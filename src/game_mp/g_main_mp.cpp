@@ -404,7 +404,7 @@ const dvar_s *G_RegisterDvars()
         "Call 'client think' exactly once for each server frame to make smooth demos");
     g_log = Dvar_RegisterString("g_log", "games_mp.log", DVAR_ARCHIVE, "Log file name");
     g_logSync = Dvar_RegisterBool("g_logSync", false, DVAR_ARCHIVE, "Enable synchronous logging");
-    // LWSS ADD: retail kills the calling thread when a precache* hits a missing asset, which
+    // KISAK ADD: retail kills the calling thread when a precache* hits a missing asset, which
     // costs mods with incomplete content their whole init threads. 0 restores retail behaviour.
     g_scriptIgnoreMissingAssets = Dvar_RegisterBool(
         "scr_ignoreMissingAssets",
