@@ -1053,6 +1053,7 @@ int yyparse()
 
 	short *yyss1;
 	int yysize;
+	int yyvsize;
 	stype_t *yyvs1;
 
 	sval_u valstack[6];
@@ -1103,6 +1104,12 @@ yynewstate:
 			/* Get the current used size of the three stacks, in elements.  */
 			yysize = yyssp - yyss + 1;
 
+			/* Value stack trails the state stack by one here: dropping bison's yysetstate entry
+			and folding the increment into *++yyssp above leaves yyssp permanently one index
+			ahead, so it needs its own size. Sizing both from yysize parks yyvsp a slot high and
+			every yyvsp[-N] in the actions below then reads the wrong semantic value. */
+			yyvsize = yyvsp - yyvs + 1;
+
 			/* Extend the stack our own way.  */
 			if (yystacksize >= 10000) // YYMAXDEPTH
 			{
@@ -1146,9 +1153,9 @@ yynewstate:
 			//yyvs = (stype_t *)malloc(sizeof(stype_t) * yystacksize);
 			free2addr = yyvs;
 			//memcpy(yyss, yyvs1, sizeof(stype_t) * yystacksize);
-			memcpy(yyvs, yyvs1, sizeof(stype_t) * yysize); // LWSS CHANGE
+			memcpy(yyvs, yyvs1, sizeof(stype_t) * yyvsize); // LWSS CHANGE
 
-			yyvsp = &yyvs[yysize - 1];
+			yyvsp = &yyvs[yyvsize - 1];
 			yyssp = &yyss[yysize - 1];
 
 			// YYDPRINTF ((stderr, "Stack size increased to %lu\n", (unsigned long int) yystacksize));

@@ -100,6 +100,7 @@ const dvar_t *g_gametype;
 const dvar_t *g_fogStartDistReadOnly;
 const dvar_t *g_debugLocDamage;
 const dvar_t *g_logSync ;
+const dvar_t *g_scriptIgnoreMissingAssets;
 const dvar_t *g_mantleBlockTimeBuffer;
 const dvar_t *player_throwbackOuterRadius;
 const dvar_t *g_oldVoting;
@@ -403,6 +404,13 @@ const dvar_s *G_RegisterDvars()
         "Call 'client think' exactly once for each server frame to make smooth demos");
     g_log = Dvar_RegisterString("g_log", "games_mp.log", DVAR_ARCHIVE, "Log file name");
     g_logSync = Dvar_RegisterBool("g_logSync", false, DVAR_ARCHIVE, "Enable synchronous logging");
+    // LWSS ADD: retail kills the calling thread when a precache* hits a missing asset, which
+    // costs mods with incomplete content their whole init threads. 0 restores retail behaviour.
+    g_scriptIgnoreMissingAssets = Dvar_RegisterBool(
+        "scr_ignoreMissingAssets",
+        true,
+        DVAR_NOFLAG,
+        "Warn instead of raising a script error when a precached asset is missing");
     g_password = Dvar_RegisterString("g_password", (char *)"", DVAR_NOFLAG, "Password");
     g_banIPs = Dvar_RegisterString("g_banIPs", (char *)"", DVAR_ARCHIVE, "IP addresses to ban from playing");
 #if defined(DEDICATED) || defined(KISAK_DEDICATED)

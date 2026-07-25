@@ -132,7 +132,10 @@ void __cdecl Scr_BeginLoadScripts()
         scrCompilePub.builtinMeth = Scr_AllocArray();
         if (scrVarDebugPub)
             ++scrVarDebugPub->extRefCount[scrCompilePub.builtinMeth];
-        scrVarPub.programHunkUser = Hunk_UserCreate(0x100000, "Scr_BeginLoadScripts", 1, 0, 7);
+        // Compiled-GSC program buffer, raised from retail's 0x100000 which large script mods
+        // overrun. Fixed user, so this size is a hard ceiling - but it is only reserved address
+        // space, committed on demand, so the headroom costs no RAM.
+        scrVarPub.programHunkUser = Hunk_UserCreate(0x400000, "Scr_BeginLoadScripts", 1, 0, 7);
         TempMemoryReset(scrVarPub.programHunkUser);
         scrVarPub.programBuffer = TempMalloc(0);
         if (((int)scrVarPub.programBuffer & 0x1F) != 0)

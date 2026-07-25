@@ -3744,6 +3744,15 @@ void __cdecl Scr_ErrorOnDefaultAsset(XAssetType type, const char *assetName)
     {
         XAssetTypeName = DB_GetXAssetTypeName(type);
         v3 = va("precache %s '%s' failed", XAssetTypeName, assetName);
+
+        // Already fell back to the default asset and got logged to missingasset.csv, so the
+        // thread can carry on with a placeholder rather than dying here.
+        if (g_scriptIgnoreMissingAssets && g_scriptIgnoreMissingAssets->current.enabled)
+        {
+            Com_PrintWarning(23, "WARNING: %s - using default asset\n", v3);
+            return;
+        }
+
         Scr_NeverTerminalError(v3);
     }
 }

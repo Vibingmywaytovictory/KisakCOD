@@ -893,7 +893,13 @@ void* Hunk_UserAlloc(HunkUser* user, uint32_t size, int32_t alignment)
         if ((signed int)(size + result) <= current->end)
             break;
         if (user->fixed)
-            Com_Error(ERR_FATAL, "Hunk_UserAlloc: out of memory");
+            Com_Error(
+                ERR_FATAL,
+                "Hunk_UserAlloc: out of memory in '%s' (requested %u bytes, %d of %d used)",
+                user->name ? user->name : "?",
+                size,
+                current->pos - (int)current->buf,
+                user->maxSize);
         newCurrent = Hunk_UserCreate(user->maxSize, user->name, 0, user->tempMem, user->type);
         user->current = newCurrent;
         current->next = newCurrent;

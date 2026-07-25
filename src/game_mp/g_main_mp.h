@@ -263,6 +263,7 @@ extern const dvar_t *g_gametype;
 extern const dvar_t *g_fogStartDistReadOnly;
 extern const dvar_t *g_debugLocDamage;
 extern const dvar_t *g_logSync;
+extern const dvar_t *g_scriptIgnoreMissingAssets;
 extern const dvar_t *g_mantleBlockTimeBuffer;
 extern const dvar_t *player_throwbackOuterRadius;
 extern const dvar_t *g_oldVoting;
