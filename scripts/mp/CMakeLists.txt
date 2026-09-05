@@ -76,9 +76,14 @@ endif()
 include(${SCRIPTS_DIR}/pre_build.cmake)
 include(${SCRIPTS_DIR}/post_build.cmake)
 
+# 32-bit image, but on 64-bit Windows /LARGEADDRESSAWARE lifts the user-space
+# ceiling from 2 GB to 4 GB. This is needed by every configuration, not just the
+# sanitizer build it used to be scoped to.
+target_link_options(${PROJECT_NAME} PRIVATE /LARGEADDRESSAWARE)
+
 if (USE_ASAN)
     target_compile_options(${PROJECT_NAME} PRIVATE /fsanitize=address)
-    target_link_options(${PROJECT_NAME} PRIVATE /fsanitize=address /LARGEADDRESSAWARE)
+    target_link_options(${PROJECT_NAME} PRIVATE /fsanitize=address)
 else()
 # Tracy
     include(${SCRIPTS_DIR}/extern/tracy.cmake)
