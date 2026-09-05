@@ -4,6 +4,7 @@
 
 #include <universal/q_shared.h>
 #include "server_mp.h"
+#include "sv_ratelimit_mp.h"
 
 #include <qcommon/qcommon.h>
 #include <qcommon/mem_track.h>
@@ -689,6 +690,18 @@ void __cdecl SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
 
     if (!I_stricmp(c, "getstatus"))
     {
+        // A statusResponse is many times the size of the request that asked
+        // for it, and the request is one spoofable datagram. Unlimited, this
+        // server is a usable amplifier for a flood aimed at someone else.
+        // Per-address first, then a ceiling on how much status traffic the
+        // server will emit at all, since spoofed sources defeat the former.
+        if (SV_RateLimitAddress(from, 2, SV_QueryIgnoreTime())
+            || SV_RateLimitGlobal(SV_RATELIMIT_STATUS, 20, 20000))
+        {
+            SV_Cmd_EndTokenizedString();
+            return;
+        }
+
         SV_UpdateLastTimeMasterServerCommunicated(from);
         SVC_Status(from);
     }
@@ -698,6 +711,16 @@ void __cdecl SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     }
     else if (!I_stricmp(c, "getinfo"))
     {
+        // infoResponse is smaller than statusResponse, so it amplifies less
+        // and server browsers send it far more often. Looser limits, same
+        // shape. These are CoD4x's numbers.
+        if (SV_RateLimitAddress(from, 4, SV_QueryIgnoreTime())
+            || SV_RateLimitGlobal(SV_RATELIMIT_INFO, 100, 100000))
+        {
+            SV_Cmd_EndTokenizedString();
+            return;
+        }
+
         SVC_Info(from);
         SV_UpdateLastTimeMasterServerCommunicated(from);
     }

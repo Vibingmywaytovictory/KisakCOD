@@ -4,6 +4,7 @@
 
 #include <universal/q_shared.h>
 #include "server_mp.h"
+#include "sv_ratelimit_mp.h"
 #include <qcommon/qcommon.h>
 #include <server/sv_game.h>
 #include <database/database.h>
@@ -670,6 +671,11 @@ void __cdecl SV_Init()
     DvarLimits mina; // [esp+4h] [ebp-18h]
 
     SV_AddOperatorCommands();
+
+    // Before any dvar below, so a config parsed during startup can already set
+    // sv_queryLimit and sv_queryIgnoreTime.
+    SV_RateLimitInit();
+
     sv_gametype = Dvar_RegisterString("g_gametype", "war", DVAR_SERVERINFO | DVAR_LATCH, "Current game type");
     Dvar_RegisterString("sv_keywords", (char *)"", DVAR_SERVERINFO, "Server keywords");
     Dvar_RegisterInt("protocol", 1, (DvarLimits)0x100000001LL, DVAR_SERVERINFO | DVAR_ROM, "Protocol version");

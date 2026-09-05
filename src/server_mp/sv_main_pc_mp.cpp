@@ -4,6 +4,7 @@
 
 #include <universal/q_shared.h>
 #include "server_mp.h"
+#include "sv_ratelimit_mp.h"
 #include <qcommon/cmd.h>
 
 #include <cgame_mp/cg_local_mp.h>
@@ -236,7 +237,10 @@ void __cdecl SV_FlushRedirect(char *outputbuf)
     NET_OutOfBandPrint(NS_SERVER, svs.redirectAddress, buf);
 }
 
-int lasttime;
+// Superseded by the rate limiter below. The old throttle was one global
+// timestamp, so an attacker hammering rcon locked every administrator out of
+// it as a side effect of being throttled themself.
+//int lasttime;
 void __cdecl SVC_RemoteCommand(netadr_t from)
 {
     const char *v1; // eax
@@ -250,13 +254,17 @@ void __cdecl SVC_RemoteCommand(netadr_t from)
     int valid; // [esp+C08h] [ebp-18h]
     int len; // [esp+C0Ch] [ebp-14h]
     const char *password; // [esp+C10h] [ebp-10h]
-    int time; // [esp+C14h] [ebp-Ch]
     int i; // [esp+C18h] [ebp-8h]
 
-    time = Sys_Milliseconds();
-    if (!lasttime || time - lasttime >= 500)
+    // Nothing else caps how fast a password can be guessed. Per-address rather
+    // than the global throttle this replaces, so a flood from one source
+    // cannot deny rcon to an administrator elsewhere. CoD4x adds a global
+    // rcon bucket on top, which reintroduces exactly that denial; the ceiling
+    // below is applied to rejected attempts only instead.
+    if (SV_RateLimitAddress(from, 10, 1000))
+        return;
+
     {
-        lasttime = time;
         // rcon_password is a string dvar, so current.integer here is the
         // aliased char pointer, which is never null for a registered dvar --
         // that test was always true. With the password left unset it made
@@ -276,6 +284,14 @@ void __cdecl SVC_RemoteCommand(netadr_t from)
         }
         else
         {
+            // A rejected attempt costs a console line and a reply datagram,
+            // and the address that reply goes to is whatever the packet
+            // claimed. Cap how many of those the server will spend in total.
+            // A correct password never reaches this, so no amount of noise
+            // from strangers can flood an administrator out of rcon.
+            if (SV_RateLimitGlobal(SV_RATELIMIT_RCON, 10, 1000))
+                return;
+
             valid = 0;
             v5 = SV_Cmd_Argv(2);
             v1 = NET_AdrToString(from);
