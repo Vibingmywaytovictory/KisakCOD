@@ -10,6 +10,7 @@
 #include <qcommon/cmd.h>
 #include <server/sv_game.h>
 #include <game_mp/g_main_mp.h>
+#include "sv_bots_mp.h"
 #include <qcommon/files.h>
 #include <universal/com_files.h>
 #include <qcommon/threads.h>
@@ -1046,8 +1047,22 @@ void __cdecl SV_BotUserMove(client_t *cl)
                 "%s",
                 "SV_GameClientNum( cl - svs.clients )->weapon == static_cast<byte>( SV_GameClientNum( cl - svs.clients )->weapon )");
         nullcmd.weapon = SV_GameClientNum(cl - svs.clients)->weapon;
+
+        // Stock leaves serverTime at zero. Pmove integrates from cmd.serverTime,
+        // so a scripted bot needs a real one or it never advances.
+        nullcmd.serverTime = svs.time;
+
         if (!G_GetClientArchiveTime(cl - svs.clients))
         {
+            const int32_t botNum = (int32_t)(cl - svs.clients);
+
+            if (SV_BotIsScripted(botNum))
+            {
+                SV_BotApplyScriptedInput(cl->gentity, botNum, cl->lastUsercmd.angles, &nullcmd);
+            }
+            else
+            {
+            // Stock test-client wander, kept verbatim for bots no script drives.
             if (random() < 0.5 && sv_botsPressAttackBtn->current.enabled)
                 nullcmd.buttons |= BUTTON_ATTACK;
             if (random() < 0.5)
@@ -1076,6 +1091,7 @@ void __cdecl SV_BotUserMove(client_t *cl)
                 nullcmd.angles[1] = (int)(crandom() * 360.0);
             if (random() < 0.3300000131130219)
                 nullcmd.angles[2] = (int)(crandom() * 360.0);
+            }
         }
         cl->header.deltaMessage = cl->header.netchan.outgoingSequence - 1;
         SV_ClientThink(cl, &nullcmd);

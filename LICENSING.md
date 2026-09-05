@@ -48,7 +48,12 @@ Kept current as ports land.
 
 | File | Derived from | Notes |
 |---|---|---|
-| _(none yet)_ | | |
+| `src/server_mp/sv_bots_mp.h` | `src/sv_bots.h` | Bot input struct and declarations. |
+| `src/server_mp/sv_bots_mp.cpp` | `src/sv_bots.cpp` | Six GSC bot methods, action table, usercmd translation. |
+
+The bot changes inside `src/server_mp/sv_main_mp.cpp` (`SV_BotUserMove`) and the six
+rows added to `methods_2[]` in `src/game_mp/g_scr_main_mp.cpp` are edits to existing
+GPLv3 files that call into the AGPLv3 code above; the files themselves stay GPLv3.
 
 ## Deliberately excluded
 

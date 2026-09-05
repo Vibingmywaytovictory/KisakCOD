@@ -14,6 +14,7 @@
 
 #include <server/sv_game.h>
 #include <server_mp/server_mp.h>
+#include <server_mp/sv_bots_mp.h>
 
 #include <script/scr_animtree.h>
 #include <script/scr_const.h>
@@ -335,7 +336,14 @@ BuiltinMethodDef methods_2[] =
   { "startragdoll", &GScr_StartRagdoll, 0 },
   { "isragdoll", &GScr_IsRagdoll, 0 },
   { "getcorpseanim", &GScr_GetCorpseAnim, 0 },
-  { "itemweaponsetammo", &ScrCmd_ItemWeaponSetAmmo, 0 }
+  { "itemweaponsetammo", &ScrCmd_ItemWeaponSetAmmo, 0 },
+  // Bot input steering, ported from CoD4x (AGPLv3, see LICENSING.md).
+  { "botmoveto", &GScr_BotMoveTo, 0 },
+  { "botlookat", &GScr_BotLookAt, 0 },
+  { "botstop", &GScr_BotStop, 0 },
+  { "botaction", &GScr_BotAction, 0 },
+  { "botlookatplayer", &GScr_BotLookAtPlayer, 0 },
+  { "botweapon", &GScr_BotWeapon, 0 }
 }; // idb
 
 uint32_t __cdecl GScr_AllocString(const char *s)
