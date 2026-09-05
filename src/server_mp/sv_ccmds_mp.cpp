@@ -6,6 +6,7 @@
 #include "server_mp.h"
 #include "sv_moderation_mp.h"
 #include "sv_banlist_mp.h"
+#include "sv_consay_mp.h"
 #include <qcommon/files.h>
 #include <qcommon/cmd.h>
 #include <win32/win_net_debug.h>
@@ -299,7 +300,8 @@ void __cdecl SV_AddOperatorCommands()
         Cmd_AddCommandInternal("onlykick", Cbuf_AddServerText_f, &SV_Drop_f_VAR);
         Cmd_AddServerCommandInternal("onlykick", SV_Drop_f, &SV_Drop_f_VAR_SERVER);
         SV_AddModerationCommands();
-    SV_BanList_AddCommands();
+        SV_BanList_AddCommands();
+        SV_ConSay_AddCommands();
         Cmd_AddCommandInternal("banUser", Cbuf_AddServerText_f, &SV_Ban_f_VAR);
         Cmd_AddServerCommandInternal("banUser", SV_Ban_f, &SV_Ban_f_VAR_SERVER);
         Cmd_AddCommandInternal("banClient", Cbuf_AddServerText_f, &SV_BanNum_f_VAR);
@@ -1120,7 +1122,11 @@ void __cdecl SV_AddDedicatedCommands()
     Cmd_AddServerCommandInternal("tell", SV_ConTell_f, &SV_ConTell_f_VAR_SERVER);
 }
 
-const char aC_5[] = "%c \""; // idb
+// Was "%c \"", four characters with no %s, so the assembled server
+// command was `h "` and the message never reached anyone -- verified on a
+// running server, which sent `h "` for `say HELLOWORLD`. The decompiler
+// truncated the literal at the escaped quote.
+const char aC_5[] = "%c \"%s\""; // idb
 void __cdecl SV_ConSay_f()
 {
     char text[1028]; // [esp+0h] [ebp-408h] BYREF
@@ -1139,42 +1145,33 @@ void __cdecl SV_ConSay_f()
     }
 }
 
+// The body pulled its text out of Cmd_ArgsBuffer -- the console tokenizer --
+// while testing SV_Cmd_Argc, which is the server one. Over rcon those hold
+// different things entirely, so say picked up the rcon packet's arguments.
+// SV_ConSay_Assemble reads the same tokenizer the caller checked, and takes
+// the prefix as a parameter so the new consay commands can share it.
 void __cdecl SV_AssembleConSayMessage(int firstArg, char *text, int sizeofText)
 {
-    uint32_t textLen; // [esp+10h] [ebp-4h]
-
-    strcpy(text, "console: ");
-    textLen = 9;
-    if (strlen(text) != 9)
-        MyAssertHandler(".\\server_mp\\sv_ccmds_mp.cpp", 827, 1, "%s", "textLen == strlen( text )");
-    Cmd_ArgsBuffer(firstArg, text + 9, sizeofText - 9);
-    if (text[9] == 34)
-    {
-        while (text[textLen + 1])
-        {
-            text[textLen - 1] = text[textLen];
-            ++textLen;
-        }
-        text[textLen] = 0;
-    }
+    SV_ConSay_Assemble(firstArg, "console: ", text, sizeofText);
 }
 
 void __cdecl SV_ConTell_f()
 {
-    const char *v0; // eax
-    int clientNum; // [esp+4h] [ebp-40Ch]
     char text[1028]; // [esp+8h] [ebp-408h] BYREF
 
     if (com_sv_running->current.enabled)
     {
         if (SV_Cmd_Argc() >= 3)
         {
-            v0 = SV_Cmd_Argv(1);
-            clientNum = atoi(v0);
-            if (clientNum >= 0 && clientNum < sv_maxclients->current.integer && svs.clients[clientNum].header.state == 4)
+            // atoi returns 0 for a name, so `tell someone hi` used to go to
+            // client 0 without a word. Resolve by number or by name, and say
+            // so when there is no match.
+            client_t *target = SV_ConSay_ResolveTarget();
+
+            if (target)
             {
                 SV_AssembleConSayMessage(2, text, 1024);
-                SV_SendServerCommand(&svs.clients[clientNum], SV_CMD_CAN_IGNORE, aC_5, 104, text);
+                SV_SendServerCommand(target, SV_CMD_CAN_IGNORE, aC_5, 104, text);
             }
         }
     }
