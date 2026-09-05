@@ -1220,6 +1220,25 @@ void __cdecl SV_Disconnect_f(client_t *cl)
     SV_DropClient(cl, "EXE_DISCONNECTED", 1);
 }
 
+// Copies a client-supplied name, dropping anything that would break a console
+// line or a log line. Deliberately not shared with the game's
+// ClientCleanName, which also strips colour and enforces a fallback name;
+// this one only removes what is unsafe to print.
+static void SV_CopySanitizedName(char *out, const char *in, uint32_t outSize)
+{
+    uint32_t written = 0;
+
+    for (; *in && written < outSize - 1; ++in)
+    {
+        if ((uint8_t)*in < 0x20 || (uint8_t)*in == 0x7F)
+            continue;
+
+        out[written++] = *in;
+    }
+
+    out[written] = 0;
+}
+
 void __cdecl SV_UserinfoChanged(client_t *cl)
 {
     const char *v1; // eax
@@ -1230,7 +1249,12 @@ void __cdecl SV_UserinfoChanged(client_t *cl)
     int i; // [esp+34h] [ebp-4h]
 
     v1 = Info_ValueForKey(cl->userinfo, "name");
-    I_strncpyz(cl->name, v1, 16);
+    // The game keeps its own cleaned copy in sess.cs.name; this one is what
+    // the console, the status listing and the kick and mute commands print,
+    // and it was taken from the userinfo verbatim. Colour codes are left
+    // alone -- the console renders them -- but control characters are not,
+    // for the same reason ClientCleanName drops them.
+    SV_CopySanitizedName(cl->name, v1, sizeof(cl->name));
     if (!Sys_IsLANAddress(cl->header.netchan.remoteAddress) || com_dedicated->current.integer == 2)
     {
         val = Info_ValueForKey(cl->userinfo, "rate");

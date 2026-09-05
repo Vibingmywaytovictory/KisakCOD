@@ -215,6 +215,13 @@ void __cdecl ClientCleanName(const char *in, char *out, int32_t outSize)
         v3 = *in++;
         if (!v3)
             break;
+        // Control characters were passed through, and this name reaches
+        // G_LogPrintf. A newline in it lets a player close the current log
+        // line and write their own, which every stats parser downstream then
+        // reads as something the server said. Nothing legitimate is lost:
+        // these are unrenderable in game anyway.
+        if ((uint8_t)v3 < 0x20 || (uint8_t)v3 == 0x7F)
+            continue;
         if (*p || v3 != 32)
         {
             if (v3 == 94)
