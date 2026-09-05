@@ -15,7 +15,7 @@ set(KISAK_PLATFORM win32)
 # NOTE: If you use this you will need to copy to the game's directory
 # clang_rt.asan_dbg_dynamic-i386.dll and clang_rt.asan_dynamic-i386.dll from the MSVC C directory located below (or similar)
 # C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.44.35207\bin\Hostx86\x86
-set(USE_ASAN OFF)
+option(USE_ASAN "Build with AddressSanitizer (/fsanitize=address)" OFF)
 
 # Set to ON to build the sound system against OpenAL instead of Miles/MSS.
 # When OFF (default), the original Miles Sound System (MSS/AIL) backend is used.
