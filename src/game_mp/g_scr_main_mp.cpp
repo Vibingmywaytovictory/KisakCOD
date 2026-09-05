@@ -6597,7 +6597,10 @@ void(__cdecl *__cdecl Scr_GetFunction(const char **pName, int *type))()
 {
     uint32_t i; // [esp+18h] [ebp-4h]
 
-    for (i = 0; i < 0xCD; ++i)
+    // Was a hardcoded 0xCD (205), the table's size in the original binary. Any row
+    // added past that was silently invisible to the script compiler, which reports
+    // it as "unknown function". Derive the bound from the table instead.
+    for (i = 0; i < (uint32_t)ARRAY_COUNT(functions); ++i)
     {
         if (!strcmp(*pName, functions[i].actionString))
         {
@@ -6613,7 +6616,9 @@ void(__cdecl *__cdecl BuiltIn_GetMethod(const char **pName, int *type))(scr_entr
 {
     uint32_t i; // [esp+18h] [ebp-4h]
 
-    for (i = 0; i < 0x52; ++i)
+    // Same decompilation artefact as Scr_GetFunction: 0x52 (82) was the original
+    // table size, so added methods were never found.
+    for (i = 0; i < (uint32_t)ARRAY_COUNT(methods_2); ++i)
     {
         if (!strcmp(*pName, methods_2[i].actionString))
         {
