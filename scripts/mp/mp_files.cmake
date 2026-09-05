@@ -167,6 +167,8 @@ set(SERVER_MP
     "${SRC_DIR}/server_mp/sv_client_mp.cpp"
     "${SRC_DIR}/server_mp/sv_bots_mp.cpp"
     "${SRC_DIR}/server_mp/sv_bots_mp.h"
+    "${SRC_DIR}/server_mp/sv_script_fs_mp.cpp"
+    "${SRC_DIR}/server_mp/sv_script_fs_mp.h"
     "${SRC_DIR}/server_mp/sv_init_mp.cpp"
     "${SRC_DIR}/server_mp/sv_main_mp.cpp"
     "${SRC_DIR}/server_mp/sv_main_pc_mp.cpp"

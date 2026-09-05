@@ -15,6 +15,7 @@
 #include <server/sv_game.h>
 #include <server_mp/server_mp.h>
 #include <server_mp/sv_bots_mp.h>
+#include <server_mp/sv_script_fs_mp.h>
 
 #include <script/scr_animtree.h>
 #include <script/scr_const.h>
@@ -245,7 +246,14 @@ BuiltinFunctionDef functions[] =
   { "visionsetnight", &Scr_VisionSetNight, 0 },
   { "tablelookup", &Scr_TableLookup, 0 },
   { "tablelookupistring", &Scr_TableLookupIString, 0 },
-  { "endlobby", &KISAK_NULLSUB, 0 }
+  { "endlobby", &KISAK_NULLSUB, 0 },
+  // Script file I/O, ported from CoD4x (AGPLv3, see LICENSING.md).
+  // Paths are confined to scriptdata/ inside the engine.
+  { "fs_fopen", &GScr_FS_FOpen, 0 },
+  { "fs_fclose", &GScr_FS_FClose, 0 },
+  { "fs_testfile", &GScr_FS_TestFile, 0 },
+  { "fs_readline", &GScr_FS_ReadLine, 0 },
+  { "fs_writeline", &GScr_FS_WriteLine, 0 }
 }; // idb
 
 void __cdecl ScrCmd_NULLSUB(scr_entref_t entref)

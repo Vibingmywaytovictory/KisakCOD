@@ -50,6 +50,8 @@ Kept current as ports land.
 |---|---|---|
 | `src/server_mp/sv_bots_mp.h` | `src/sv_bots.h` | Bot input struct and declarations. |
 | `src/server_mp/sv_bots_mp.cpp` | `src/sv_bots.cpp` | Six GSC bot methods, action table, usercmd translation. |
+| `src/server_mp/sv_script_fs_mp.h` | `src/scr_vm_fs.c` | Script file I/O declarations. |
+| `src/server_mp/sv_script_fs_mp.cpp` | `src/scr_vm_fs.c`, `src/scr_vm_functions.c` | Five fs_* GSC builtins. Re-implemented on KisakCOD's filesystem; sandbox is new. |
 
 The bot changes inside `src/server_mp/sv_main_mp.cpp` (`SV_BotUserMove`) and the six
 rows added to `methods_2[]` in `src/game_mp/g_scr_main_mp.cpp` are edits to existing
