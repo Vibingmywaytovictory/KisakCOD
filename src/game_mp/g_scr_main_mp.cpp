@@ -418,6 +418,7 @@ void __cdecl GScr_LoadScripts()
     // names at compile time, so a late registration is an unknown function.
     Scr_AddBotsMovement();
     Scr_AddScriptFileFunctions();
+    Scr_AddUtilityFunctions();
 
     Scr_BeginLoadScripts();
     g_scr_data.delete_ = GScr_LoadScriptAndLabel("codescripts/delete", "main", 1);

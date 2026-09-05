@@ -53,3 +53,4 @@ ScrMethod_t __cdecl Scr_FindDynamicMethod(const char **pName, int32_t *type);
 // GScr_LoadScripts before any script is compiled.
 void __cdecl Scr_AddBotsMovement();
 void __cdecl Scr_AddScriptFileFunctions();
+void __cdecl Scr_AddUtilityFunctions();

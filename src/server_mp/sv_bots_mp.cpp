@@ -460,8 +460,82 @@ void __cdecl GScr_BotWeapon(scr_entref_t entref)
     ai->weapon = (uint8_t)weaponIndex;
 }
 
-// Registered at VM init rather than as rows in methods_2[]. This is how CoD4x
-// does it, and it keeps the stock table untouched.
+// Stock CoD4 has SV_AddTestClient and no counterpart, so bots accumulate until
+// the map ends. CoD4x matches on netchan.remoteAddress.type == NA_BOT; this
+// tests bIsTestClient instead, because NA_BOT is zero in this tree's netadr
+// enum and a zeroed address would therefore read as a bot.
+gentity_s *__cdecl SV_RemoveTestClient()
+{
+    for (int32_t i = 0; i < sv_maxclients->current.integer; ++i)
+    {
+        client_t *cl = &svs.clients[i];
+
+        if (cl->header.state <= CS_FREE || !cl->bIsTestClient)
+            continue;
+
+        // Whatever script had queued for this slot dies with the client. The
+        // slot is reused by the next connect, so a stale doMove there would
+        // steer a real player.
+        SV_BotClearMovementInfo(i);
+        SV_DropClient(cl, "EXE_DISCONNECTED", 1);
+
+        return SV_GentityNumLocal(i);
+    }
+
+    return nullptr;
+}
+
+int32_t __cdecl SV_RemoveAllTestClients()
+{
+    int32_t removed = 0;
+
+    for (int32_t i = 0; i < sv_maxclients->current.integer; ++i)
+    {
+        client_t *cl = &svs.clients[i];
+
+        if (cl->header.state <= CS_FREE || !cl->bIsTestClient)
+            continue;
+
+        SV_BotClearMovementInfo(i);
+        SV_DropClient(cl, "EXE_DISCONNECTED", 1);
+        ++removed;
+    }
+
+    return removed;
+}
+
+// entity = removetestclient()
+//
+// Returns the entity that was dropped so a caller can log it; undefined when
+// there was no bot to remove.
+void __cdecl GScr_RemoveTestClient()
+{
+    if (Scr_GetNumParam() != 0)
+    {
+        Scr_Error("Usage: entity = removeTestClient();");
+        return;
+    }
+
+    gentity_s *ent = SV_RemoveTestClient();
+
+    if (ent)
+        Scr_AddEntity(ent);
+}
+
+// int = removealltestclients()
+void __cdecl GScr_RemoveAllTestClients()
+{
+    if (Scr_GetNumParam() != 0)
+    {
+        Scr_Error("Usage: int = removeAllTestClients();");
+        return;
+    }
+
+    Scr_AddInt(SV_RemoveAllTestClients());
+}
+
+// Registered at VM init rather than as rows in the static tables. This is how
+// CoD4x does it, and it keeps those tables untouched.
 void __cdecl Scr_AddBotsMovement()
 {
     Scr_AddMethod("botmoveto", GScr_BotMoveTo, 0);
@@ -470,4 +544,8 @@ void __cdecl Scr_AddBotsMovement()
     Scr_AddMethod("botaction", GScr_BotAction, 0);
     Scr_AddMethod("botlookatplayer", GScr_BotLookAtPlayer, 0);
     Scr_AddMethod("botweapon", GScr_BotWeapon, 0);
+
+    // addtestclient is a stock builtin; only the removals are new.
+    Scr_AddFunction("removetestclient", GScr_RemoveTestClient, 0);
+    Scr_AddFunction("removealltestclients", GScr_RemoveAllTestClients, 0);
 }

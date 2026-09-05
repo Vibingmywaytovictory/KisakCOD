@@ -59,3 +59,15 @@ void __cdecl GScr_BotStop(scr_entref_t entref);
 void __cdecl GScr_BotAction(scr_entref_t entref);
 void __cdecl GScr_BotLookAtPlayer(scr_entref_t entref);
 void __cdecl GScr_BotWeapon(scr_entref_t entref);
+
+// Drop one test client, or all of them. Stock CoD4 can only add bots -- there
+// is no matching removetestclient, so a gametype that spawns bots to fill a
+// server has no way to make room again when a real player connects.
+//
+// Returns the entity that was dropped, or null when no test client was found.
+gentity_s *__cdecl SV_RemoveTestClient();
+int32_t __cdecl SV_RemoveAllTestClients();
+
+// Registered as global functions alongside the stock addtestclient.
+void __cdecl GScr_RemoveTestClient();
+void __cdecl GScr_RemoveAllTestClients();
