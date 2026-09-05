@@ -5,6 +5,7 @@
 #include <universal/q_shared.h>
 #include "server_mp.h"
 #include "sv_moderation_mp.h"
+#include "sv_banlist_mp.h"
 #include <qcommon/files.h>
 #include <qcommon/cmd.h>
 #include <win32/win_net_debug.h>
@@ -298,6 +299,7 @@ void __cdecl SV_AddOperatorCommands()
         Cmd_AddCommandInternal("onlykick", Cbuf_AddServerText_f, &SV_Drop_f_VAR);
         Cmd_AddServerCommandInternal("onlykick", SV_Drop_f, &SV_Drop_f_VAR_SERVER);
         SV_AddModerationCommands();
+    SV_BanList_AddCommands();
         Cmd_AddCommandInternal("banUser", Cbuf_AddServerText_f, &SV_Ban_f_VAR);
         Cmd_AddServerCommandInternal("banUser", SV_Ban_f, &SV_Ban_f_VAR_SERVER);
         Cmd_AddCommandInternal("banClient", Cbuf_AddServerText_f, &SV_BanNum_f_VAR);

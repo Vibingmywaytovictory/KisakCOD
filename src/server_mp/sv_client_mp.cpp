@@ -4,6 +4,7 @@
 
 #include <universal/q_shared.h>
 #include "server_mp.h"
+#include "sv_banlist_mp.h"
 #include <qcommon/cmd.h>
 #include <universal/com_files.h>
 #include <universal/q_parse.h>
@@ -249,35 +250,6 @@ void __cdecl SV_GetChallenge(netadr_t from)
     //}
 }
 
-int __cdecl SV_IsBannedGuid(const char *cdkeyHash)
-{
-    char *file; // [esp+18h] [ebp-10h] BYREF
-    int banned; // [esp+1Ch] [ebp-Ch]
-    const char *token; // [esp+20h] [ebp-8h]
-    const char *text; // [esp+24h] [ebp-4h] BYREF
-
-    if (!*cdkeyHash)
-        return 0;
-    if (FS_ReadFile("ban.txt", (void **)&file) < 0)
-        return 0;
-    text = file;
-    banned = 0;
-    while (1)
-    {
-        token = (const char *)Com_Parse(&text);
-        if (!*token)
-            break;
-        if (!strcmp(token, cdkeyHash))
-        {
-            banned = 1;
-            break;
-        }
-        Com_SkipRestOfLine(&text);
-    }
-    FS_FreeFile(file);
-    return banned;
-}
-
 void __cdecl SV_ReceiveStats(netadr_t from, msg_t *msg)
 {
     const char *v2; // eax
@@ -468,6 +440,7 @@ void __cdecl SV_BanClient(client_t *cl)
             I_CleanStr(cleanName);
             FS_Printf(file, "%s %s\r\n", cl->cdkeyHash, cleanName);
             FS_FCloseFile(file);
+            SV_BanList_Invalidate();
             SV_DropClient(cl, "EXE_PLAYERKICKED", 1);
             cl->lastPacketTime = svs.time;
         }
@@ -520,6 +493,7 @@ void __cdecl SV_UnbanClient(char *name)
         }
         FS_WriteFile((char*)"ban.txt", file, fileSize);
         FS_FreeFile(file);
+        SV_BanList_Invalidate();
         if (found)
             Com_Printf(15, "unbanned %i user(s) named %s\n", found, cleanName);
         else
