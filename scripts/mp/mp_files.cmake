@@ -68,6 +68,8 @@ set(GAME_MP
     "${SRC_DIR}/game_mp/g_public_mp.h"
     "${SRC_DIR}/game_mp/g_scr_helicopter.cpp"
     "${SRC_DIR}/game_mp/g_scr_main_mp.cpp"
+    "${SRC_DIR}/game_mp/g_scr_builtins_mp.cpp"
+    "${SRC_DIR}/game_mp/g_scr_builtins_mp.h"
     "${SRC_DIR}/game_mp/g_spawn_mp.cpp"
     "${SRC_DIR}/game_mp/g_trigger_mp.cpp"
     "${SRC_DIR}/game_mp/g_utils_mp.cpp"

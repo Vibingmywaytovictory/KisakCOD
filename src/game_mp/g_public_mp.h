@@ -495,6 +495,11 @@ void __cdecl Scr_LoadLevel();
 void __cdecl GScr_LoadGameTypeScript();
 int32_t __cdecl GScr_LoadScriptAndLabel(const char *filename, const char *label, int32_t bEnforceExists);
 void __cdecl GScr_LoadScripts();
+
+// Builtin name resolution. Defined in g_scr_main_mp.cpp; the single-player
+// declarations live in game/g_scr_main.h, which refuses to be included from MP.
+void(__cdecl *__cdecl Scr_GetFunction(const char **pName, int *type))();
+void(__cdecl *__cdecl BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t);
 int32_t GScr_LoadLevelScript();
 void GScr_PostLoadScripts();
 void __cdecl GScr_FreeScripts();

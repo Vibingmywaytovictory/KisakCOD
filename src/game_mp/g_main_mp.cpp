@@ -4,6 +4,7 @@
 
 #include <universal/q_shared.h>
 #include <server_mp/sv_script_fs_mp.h>
+#include "g_scr_builtins_mp.h"
 #include "g_main_mp.h"
 
 #include "g_public_mp.h"
@@ -838,6 +839,10 @@ void __cdecl G_ShutdownGame(int32_t freeScripts)
     // Scripts are not required to close what they opened, and handles must not
     // survive into the next map.
     SV_ScriptFS_CloseAll();
+
+    // Dynamic builtins are re-registered every GScr_LoadScripts, so drop them
+    // rather than let a stale function pointer reach the next map.
+    Scr_ClearDynamicBuiltins();
 
     bgs = 0;
     G_FreeEntities();

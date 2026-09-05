@@ -16,6 +16,7 @@
 #include <server_mp/server_mp.h>
 #include <server_mp/sv_bots_mp.h>
 #include <server_mp/sv_script_fs_mp.h>
+#include "g_scr_builtins_mp.h"
 
 #include <script/scr_animtree.h>
 #include <script/scr_const.h>
@@ -246,14 +247,7 @@ BuiltinFunctionDef functions[] =
   { "visionsetnight", &Scr_VisionSetNight, 0 },
   { "tablelookup", &Scr_TableLookup, 0 },
   { "tablelookupistring", &Scr_TableLookupIString, 0 },
-  { "endlobby", &KISAK_NULLSUB, 0 },
-  // Script file I/O, ported from CoD4x (AGPLv3, see LICENSING.md).
-  // Paths are confined to scriptdata/ inside the engine.
-  { "fs_fopen", &GScr_FS_FOpen, 0 },
-  { "fs_fclose", &GScr_FS_FClose, 0 },
-  { "fs_testfile", &GScr_FS_TestFile, 0 },
-  { "fs_readline", &GScr_FS_ReadLine, 0 },
-  { "fs_writeline", &GScr_FS_WriteLine, 0 }
+  { "endlobby", &KISAK_NULLSUB, 0 }
 }; // idb
 
 void __cdecl ScrCmd_NULLSUB(scr_entref_t entref)
@@ -344,14 +338,7 @@ BuiltinMethodDef methods_2[] =
   { "startragdoll", &GScr_StartRagdoll, 0 },
   { "isragdoll", &GScr_IsRagdoll, 0 },
   { "getcorpseanim", &GScr_GetCorpseAnim, 0 },
-  { "itemweaponsetammo", &ScrCmd_ItemWeaponSetAmmo, 0 },
-  // Bot input steering, ported from CoD4x (AGPLv3, see LICENSING.md).
-  { "botmoveto", &GScr_BotMoveTo, 0 },
-  { "botlookat", &GScr_BotLookAt, 0 },
-  { "botstop", &GScr_BotStop, 0 },
-  { "botaction", &GScr_BotAction, 0 },
-  { "botlookatplayer", &GScr_BotLookAtPlayer, 0 },
-  { "botweapon", &GScr_BotWeapon, 0 }
+  { "itemweaponsetammo", &ScrCmd_ItemWeaponSetAmmo, 0 }
 }; // idb
 
 uint32_t __cdecl GScr_AllocString(const char *s)
@@ -427,6 +414,11 @@ int32_t __cdecl GScr_LoadScriptAndLabel(const char *filename, const char *label,
 
 void __cdecl GScr_LoadScripts()
 {
+    // Must run before any script is compiled: the compiler resolves builtin
+    // names at compile time, so a late registration is an unknown function.
+    Scr_AddBotsMovement();
+    Scr_AddScriptFileFunctions();
+
     Scr_BeginLoadScripts();
     g_scr_data.delete_ = GScr_LoadScriptAndLabel("codescripts/delete", "main", 1);
     g_scr_data.initstructs = GScr_LoadScriptAndLabel("codescripts/struct", "initstructs", 1);
@@ -6609,7 +6601,10 @@ void(__cdecl *__cdecl Scr_GetFunction(const char **pName, int *type))()
             return functions[i].actionFunc;
         }
     }
-    return 0;
+
+    // Static table is the built-in set and is searched first, so a dynamic
+    // registration can extend but never shadow it.
+    return Scr_FindDynamicFunction(pName, type);
 }
 
 void(__cdecl *__cdecl BuiltIn_GetMethod(const char **pName, int *type))(scr_entref_t)
@@ -6627,7 +6622,8 @@ void(__cdecl *__cdecl BuiltIn_GetMethod(const char **pName, int *type))(scr_entr
             return methods_2[i].actionFunc;
         }
     }
-    return 0;
+
+    return Scr_FindDynamicMethod(pName, type);
 }
 
 void(__cdecl *__cdecl Scr_GetMethod(const char **pName, int *type))(scr_entref_t)

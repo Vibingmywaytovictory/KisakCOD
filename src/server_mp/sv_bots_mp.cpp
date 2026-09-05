@@ -16,6 +16,7 @@
 #include <qcommon/msg_mp.h>
 #include <script/scr_const.h>
 #include <script/scr_vm.h>
+#include <game_mp/g_scr_builtins_mp.h>
 
 #include <math.h>
 
@@ -457,4 +458,16 @@ void __cdecl GScr_BotWeapon(scr_entref_t entref)
     }
 
     ai->weapon = (uint8_t)weaponIndex;
+}
+
+// Registered at VM init rather than as rows in methods_2[]. This is how CoD4x
+// does it, and it keeps the stock table untouched.
+void __cdecl Scr_AddBotsMovement()
+{
+    Scr_AddMethod("botmoveto", GScr_BotMoveTo, 0);
+    Scr_AddMethod("botlookat", GScr_BotLookAt, 0);
+    Scr_AddMethod("botstop", GScr_BotStop, 0);
+    Scr_AddMethod("botaction", GScr_BotAction, 0);
+    Scr_AddMethod("botlookatplayer", GScr_BotLookAtPlayer, 0);
+    Scr_AddMethod("botweapon", GScr_BotWeapon, 0);
 }

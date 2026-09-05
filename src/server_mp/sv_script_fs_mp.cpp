@@ -19,6 +19,7 @@
 #include <qcommon/qcommon.h>
 #include <universal/com_files.h>
 #include <script/scr_vm.h>
+#include <game_mp/g_scr_builtins_mp.h>
 
 #include <string.h>
 
@@ -406,4 +407,17 @@ void __cdecl GScr_FS_WriteLine()
     const uint32_t written = FS_Write(buffer, len, f->fsHandle);
 
     Scr_AddBool(written == len);
+}
+
+// CoD4x registers these from scr_vm_main.c the same way. fs_fcloseall and
+// fs_remove exist there too and are deliberately not carried over yet: the first
+// is redundant now that G_ShutdownGame closes everything, and the second is a
+// delete primitive that deserves its own thought about the sandbox.
+void __cdecl Scr_AddScriptFileFunctions()
+{
+    Scr_AddFunction("fs_fopen", GScr_FS_FOpen, 0);
+    Scr_AddFunction("fs_fclose", GScr_FS_FClose, 0);
+    Scr_AddFunction("fs_testfile", GScr_FS_TestFile, 0);
+    Scr_AddFunction("fs_readline", GScr_FS_ReadLine, 0);
+    Scr_AddFunction("fs_writeline", GScr_FS_WriteLine, 0);
 }

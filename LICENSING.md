@@ -52,6 +52,8 @@ Kept current as ports land.
 | `src/server_mp/sv_bots_mp.cpp` | `src/sv_bots.cpp` | Six GSC bot methods, action table, usercmd translation. |
 | `src/server_mp/sv_script_fs_mp.h` | `src/scr_vm_fs.c` | Script file I/O declarations. |
 | `src/server_mp/sv_script_fs_mp.cpp` | `src/scr_vm_fs.c`, `src/scr_vm_functions.c` | Five fs_* GSC builtins. Re-implemented on KisakCOD's filesystem; sandbox is new. |
+| `src/game_mp/g_scr_builtins_mp.h` | `src/scr_vm.h`, `src/scr_vm_cmd.c` | Dynamic builtin registration API. |
+| `src/game_mp/g_scr_builtins_mp.cpp` | `src/scr_vm_cmd.c` | Scr_AddFunction/Scr_AddMethod. Fixed pool instead of CoD4x's malloc'd lists. |
 | `src/game/g_client_fields.cpp` | `src/g_client_fields.cpp` | The `isbot` client field and its getter only; the rest of the file is KisakCOD's own GPLv3 code. |
 
 The bot changes inside `src/server_mp/sv_main_mp.cpp` (`SV_BotUserMove`) and the six
