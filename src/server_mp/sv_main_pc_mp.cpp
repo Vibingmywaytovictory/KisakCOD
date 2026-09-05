@@ -257,8 +257,17 @@ void __cdecl SVC_RemoteCommand(netadr_t from)
     if (!lasttime || time - lasttime >= 500)
     {
         lasttime = time;
+        // rcon_password is a string dvar, so current.integer here is the
+        // aliased char pointer, which is never null for a registered dvar --
+        // that test was always true. With the password left unset it made
+        // strcmp("", "") a successful login, so `rcon "" <command>` executed
+        // anything on a default server, and the "must set rcon_password"
+        // message below was unreachable. Test the string, not the pointer.
+        const bool passwordSet =
+            rcon_password->current.string && rcon_password->current.string[0];
+
         password = SV_Cmd_Argv(1);
-        if (rcon_password->current.integer && !strcmp(password, rcon_password->current.string))
+        if (passwordSet && !strcmp(password, rcon_password->current.string))
         {
             valid = 1;
             v6 = SV_Cmd_Argv(2);
@@ -274,7 +283,7 @@ void __cdecl SVC_RemoteCommand(netadr_t from)
         }
         svs.redirectAddress = from;
         Com_BeginRedirect(sv_outputbuf, 0x7F0u, SV_FlushRedirect);
-        if (rcon_password->current.integer)
+        if (passwordSet)
         {
             if (valid)
             {
