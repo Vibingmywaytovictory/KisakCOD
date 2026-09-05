@@ -36,3 +36,12 @@ void __cdecl SV_MuteStatus_f();     // mutestatus
 
 // Registered from SV_AddOperatorCommands.
 void __cdecl SV_AddModerationCommands();
+
+// sv_disablechat, from CoD4x. Refuses chat from every player at once,
+// which is what an admin reaches for during a match or an argument -- the
+// per-player mute above is the wrong tool when the answer is "nobody talks
+// for the next two minutes". Off by default.
+//
+// Registered with CoD4x's spelling, all lower case, so a config carried
+// over from a CoD4x server keeps working.
+bool __cdecl SV_ChatDisabled();

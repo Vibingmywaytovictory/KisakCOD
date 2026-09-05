@@ -7,6 +7,7 @@
 #include "sv_moderation_mp.h"
 #include "sv_banlist_mp.h"
 #include "sv_consay_mp.h"
+#include "sv_maprotation_mp.h"
 #include <qcommon/files.h>
 #include <qcommon/cmd.h>
 #include <win32/win_net_debug.h>
@@ -302,6 +303,7 @@ void __cdecl SV_AddOperatorCommands()
         SV_AddModerationCommands();
         SV_BanList_AddCommands();
         SV_ConSay_AddCommands();
+        SV_MapRotation_Init();
         Cmd_AddCommandInternal("banUser", Cbuf_AddServerText_f, &SV_Ban_f_VAR);
         Cmd_AddServerCommandInternal("banUser", SV_Ban_f, &SV_Ban_f_VAR_SERVER);
         Cmd_AddCommandInternal("banClient", Cbuf_AddServerText_f, &SV_BanNum_f_VAR);
@@ -574,12 +576,14 @@ void __cdecl SV_MapRotate_f()
     Com_Printf(0, "map_rotate...\n\n");
     Com_Printf(0, "\"sv_mapRotation\" is:\"%s\"\n\n", sv_mapRotation->current.string);
     Com_Printf(0, "\"sv_mapRotationCurrent\" is:\"%s\"\n\n", sv_mapRotationCurrent->current.string);
-    if (!*(_BYTE *)sv_mapRotationCurrent->current.integer)
-        Dvar_SetString((dvar_s *)sv_mapRotationCurrent, (char *)sv_mapRotation->current.integer);
+    // Both refill points go through SV_MapRotation_Refill so that
+    // sv_randomMapRotation reshuffles on every cycle, not just the first.
+    if (!sv_mapRotationCurrent->current.string[0])
+        SV_MapRotation_Refill();
     token = SV_GetMapRotationToken();
     if (!token)
     {
-        Dvar_SetString((dvar_s *)sv_mapRotationCurrent, (char *)sv_mapRotation->current.integer);
+        SV_MapRotation_Refill();
         token = SV_GetMapRotationToken();
     }
     while (1)

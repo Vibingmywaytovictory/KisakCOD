@@ -664,6 +664,14 @@ void __cdecl G_Say(gentity_s *ent, gentity_s *target, int32_t mode, char *chatTe
         return;
     }
 
+    // sv_disablechat, the same check applied to everyone at once.
+    if (SV_ChatDisabled())
+    {
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE,
+                                 va("%c \"Chat is disabled on this server\"", 101));
+        return;
+    }
+
     pszTeamString = "";
     if (mode == 1 && ent->client->sess.cs.team != TEAM_AXIS)
         mode = ent->client->sess.cs.team == TEAM_ALLIES;

@@ -233,8 +233,19 @@ void __cdecl SV_MuteStatus_f()
         Com_Printf(CON_CHANNEL_SERVER, "No clients are muted.\n");
 }
 
+static const dvar_t *sv_disablechat;
+
+bool __cdecl SV_ChatDisabled()
+{
+    return sv_disablechat && sv_disablechat->current.enabled;
+}
+
 void __cdecl SV_AddModerationCommands()
 {
+    sv_disablechat = Dvar_RegisterBool(
+        "sv_disablechat", false, DVAR_ARCHIVE,
+        "Refuse chat messages from all clients");
+
     // Mirrors the kick/ban pairs in SV_AddOperatorCommands: the console entry
     // routes through the server text buffer, and the server entry does the work.
     Cmd_AddCommandInternal("muteClient", Cbuf_AddServerText_f, &SV_MuteClient_f_VAR);
