@@ -322,15 +322,20 @@ void __cdecl SV_ChangeMaxClients()
     SV_BoundMaxClients(counta);
     if (sv_maxclients->current.integer != oldMaxClients)
     {
-        oldClients = (client_t *)Hunk_AllocateTempMemory(677432 * counta, "SV_ChangeMaxClients");
+        // 677432 (0xA5638) was sizeof(client_t) in the original binary and was
+        // baked in here three times. The temp buffer sized by it is the dangerous
+        // one: the memcpy below moves sizeof(client_t) bytes per slot, so the
+        // moment the struct grows by a single field this allocation is short and
+        // the copy runs off the end of it. Derive all three from the type.
+        oldClients = (client_t *)Hunk_AllocateTempMemory(sizeof(client_t) * counta, "SV_ChangeMaxClients");
         for (ia = 0; ia < counta; ++ia)
         {
             if (svs.clients[ia].header.state < 2)
-                Com_Memset(&oldClients[ia], 0, 677432);
+                Com_Memset(&oldClients[ia], 0, sizeof(client_t));
             else
                 memcpy(&oldClients[ia], &svs.clients[ia], sizeof(client_t));
         }
-        Com_Memset(svs.clients, 0, 677432 * sv_maxclients->current.integer);
+        Com_Memset(svs.clients, 0, sizeof(client_t) * sv_maxclients->current.integer);
         for (ib = 0; ib < counta; ++ib)
         {
             if (oldClients[ib].header.state >= 2)
