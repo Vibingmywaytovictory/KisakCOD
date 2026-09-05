@@ -157,6 +157,7 @@ struct VehiclePhysicsBackup // sizeof=0x1B8
 void __cdecl ClientScr_ReadOnly(gclient_s *pSelf, const client_fields_s *pField);
 void __cdecl ClientScr_SetSessionTeam(gclient_s *pSelf, const client_fields_s *pField);
 void __cdecl ClientScr_GetName(gclient_s *pSelf, const client_fields_s *pField);
+void __cdecl ClientScr_GetBotStatus(gclient_s *pSelf, const client_fields_s *pField);
 void __cdecl ClientScr_GetSessionTeam(gclient_s *pSelf, const client_fields_s *pField);
 void __cdecl ClientScr_SetSessionState(gclient_s *pSelf, const client_fields_s *pField);
 void __cdecl ClientScr_GetSessionState(gclient_s *pSelf, const client_fields_s *pField);

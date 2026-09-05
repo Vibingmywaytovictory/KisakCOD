@@ -11,7 +11,7 @@
 #include <game_mp/g_public_mp.h>
 #include <server_mp/server_mp.h>
 
-const client_fields_s fields[18] =
+const client_fields_s fields[19] =
 {
   { "name", 0, F_LSTRING, &ClientScr_ReadOnly, &ClientScr_GetName },
   {
@@ -66,6 +66,10 @@ const client_fields_s fields[18] =
     &ClientScr_GetPSOffsetTime
   },
   { "pers", 12168, F_OBJECT, &ClientScr_ReadOnly, NULL },
+  // Ported from CoD4x_Server (AGPLv3, see LICENSING.md); Bot Warfare and other
+  // CoD4x mods test <player>.isbot. Read-only: it reflects the connection, not
+  // anything script owns.
+  { "isbot", 0, F_INT, &ClientScr_ReadOnly, &ClientScr_GetBotStatus },
   { NULL, 0, F_INT, NULL, NULL }
 }; // idb
 
@@ -387,6 +391,17 @@ void __cdecl ClientScr_SetPSOffsetTime(gclient_s *pSelf, const client_fields_s *
     pSelf->sess.psOffsetTime = Scr_GetInt(0);
 }
 
+// True when this client's connection is a bot slot rather than a real netchan.
+void __cdecl ClientScr_GetBotStatus(gclient_s *pSelf, const client_fields_s *pField)
+{
+    iassert(pSelf);
+
+    const int32_t clientNum = (int32_t)(pSelf - level.clients);
+    iassert(clientNum >= 0 && clientNum < MAX_CLIENTS);
+
+    Scr_AddBool(svs.clients[clientNum].header.netchan.remoteAddress.type == NA_BOT);
+}
+
 void __cdecl ClientScr_GetPSOffsetTime(gclient_s *pSelf, const client_fields_s *pField)
 {
     Scr_AddInt(pSelf->sess.archiveTime);
@@ -418,7 +433,7 @@ void __cdecl Scr_SetClientField(gclient_s *client, int32_t offset)
 
     if (!client)
         MyAssertHandler(".\\game\\g_client_fields.cpp", 494, 0, "%s", "client");
-    if ((uint32_t)offset >= 0x11)
+    if ((uint32_t)offset >= ARRAY_COUNT(fields) - 1)
         MyAssertHandler(
             ".\\game\\g_client_fields.cpp",
             495,
@@ -446,7 +461,7 @@ void __cdecl Scr_GetClientField(gclient_s *client, int32_t offset)
 
     if (!client)
         MyAssertHandler(".\\game\\g_client_fields.cpp", 520, 0, "%s", "client");
-    if ((uint32_t)offset >= 0x11)
+    if ((uint32_t)offset >= ARRAY_COUNT(fields) - 1)
         MyAssertHandler(
             ".\\game\\g_client_fields.cpp",
             521,
