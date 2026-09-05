@@ -5,6 +5,8 @@ project(KisakCOD)
 # Set the default C++ standard
 set(CMAKE_CXX_STANDARD 20)
 
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
+
 # Set this to match the folder name in scripts/platform
 # This will handle the path overrides if needed
 set(KISAK_PLATFORM win32)
@@ -17,7 +19,7 @@ set(USE_ASAN OFF)
 
 # Set to ON to build the sound system against OpenAL instead of Miles/MSS.
 # When OFF (default), the original Miles Sound System (MSS/AIL) backend is used.
-set(KISAK_SOUND OFF)
+set(KISAK_OPENAL OFF)
 
 # Set the gloabl directory variables
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -42,3 +44,4 @@ message("Building KISAK_PLATFORM: ${KISAK_PLATFORM}")
 add_subdirectory(${SCRIPTS_DIR}/mp)
 add_subdirectory(${SCRIPTS_DIR}/sp)
 add_subdirectory(${SCRIPTS_DIR}/dedi)
+add_subdirectory(${SCRIPTS_DIR}/radiant)

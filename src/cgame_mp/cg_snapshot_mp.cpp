@@ -94,8 +94,6 @@ void __cdecl CG_ExtractTransPlayerState(const playerState_s *ps, transPlayerStat
 
 void __cdecl CG_SetNextSnap(int localClientNum, snapshot_s *snap)
 {
-    char *v2; // eax
-    const char *v3; // eax
     const char *v4; // eax
     XModel *v5; // eax
     int v6; // eax
@@ -199,7 +197,7 @@ void __cdecl CG_SetNextSnap(int localClientNum, snapshot_s *snap)
                 }
             }
         }
-        cgameGlob->identifyClientNum = snap->ps.stats[3];
+        cgameGlob->identifyClientNum = snap->ps.stats[STAT_IDENT_CLIENT_NUM];
         entnum = snap->ps.clientNum;
         cgameGlob->playerTeleported = 0;
         if ((snap->ps.otherFlags & 6) != 0)
@@ -209,7 +207,7 @@ void __cdecl CG_SetNextSnap(int localClientNum, snapshot_s *snap)
             BG_PlayerStateToEntityState(&snap->ps, &cent->nextState, 0, 0);
             cent->nextValid = 1;
             if (!cgameGlob->mapRestart
-                && snap->ps.stats[4] == cgameGlob->snap->ps.stats[4]
+                && snap->ps.stats[STAT_SPAWN_COUNT] == cgameGlob->snap->ps.stats[STAT_SPAWN_COUNT]
                 && entnum == cgameGlob->snap->ps.clientNum)
             {
                 if ((centInPrevSnapshot[entnum >> 5] & (0x80000000 >> (entnum & 0x1F))) != 0 && !cgameGlob->playerTeleported)
@@ -250,7 +248,7 @@ void __cdecl CG_SetNextSnap(int localClientNum, snapshot_s *snap)
             CG_ResetEntity(localClientNum, cent, 1);
         }
         else if (cgameGlob->mapRestart
-            || snap->ps.stats[4] != cgameGlob->snap->ps.stats[4]
+            || snap->ps.stats[STAT_SPAWN_COUNT] != cgameGlob->snap->ps.stats[STAT_SPAWN_COUNT]
             || entnum != cgameGlob->snap->ps.clientNum)
         {
             memcpy((uint8_t *)&cgameGlob->snap->ps, (uint8_t *)&snap->ps, sizeof(cgameGlob->snap->ps));
@@ -384,7 +382,6 @@ void __cdecl CG_ResetEntity(int localClientNum, centity_s *cent, int newEntity)
     clientInfo_t *ci; // [esp+30h] [ebp-Ch]
     int i; // [esp+34h] [ebp-8h]
     clientInfo_t *corpseInfo; // [esp+38h] [ebp-4h]
-    int savedregs; // [esp+3Ch] [ebp+0h] BYREF
     cg_s *cgameGlob;
     cgs_t *cgs;
 

@@ -9,6 +9,10 @@
 #include "rb_logfile.h"
 #include "rb_state.h"
 
+#ifdef KISAK_RADIANT
+#include <cgame/cg_local.h>
+#endif
+
 void __cdecl R_DeriveNearPlaneConstantsForView(GfxCmdBufSourceState *source)
 {
     const GfxViewParms *viewParms = &source->viewParms;
@@ -115,7 +119,7 @@ int __cdecl R_PickMaterial(
     *contents = 0;
     contents[charLimit - 1] = 0;
     contentsLen = 0;
-    v8 = (trace.surfaceFlags & 0x1F00000) >> 20;
+    v8 = SURF_TYPEINDEX(trace.surfaceFlags);
     index = (uint8_t)v8;
     if ((_BYTE)v8 && index < 29)
         strncpy(surfaceFlags, infoParms[index - 1].name, charLimit);
@@ -124,7 +128,7 @@ int __cdecl R_PickMaterial(
     if (surfaceFlags[charLimit - 1])
         return 0;
     surfaceFlagsLen = strlen(surfaceFlags);
-    if ((trace.contents & 1) != 0)
+    if ((trace.contents & CONTENTS_SOLID) != 0)
         strncpy(contents, "solid", charLimit);
     else
         strncpy(contents, "^3nonsolid^7", charLimit);
@@ -181,15 +185,11 @@ void __cdecl R_Set2D(GfxCmdBufSourceState *source)
 
 void __cdecl R_CmdBufSet2D(GfxCmdBufSourceState* source, GfxViewport* viewport)
 {
-    GfxViewParms* v2; // ebp
     float v3[16]; // [esp-8h] [ebp-9Ch] BYREF
     GfxMatrix identity_52; // [esp+38h] [ebp-5Ch] BYREF
     GfxViewParms* transform_56; // [esp+7Ch] [ebp-18h]
     float transform_60; // [esp+80h] [ebp-14h]
     float v7; // [esp+84h] [ebp-10h]
-    GfxViewParms* viewParms; // [esp+88h] [ebp-Ch]
-    float invHeight; // [esp+8Ch] [ebp-8h]
-    float retaddr; // [esp+94h] [ebp+0h]
 
     //viewParms = v2;
     //invHeight = retaddr;

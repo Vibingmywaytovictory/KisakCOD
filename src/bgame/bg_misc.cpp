@@ -1039,7 +1039,7 @@ void __cdecl BG_RegisterDvars()
     mincj.value.min = 0.0f;
     bg_shock_viewKickRadius = Dvar_RegisterFloat(
         "bg_shock_viewKickRadius",
-        0.050000001f,
+        0.05f,
         mincj,
         DVAR_CHEAT,
         "Shell shock kick radius");
@@ -1219,7 +1219,9 @@ void __cdecl BG_RegisterDvars()
         "Min distance a penetrated bullet must travel before it'll trigger the effects");
     Jump_RegisterDvars();
     Mantle_RegisterDvars();
+#ifdef KISAK_MP
     Perks_RegisterDvars();
+#endif
 }
 
 char *__cdecl BG_GetEntityTypeName(int32_t eType)
@@ -1234,7 +1236,6 @@ char *__cdecl BG_GetEntityTypeName(int32_t eType)
 
 const gitem_s *__cdecl BG_FindItemForWeapon(uint32_t weapon, int32_t model)
 {
-    uint32_t NumWeapons; // eax
 
     bcassert(weapon, BG_GetNumWeapons());
     return &bg_itemlist[(weapon + (model * 128))];
@@ -1876,9 +1877,9 @@ bool __cdecl BG_CheckProneValid(
     iassert(traceFunc);
 
     if (proneCheckType)
-        iTraceMask = 0x820011;
+        iTraceMask = (CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MONSTERCLIP | CONTENTS_VEHICLE);
     else
-        iTraceMask = 0x810011;
+        iTraceMask = (MASK_DEADSOLID | CONTENTS_PLAYERCLIP);
 
     if (!isAlreadyProne)
     {
@@ -2214,19 +2215,9 @@ void __cdecl BG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
     float v4; // [esp+10h] [ebp-E4h]
     float v5; // [esp+14h] [ebp-E0h]
     float v6; // [esp+18h] [ebp-DCh]
-    float v7; // [esp+20h] [ebp-D4h]
     float v8; // [esp+30h] [ebp-C4h]
     float v9; // [esp+34h] [ebp-C0h]
-    float v10; // [esp+3Ch] [ebp-B8h]
-    float v11; // [esp+50h] [ebp-A4h]
-    float v12; // [esp+64h] [ebp-90h]
-    float v13; // [esp+78h] [ebp-7Ch]
-    float v14; // [esp+8Ch] [ebp-68h]
     float value; // [esp+9Ch] [ebp-58h]
-    float v16; // [esp+A4h] [ebp-50h]
-    float v17; // [esp+B8h] [ebp-3Ch]
-    float v18; // [esp+CCh] [ebp-28h]
-    float v19; // [esp+E0h] [ebp-14h]
     int i; // [esp+F0h] [ebp-4h]
 
     iassert(parms);

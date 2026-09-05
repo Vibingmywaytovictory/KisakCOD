@@ -471,12 +471,12 @@ float CG_CalcPlayerHealth(const playerState_s *ps)
     float v5; // [esp+Ch] [ebp-8h]
     float health; // [esp+10h] [ebp-4h]
 
-    if (!ps->stats[0] || !ps->stats[2] || ps->pm_type == PM_DEAD)
+    if (!ps->stats[STAT_HEALTH] || !ps->stats[STAT_MAX_HEALTH] || ps->pm_type == PM_DEAD)
         return 0.0;
-    health = (double)ps->stats[0] / (double)ps->stats[2];
+    health = (double)ps->stats[STAT_HEALTH] / (double)ps->stats[STAT_MAX_HEALTH];
 
     if ((health - 1.0f) < 0.0)
-        v5 = (double)ps->stats[0] / (double)ps->stats[2];
+        v5 = (double)ps->stats[STAT_HEALTH] / (double)ps->stats[STAT_MAX_HEALTH];
     else
         v5 = 1.0;
 
@@ -1438,7 +1438,7 @@ void __cdecl CG_DrawTankBody(int localClientNum, rectDef_s *rect, Material *mate
     if ((cgameGlob->predictedPlayerState.eFlags & 0x20000) != 0 && (cgameGlob->predictedPlayerState.eFlags & 0x80000) == 0)
     {
         Entity = CG_GetEntity(localClientNum, cgameGlob->predictedPlayerState.viewlocked_entNum);
-        if (Entity->nextState.eType == 11 && (Entity->nextState.lerp.eFlags & 0x10000) != 0)
+        if (Entity->nextState.eType == ET_VEHICLE && (Entity->nextState.lerp.eFlags & 0x10000) != 0)
         {
             angle = AngleSubtract(cgameGlob->refdefViewAngles[1], Entity->pose.angles[1]);
             LocalClientStaticGlobals = CG_GetLocalClientStaticGlobals(localClientNum);
@@ -1541,7 +1541,7 @@ void __cdecl CG_DrawTankBarrel(int localClientNum, const rectDef_s *rect, Materi
     {
         Entity = CG_GetEntity(localClientNum, cgameGlob->predictedPlayerState.viewlocked_entNum);
         p_pose = &Entity->pose;
-        if (Entity->nextState.eType == 11 && (Entity->nextState.lerp.eFlags & 0x10000) != 0)
+        if (Entity->nextState.eType == ET_VEHICLE && (Entity->nextState.lerp.eFlags & 0x10000) != 0)
         {
             ClientDObj = Com_GetClientDObj(Entity->nextState.number, 0);
             if (ClientDObj)
@@ -1680,7 +1680,7 @@ void __cdecl CG_ArchiveState(int localClientNum, MemoryFile *memFile)
 
 float __cdecl CG_FadeHudMenu(int localClientNum, const dvar_s *fadeDvar, int displayStartTime, int duration)
 {
-    if (CG_GetPredictedPlayerState(localClientNum)->pm_type == 4)
+    if (CG_GetPredictedPlayerState(localClientNum)->pm_type == PM_MPVIEWER)
 		return 0.0f;
 
 	if (!cg_paused->current.integer || cg_drawpaused->current.enabled)
@@ -2636,8 +2636,7 @@ void __cdecl CG_DrawPlayerStance(
                 DWORD2(v27) = v26;
                 v50 = *(float *)&v26;
                 v28 = (float)((float)*(__int64 *)((char *)&v27 + 4) * (float)0.5);
-                *(double *)&v29 = (float)((float)((float)((float)(__int64)v27 * (float)0.00066666666) * (float)540.0)
-                    * (float)0.017453292);
+                *(double *)&v29 = (float)DEG2RAD( (float)((float)((float)(__int64)v27 * (float)0.00066666666) * (float)540.0) );
                 v30 = sin(v29);
                 v52 = I_fabs((float)*(double *)&v30);
                 UI_DrawText(

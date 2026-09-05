@@ -1097,29 +1097,17 @@ gentity_s *__cdecl GetEntity(scr_entref_t entref)
 
 void GScr_AnimHasNotetrack()
 {
-    const XAnim_s *Anims; // eax
-    uint8_t v1; // al
-    uint32_t  floatValue; // [esp-4h] [ebp-10h]
-    const char *anim; // [esp+8h] [ebp-4h]
-
-    anim = Scr_GetAnim(0, 0).linkPointer;
-    floatValue = Scr_GetConstString(1);
-    Anims = Scr_GetAnims(HIWORD(anim));
-    v1 = XAnimNotetrackExists(Anims, (uint16_t)anim, floatValue);
-    Scr_AddBool(v1);
+    scr_anim_s anim = Scr_GetAnim(0, 0);
+    uint16_t name = Scr_GetConstString(1);
+    Scr_AddBool(XAnimNotetrackExists(Scr_GetAnims(anim.tree), anim.index, name));
 }
 
 void GScr_GetNotetrackTimes()
 {
-    const XAnim_s *Anims; // eax
-    VariableUnion name; // [esp+4h] [ebp-8h]
-    const char *anim; // [esp+8h] [ebp-4h]
-
-    anim = Scr_GetAnim(0, 0).linkPointer;
-    name.intValue = Scr_GetConstString(1);
+    scr_anim_s anim = Scr_GetAnim(0, 0);
+    uint32_t name = Scr_GetConstString(1);
     Scr_MakeArray();
-    Anims = Scr_GetAnims(HIWORD(anim));
-    XAnimAddNotetrackTimesToScriptArray(Anims, (uint16_t)anim, name.stringValue);
+    XAnimAddNotetrackTimesToScriptArray(Scr_GetAnims(anim.tree), anim.index, name);
 }
 
 void GScr_GetBrushModelCenter()
@@ -1844,7 +1832,6 @@ void __cdecl ScrCmd_SetModel(scr_entref_t entref)
 
 void __cdecl ScrCmd_GetNormalHealth(scr_entref_t entref)
 {
-    float value; // [esp+0h] [ebp-Ch]
     gentity_s *pEnt; // [esp+8h] [ebp-4h]
 
     pEnt = GetEntity(entref);
@@ -2531,7 +2518,7 @@ void GScr_positionWouldTelefrag()
     Scr_GetVector(0, vectorValue);
     Vec3Add(vectorValue, playerMins, sum);
     Vec3Add(vectorValue, playerMaxs, maxs);
-    v4 = CM_AreaEntities(sum, maxs, entityList, 1024, 0x2000000);
+    v4 = CM_AreaEntities(sum, maxs, entityList, 1024, CONTENTS_PLAYER);
     for (i = 0; i < v4; ++i)
     {
         v2 = &g_entities[entityList[i]];
@@ -2677,7 +2664,6 @@ void GScr_PrecacheHeadIcon()
 
 int32_t __cdecl GScr_GetHeadIconIndex(const char *pszIcon)
 {
-    const char *v2; // eax
     int32_t iConfigNum; // [esp+0h] [ebp-40Ch]
     char szConfigString[1028]; // [esp+4h] [ebp-408h] BYREF
 
@@ -2961,11 +2947,11 @@ void Scr_BulletTrace()
 
     pIgnoreEnt = 0;
     iIgnoreEntNum = ENTITYNUM_NONE;
-    iClipMask = 0x2806831;
+    iClipMask = MASK_SHOT;
     Scr_GetVector(0, vStart);
     Scr_GetVector(1u, vEnd);
     if (!Scr_GetInt(2))
-        iClipMask &= ~0x2000000u;
+        iClipMask &= ~CONTENTS_PLAYER;
     if (Scr_GetType(3) == 1 && Scr_GetPointerType(3) == 20)
     {
         pIgnoreEnt = Scr_GetEntity(3);
@@ -2997,7 +2983,7 @@ void Scr_BulletTrace()
     {
         Scr_AddVector(trace.normal);
         Scr_AddArrayStringIndexed(scr_const.normal);
-        iSurfaceTypeIndex = (trace.surfaceFlags & 0x1F00000) >> 20;
+        iSurfaceTypeIndex = SURF_TYPEINDEX(trace.surfaceFlags);
         value = Com_SurfaceTypeToName(iSurfaceTypeIndex);
         Scr_AddString(value);
         Scr_AddArrayStringIndexed(scr_const.surfacetype);
@@ -3015,11 +3001,11 @@ void Scr_BulletTracePassed()
 
     pIgnoreEnt = 0;
     iIgnoreEntNum = ENTITYNUM_NONE;
-    iClipMask = 0x2806831;
+    iClipMask = MASK_SHOT;
     Scr_GetVector(0, vStart);
     Scr_GetVector(1u, vEnd);
     if (!Scr_GetInt(2))
-        iClipMask &= ~0x2000000u;
+        iClipMask &= ~CONTENTS_PLAYER;
     if (Scr_GetType(3) == 1 && Scr_GetPointerType(3) == 20)
     {
         pIgnoreEnt = Scr_GetEntity(3);
@@ -3044,7 +3030,7 @@ void __cdecl Scr_SightTracePassed()
     Scr_GetVector(0, vStart);
     Scr_GetVector(1u, vEnd);
     if (!Scr_GetInt(2))
-        iClipMask &= ~0x2000000u;
+        iClipMask &= ~CONTENTS_PLAYER;
     if (Scr_GetType(3) == 1 && Scr_GetPointerType(3) == 20)
     {
         pIgnoreEnt = Scr_GetEntity(3);
@@ -3150,7 +3136,7 @@ void GScr_sin()
 {
     float v1; // [esp+8h] [ebp-4h]
 
-    v1 = Scr_GetFloat(0) * 0.01745329238474369;
+    v1 = DEG2RAD( Scr_GetFloat(0) );
     Scr_AddFloat(sin(v1));
 }
 
@@ -3158,7 +3144,7 @@ void GScr_cos()
 {
     float v1; // [esp+8h] [ebp-4h]
 
-    v1 = Scr_GetFloat(0) * 0.01745329238474369;
+    v1 = DEG2RAD( Scr_GetFloat(0) );
     Scr_AddFloat(cos(v1));
 }
 
@@ -3168,7 +3154,7 @@ void GScr_tan()
     float sinT; // [esp+14h] [ebp-8h]
     float cosT; // [esp+18h] [ebp-4h]
 
-    v1 = Scr_GetFloat(0) * 0.01745329238474369;
+    v1 = DEG2RAD( Scr_GetFloat(0) );
 
     cosT = cos(v1);
     sinT = sin(v1);
@@ -3192,7 +3178,7 @@ void GScr_asin()
         Scr_Error(v0);
     }
     v2 = asin(x);
-    Scr_AddFloat(v2 * 57.2957763671875);
+    Scr_AddFloat(RAD2DEG( v2 ));
 }
 
 void GScr_acos()
@@ -3208,7 +3194,7 @@ void GScr_acos()
         Scr_Error(v0);
     }
     v2 = acos(x);
-    Scr_AddFloat(v2 * 57.2957763671875);
+    Scr_AddFloat(RAD2DEG( v2 ));
 }
 
 void GScr_atan()
@@ -3218,7 +3204,7 @@ void GScr_atan()
 
     Float = Scr_GetFloat(0);
     v1 = atan(Float);
-    Scr_AddFloat(v1 * 57.2957763671875);
+    Scr_AddFloat(RAD2DEG( v1 ));
 }
 
 void GScr_abs()
@@ -3921,7 +3907,7 @@ void Scr_GrenadeExplosionEffect()
     vEnd[1] = vPos[1];
     vEnd[2] = vPos[2] - 17.0;
     G_TraceCapsule(&trace, vPos, (float *)vec3_origin, (float *)vec3_origin, vEnd, ENTITYNUM_NONE, 2065);
-    result = (trace.surfaceFlags & 0x1F00000) >> 20;
+    result = SURF_TYPEINDEX(trace.surfaceFlags);
     pEnt->s.surfType = result;
 }
 
@@ -4274,7 +4260,6 @@ void Scr_PlayFXOnTag()
 void Scr_PlayLoopedFX()
 {
     uint32_t  NumParam; // [esp+0h] [ebp-70h]
-    float v1; // [esp+4h] [ebp-6Ch]
     float pos[3]; // [esp+2Ch] [ebp-44h] BYREF
     int32_t fxId; // [esp+38h] [ebp-38h]
     int32_t repeat; // [esp+3Ch] [ebp-34h]
@@ -4383,7 +4368,6 @@ LABEL_12:
 void Scr_TriggerFX()
 {
     int32_t result; // eax
-    float v1; // [esp+4h] [ebp-14h]
     gentity_s *ent; // [esp+14h] [ebp-4h]
 
     if (!Scr_GetNumParam() || Scr_GetNumParam() > 2)
@@ -4907,7 +4891,6 @@ void __cdecl GScr_GetPartName()
 gentity_s *GScr_Earthquake()
 {
     gentity_s *result; // eax
-    float v1; // [esp+0h] [ebp-2Ch]
     float source[3]; // [esp+10h] [ebp-1Ch] BYREF
     gentity_s *tent; // [esp+1Ch] [ebp-10h]
     int32_t duration; // [esp+20h] [ebp-Ch]
@@ -4934,7 +4917,6 @@ gentity_s *GScr_Earthquake()
 
 void __cdecl GScr_ShellShock(scr_entref_t entref)
 {
-    float v3; // [esp+8h] [ebp-424h]
     int32_t duration; // [esp+18h] [ebp-414h]
     const char *shock; // [esp+1Ch] [ebp-410h]
     gentity_s *ent; // [esp+20h] [ebp-40Ch]
@@ -5238,7 +5220,7 @@ void __cdecl GScr_PlaceSpawnPoint(scr_entref_t entref)
         (float *)playerMaxs,
         vEnd,
         pEnt->s.number,
-        0x2810011);
+        MASK_PLAYERSOLID);
     Vec3Lerp(vStart, vEnd, trace.fraction, vStart);
     vEnd[0] = vStart[0];
     vEnd[1] = vStart[1];
@@ -5250,7 +5232,7 @@ void __cdecl GScr_PlaceSpawnPoint(scr_entref_t entref)
         (float *)playerMaxs,
         vEnd,
         pEnt->s.number,
-        0x2810011);
+        MASK_PLAYERSOLID);
     EntityHitId = Trace_GetEntityHitId(&trace);
     pEnt->s.groundEntityNum = EntityHitId;
     g_entities[pEnt->s.groundEntityNum].flags |= FL_GROUND_ENT;
@@ -5262,7 +5244,7 @@ void __cdecl GScr_PlaceSpawnPoint(scr_entref_t entref)
         (float *)playerMaxs,
         vStart,
         pEnt->s.number,
-        0x2810011);
+        MASK_PLAYERSOLID);
     if (trace.allsolid)
         Com_PrintWarning(
             23,
@@ -5982,7 +5964,7 @@ void GScr_SetMiniMap()
     lowerRight[1] = Scr_GetFloat(4);
     SV_GetConfigstring(0x336u, northYawString, 32);
     v1 = atof(northYawString);
-    v2 = v1 * 0.01745329238474369;
+    v2 = DEG2RAD( v1 );
     north[0] = cos(v2);
     north[1] = sin(v2);
     diff = lowerRight[0] - upperLeft;
@@ -6227,7 +6209,7 @@ void __cdecl Scr_SetHealth(gentity_s *ent, int32_t i)
     if (ent->client)
     {
         ent->health = health;
-        ent->client->ps.stats[0] = health;
+        ent->client->ps.stats[STAT_HEALTH] = health;
     }
     else
     {
@@ -6488,7 +6470,7 @@ void __cdecl Scr_PlayerDamage(
     GScr_AddVector(vPoint);
     WeaponDef = BG_GetWeaponDef(iWeapon);
     Scr_AddString((char *)WeaponDef->szInternalName);
-    if (meansOfDeath < 0x10)
+    if (meansOfDeath < MOD_NUM)
         Scr_AddConstString(*modNames[meansOfDeath]);
     else
         Scr_AddString("badMOD");
@@ -6523,7 +6505,7 @@ void __cdecl Scr_PlayerKilled(
     GScr_AddVector(vDir);
     WeaponDef = BG_GetWeaponDef(iWeapon);
     Scr_AddString((char *)WeaponDef->szInternalName);
-    if (meansOfDeath < 0x10)
+    if (meansOfDeath < MOD_NUM)
         Scr_AddConstString(*modNames[meansOfDeath]);
     else
         Scr_AddString("badMOD");
@@ -6556,7 +6538,7 @@ void __cdecl Scr_PlayerLastStand(
     GScr_AddVector(vDir);
     WeaponDef = BG_GetWeaponDef(iWeapon);
     Scr_AddString((char *)WeaponDef->szInternalName);
-    if (meansOfDeath < 0x10)
+    if (meansOfDeath < MOD_NUM)
         Scr_AddConstString(*modNames[meansOfDeath]);
     else
         Scr_AddString("badMOD");

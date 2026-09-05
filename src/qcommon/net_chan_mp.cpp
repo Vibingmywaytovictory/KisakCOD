@@ -789,9 +789,21 @@ bool __cdecl Netchan_TransmitNextFragment(netchan_t *chan)
     return res > 0;
 }
 
+void BADPACKET(void *buffer, uint32_t len)
+{
+    if (cl_shownet && cl_shownet->current.integer >= 1) // LWSS: move behind `cl_shownet`
+    {
+        int file = FS_FOpenFileWrite((char *)"badpacket.dat");
+        if (file)
+        {
+            FS_Write((char*)buffer, len, file);
+            FS_FCloseFile(file);
+        }
+    }
+}
+
 bool __cdecl Netchan_Transmit(netchan_t *chan, int length, char *data)
 {
-    int file; // [esp+4Ch] [ebp-5ACh]
     msg_t send; // [esp+50h] [ebp-5A8h] BYREF
     uint8_t send_buf[1400]; // [esp+78h] [ebp-580h] BYREF
     int res; // [esp+5F4h] [ebp-4h]
@@ -800,14 +812,10 @@ bool __cdecl Netchan_Transmit(netchan_t *chan, int length, char *data)
 
     if (length > 0x20000)
     {
-        file = FS_FOpenFileWrite((char*)"badpacket.dat");
-        if (file)
-        {
-            FS_Write(data, length, file);
-            FS_FCloseFile(file);
-        }
+        BADPACKET(data, length);
         Com_Error(ERR_DROP, "Netchan_Transmit: length = %i", length);
     }
+
     chan->unsentFragmentStart = 0;
     if (length < 1300)
     {
@@ -842,14 +850,7 @@ bool __cdecl Netchan_Transmit(netchan_t *chan, int length, char *data)
     {
         chan->unsentFragments = 1;
         chan->unsentLength = length;
-        if (chan->unsentBufferSize <= length)
-            MyAssertHandler(
-                ".\\qcommon\\net_chan_mp.cpp",
-                1228,
-                0,
-                "%s\n\t(length) = %i",
-                "(chan->unsentBufferSize > length)",
-                length);
+        iassert(chan->unsentBufferSize > length);
         Com_Memcpy((char *)chan->unsentBuffer, data, length);
         Netchan_TransmitNextFragment(chan);
         return 1;
@@ -967,7 +968,10 @@ int __cdecl Netchan_Process(netchan_t *chan, msg_t *msg)
         chan->fragmentLength += fragmentLength;
         if (fragmentLength == 1300)
             return 0;
-        if (chan->fragmentLength > msg->maxsize)
+            
+        // KISAK: the reassembled message is written at data+4, so the 4-byte sequence header must fit too.
+        // The client's fragment buffer equals its msg buffer (0x20000), so equality overflowed by 4 bytes.
+        if (chan->fragmentLength + 4 > msg->maxsize)
         {
             v10 = chan->fragmentLength;
             v7 = NET_AdrToString(chan->remoteAddress);
@@ -1114,6 +1118,12 @@ void __cdecl NET_SendLoopPacket(netsrc_t sock, uint32_t length, uint8_t *data, n
     }
     loop = &loopbacks[sock];
     i = loop->send & 0xF;
+    // KISAK: OOB voice/print packets can exceed the loopback slot size
+    if (length > sizeof(loop->msgs[i].data))
+    {
+        Com_PrintWarning(16, "NET_SendLoopPacket: dropping %u byte packet (slot is %u bytes)\n", length, (uint32_t)sizeof(loop->msgs[i].data));
+        return;
+    }
     memcpy(loop->msgs[i].data, data, length);
     loop->msgs[i].datalen = length;
     loop->msgs[i].port = port;
@@ -1202,6 +1212,11 @@ bool __cdecl NET_OutOfBandData(netsrc_t sock, netadr_t adr, const uint8_t *forma
     tempNetchanPacketBuf[1] = -1;
     tempNetchanPacketBuf[2] = -1;
     tempNetchanPacketBuf[3] = -1;
+    if (len < 0 || len + 4 > (int)sizeof(tempNetchanPacketBuf))
+    {
+        Com_PrintError(16, "NET_OutOfBandData: %i bytes is too large to send\n", len);
+        return 0;
+    }
     for (i = 0; i < len; ++i)
         tempNetchanPacketBuf[i + 4] = format[i];
     mbuf_20 = len + 4;
@@ -1225,13 +1240,11 @@ bool __cdecl NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, uint8_t *format
     tempNetchanPacketBuf[1] = -1;
     tempNetchanPacketBuf[2] = -1;
     tempNetchanPacketBuf[3] = -1;
-    if ((int)(len + 4) >= 0x20000)
-        MyAssertHandler(
-            ".\\qcommon\\net_chan_mp.cpp",
-            1952,
-            0,
-            "%s",
-            "len + 4 < static_cast<int>( sizeof( tempNetchanPacketBuf ) )");
+    if (len + 4 > sizeof(tempNetchanPacketBuf))
+    {
+        Com_PrintError(16, "NET_OutOfBandVoiceData: %u bytes is too large to send\n", len);
+        return 0;
+    }
     memcpy(&tempNetchanPacketBuf[4], format, len);
     mbuf_20 = len + 4;
     res = (int)FakeLag_SendPacket(sock, len + 4, tempNetchanPacketBuf, adr) >= -1;

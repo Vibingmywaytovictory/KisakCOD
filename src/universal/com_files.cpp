@@ -450,7 +450,6 @@ void __cdecl FS_BuildOSPathForThread(const char *base, const char *game, const c
 int __cdecl FS_CreatePath(char *OSPath)
 {
     const char *v1; // eax
-    int v2; // eax
     char *ofs; // [esp+0h] [ebp-4h]
 
     v1 = strstr(OSPath, "..");
@@ -1263,7 +1262,6 @@ void FS_RegisterDvars()
 {
     char *v1; // eax
     char *v2; // eax
-    const dvar_s *result; // eax
     char *homePath; // [esp+0h] [ebp-4h]
 
     fs_debug = Dvar_RegisterInt("fs_debug", 0, (DvarLimits)0x200000000LL, DVAR_NOFLAG, "Enable file system debugging information");
@@ -1271,6 +1269,43 @@ void FS_RegisterDvars()
     v1 = (char *)Sys_DefaultCDPath();
     fs_cdpath = Dvar_RegisterString("fs_cdpath", v1, DVAR_INIT, "CD path");
     v2 = Sys_Cwd();
+#ifdef KISAK_RADIANT
+    // The shipping editor lives in <install>\bin\ (the dev build in <install>\bin\Debug\),
+    // with the game data (raw\, main\, ...) at <install>\.  Derive fs_basepath from the EXE
+    // location by walking up from its directory to the first ancestor that actually contains
+    // a `raw\` folder — so the editor finds its materials/textures wherever it is run from,
+    // as long as it sits under the install's `bin` (the expected layout).  Falls back to the
+    // known CoD4 install when run from a build tree with no game data beside it (repo bin\Debug).
+    {
+        static char s_fsBase[MAX_PATH];
+        int   foundBase = 0;
+        char  exeDir[MAX_PATH];
+        if ( GetModuleFileNameA( NULL, exeDir, sizeof( exeDir ) ) )
+        {
+            char *slash = strrchr( exeDir, '\\' );
+            if ( slash ) *slash = 0;                       // strip the exe name -> its directory
+            for ( int up = 0; up < 6 && !foundBase; ++up )
+            {
+                char probe[MAX_PATH];
+                Com_sprintf( probe, sizeof( probe ), "%s\\raw", exeDir );
+                if ( GetFileAttributesA( probe ) != INVALID_FILE_ATTRIBUTES )
+                {
+                    I_strncpyz( s_fsBase, exeDir, sizeof( s_fsBase ) );
+                    v2 = s_fsBase;
+                    foundBase = 1;
+                }
+                else
+                {
+                    char *u = strrchr( exeDir, '\\' );     // climb one directory level
+                    if ( !u ) break;
+                    *u = 0;
+                }
+            }
+        }
+        if ( !foundBase )
+            v2 = (char *)"F:\\SteamLibrary\\steamapps\\common\\Call of Duty 4";
+    }
+#endif
     fs_basepath = Dvar_RegisterString("fs_basepath", v2, DVAR_INIT | DVAR_AUTOEXEC, "Base game path");
     fs_basegame = Dvar_RegisterString("fs_basegame", (char *)"", DVAR_INIT, "Base game name");
     fs_gameDirVar = Dvar_RegisterString(
@@ -2701,17 +2736,15 @@ void __cdecl FS_Remove(const char *osPath)
 
 void __cdecl FS_SV_Rename(char *from, char *to)
 {
-    char *v2; // [esp+1Ch] [ebp-20Ch]
     char to_ospath[256]; // [esp+20h] [ebp-208h] BYREF
     char from_ospath[260]; // [esp+120h] [ebp-108h] BYREF
 
     FS_CheckFileSystemStarted();
     FS_BuildOSPath((char *)fs_homepath->current.integer, from, (char *)"", from_ospath);
     FS_BuildOSPath((char *)fs_homepath->current.integer, to, (char *)"", to_ospath);
-    v2 = from_ospath;
-    v2 += strlen(v2) + 1;
-    to_ospath[v2 - &from_ospath[1] + 255] = 0;
-    to_ospath[&to_ospath[strlen(to_ospath) + 1] - &to_ospath[1] - 1] = 0;
+
+    from_ospath[strlen(from_ospath) - 1] = 0;
+    to_ospath[strlen(to_ospath) - 1] = 0;
     if (fs_debug->current.integer)
         Com_Printf(10, "FS_SV_Rename: %s --> %s\n", from_ospath, to_ospath);
     if (rename(from_ospath, to_ospath))
@@ -2737,7 +2770,6 @@ int __cdecl FS_SV_FileExists(char *file)
 
 void __cdecl FS_Restart(int localClientNum, int checksumFeed)
 {
-    const char *v2; // eax
 
     FS_Shutdown();
     fs_checksumFeed = checksumFeed;
@@ -2796,9 +2828,11 @@ void __cdecl FS_Restart(int localClientNum, int checksumFeed)
 bool __cdecl FS_NeedRestart(int checksumFeed)
 {
     if (com_sv_running->current.enabled)
-        return 0;
+        return false;
+
     if (fs_gameDirVar->modified)
-        return 1;
+        return true;
+
     return checksumFeed != fs_checksumFeed;
 }
 

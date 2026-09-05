@@ -202,7 +202,7 @@ void __cdecl SP_script_model(gentity_s *pSelf)
     G_DObjUpdate(pSelf);
     InitScriptMover(pSelf);
     pSelf->r.svFlags |= 4u;
-    pSelf->r.contents = 8320;
+    pSelf->r.contents = MASK_WEAPONCLIP;
     SV_LinkEntity(pSelf);
 #ifdef KISAK_SP
     pSelf->flags |= FL_SUPPORTS_ANIMSCRIPTED; // KISAKTODO: flags here different in blops, why?
@@ -707,7 +707,7 @@ void __cdecl ScriptEnt_DevAddRotate(scr_entref_t entref, uint32_t iAxis)
     if (Scr_GetNumParam() == 1)
     {
         fDelta = Scr_GetFloat(0);
-        v3 = fDelta * 0.01745329238474369;
+        v3 = DEG2RAD( fDelta );
         fCos = cos(v3);
         fSin = sin(v3);
         AnglesToAxis(pSelf->r.currentAngles, axisIn);
@@ -1201,7 +1201,7 @@ void __cdecl ScriptEntCmd_Solid(scr_entref_t entref)
     {
         if (pSelf->classname == scr_const.script_model)
         {
-            pSelf->r.contents = 8320;
+            pSelf->r.contents = MASK_WEAPONCLIP;
         }
         else
         {

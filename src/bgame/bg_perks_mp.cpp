@@ -1,3 +1,7 @@
+#ifndef KISAK_MP
+#error This File is MultiPlayer Only
+#endif
+
 #include <universal/q_shared.h>
 #include "bg_public.h"
 #include "bg_local.h"
@@ -13,7 +17,7 @@ const dvar_t *perk_weapReloadMultiplier = nullptr;
 const dvar_t *perk_weapRateMultiplier = nullptr;
 const dvar_t *perk_sprintMultiplier = nullptr;
 
-const char *bg_perkNames[20] =
+const char *bg_perkNames[PERK_COUNT] =
 {
     "specialty_gpsjammer",
     "specialty_bulletaccuracy",
@@ -42,8 +46,8 @@ uint32_t __cdecl BG_GetPerkIndexForName(const char *perkName)
     uint32_t idx; // [esp+0h] [ebp-4h]
 
     if (!perkName)
-        return 20;
-    for (idx = 0; idx < 0x14 && I_stricmp(perkName, bg_perkNames[idx]); ++idx)
+        return PERK_UNKNOWN;
+    for (idx = 0; idx < PERK_COUNT && I_stricmp(perkName, bg_perkNames[idx]); ++idx)
         ;
     return idx;
 }

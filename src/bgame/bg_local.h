@@ -32,24 +32,28 @@ constexpr auto MAX_FRIENDLY_DIST = 15000.0;
 #define WEAPONSTATE_DROPPING(x) (x == WEAPON_DROPPING || x == WEAPON_DROPPING_QUICK)
 
 // Kisak: Custom enum
-typedef enum {
+enum sndEnumStuff
+{
     SND_MAX_ENTCHANNEL_NAMELENGTH = 0x40
-} sndEnumStuff;
+};
 
 // Kisak: Custom Enum
-typedef enum {
+enum 
+{
     EVENT_PARM_MAX = 0xFF
 };
 
 // Kisak: Custom Enum
-typedef enum {
+enum playerStateEFlags
+{
     EF_TURRET_ACTIVE = 0x300
-} playerStateEFlags;
+};
 
-typedef enum {
+// Kisak: Custom Enum
+enum playerOtherFlags 
+{
     POF_PLAYER = 4
-    
-} playerOtherFlags;
+};
 
 enum animBodyPart_t : __int32
 {                                       // ...
@@ -810,6 +814,16 @@ enum pmflags_t : __int32 // (MP/SP same)
 #endif
 };
 
+enum statIndex_t : __int32
+{
+    STAT_HEALTH = 0x0,
+    STAT_DEAD_YAW = 0x1,
+    STAT_MAX_HEALTH = 0x2,
+    STAT_IDENT_CLIENT_NUM = 0x3,
+    STAT_SPAWN_COUNT = 0x4,
+    MAX_STATS = 0x5,
+};
+
 #ifdef KISAK_MP
 enum pmtype_t : __int32
 {
@@ -893,7 +907,7 @@ struct playerState_s // sizeof=0x2F64
     int32_t damageYaw;
     int32_t damagePitch;
     int32_t damageCount;
-    int32_t stats[5];                       // XREF: SV_GetClientPositionAtTime(int,int,float * const)+E9/r
+    int32_t stats[MAX_STATS];               // XREF: SV_GetClientPositionAtTime(int,int,float * const)+E9/r
     int32_t ammo[128];
     int32_t ammoclip[128];
     uint32_t weapons[4];
@@ -957,8 +971,9 @@ enum pmtype_t : __int32
     PM_NORMAL_LINKED = 0x1,
     PM_NOCLIP = 0x2,
     PM_UFO = 0x3,
-    PM_DEAD = 0x4,
-    PM_DEAD_LINKED = 0x5,
+    PM_MPVIEWER = 0x4,
+    PM_DEAD = 0x5,
+    PM_DEAD_LINKED = 0x6,
 };
 inline pmtype_t &operator--(pmtype_t &e) {
     e = static_cast<pmtype_t>(static_cast<int>(e) - 1);
@@ -1111,7 +1126,7 @@ struct CEntTurretInfo // sizeof=0x10
 };
 static_assert(sizeof(CEntTurretInfo) == 0x10);
 
-#ifdef KISAK_MP
+#if defined(KISAK_MP) || defined(KISAK_RADIANT)
 struct CEntVehicleInfo // sizeof=0x24
 {                                       // ...
     int16_t pitch;
@@ -1131,7 +1146,8 @@ struct CEntVehicleInfo // sizeof=0x24
     // padding byte
 };
 static_assert(sizeof(CEntVehicleInfo) == 0x24);
-#elif KISAK_SP
+#endif
+#ifdef KISAK_SP
 struct CEntVehicleInfo // sizeof=0x28
 {
     int16_t pitch;          // 0x00
@@ -1158,7 +1174,7 @@ struct CEntFx // sizeof=0x8  (SP/MP Same)
 };
 static_assert(sizeof(CEntFx) == 0x8);
 
-#ifdef KISAK_MP
+#if defined(KISAK_MP) || defined(KISAK_RADIANT) // radiant: for cpose_t
 struct GfxSkinCacheEntry // sizeof=0xC
 {                                       // ...
     uint32_t frameCount;
@@ -1405,6 +1421,13 @@ enum VehicleMoveState : __int32
     VEH_MOVESTATE_HOVER = 0x2,
 };
 
+enum VehicleManualMode : __int32
+{
+    VEH_MANUAL_OFF = 0x0,
+    VEH_MANUAL_ON = 0x1,
+    VEH_MANUAL_TRANS = 0x2,
+};
+
 enum VehicleTurretState : __int32
 {                                       // ...
     VEH_TURRET_STOPPED = 0x0,
@@ -1466,7 +1489,7 @@ struct scr_vehicle_s // sizeof=0x354
     int32_t drawOnCompass;
     uint16_t lookAtText0;
     uint16_t lookAtText1;
-    int32_t manualMode;
+    VehicleManualMode manualMode;
     float manualSpeed;
     float manualAccel;
     float manualDecel;
@@ -1527,7 +1550,7 @@ struct scr_vehicle_s // sizeof=0x338
     int drawOnCompass;
     uint16_t lookAtText0;
     uint16_t lookAtText1;
-    int manualMode;
+    VehicleManualMode manualMode;
     float manualSpeed;
     float manualAccel;
     float manualDecel;
@@ -1609,6 +1632,7 @@ static_assert(sizeof(viewLerpWaypoint_s) == 0xC);
 
 struct pmove_t;
 struct pml_t;
+struct playerState_s;
 
 void __cdecl Jump_RegisterDvars();
 void __cdecl Jump_ClearState(playerState_s *ps);
@@ -1726,6 +1750,8 @@ extern bgs_t *bgs;
 // bg_misc
 enum entity_event_t : __int32;
 struct WeaponDef;
+struct playerState_s;
+struct entityState_s;
 void __cdecl BG_RegisterShockVolumeDvars();
 void __cdecl BG_RegisterDvars();
 char *__cdecl BG_GetEntityTypeName(int32_t eType);
@@ -1792,7 +1818,8 @@ char __cdecl BG_CheckProneView(
     float *pfWaistPitch,
     float prone_feet_dist);
 #endif
-void __cdecl BG_LerpHudColors(const hudelem_s *elem, int32_t time, hudelem_color_t *toColor);
+struct hudelem_s;
+void __cdecl BG_LerpHudColors(const hudelem_s *elem, int32_t time, union hudelem_color_t *toColor);
 int32_t __cdecl BG_LoadShellShockDvars(const char *name);
 void __cdecl BG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 int32_t __cdecl BG_SaveShellShockDvars(const char *name);
@@ -1918,6 +1945,7 @@ extern int32_t surfaceTypeSoundListCount;
 
 
 
+#ifdef KISAK_MP
 // bg_perks_mp
 uint32_t __cdecl BG_GetPerkIndexForName(const char *perkName);
 void __cdecl Perks_RegisterDvars();
@@ -1932,10 +1960,12 @@ extern const dvar_t *perk_grenadeDeath;
 extern const dvar_t *perk_weapReloadMultiplier;
 extern const dvar_t *perk_weapRateMultiplier;
 extern const dvar_t *perk_sprintMultiplier;
+#endif
 
 // bg_pmove
 struct pmove_t;
 struct trace_t;
+struct usercmd_s;
 
 void __cdecl PM_trace(
     pmove_t *pm,
@@ -2331,6 +2361,7 @@ void __cdecl BG_StringCopy(uint8_t *member, const char *keyValue);
 int BG_ValidateWeaponNumberOffhand(uint32_t weaponIndex);
 
 
+#ifdef KISAK_MP
 // bg_vehicles_mp
 enum vehicleRideSlots_t : __int32
 {
@@ -2341,6 +2372,7 @@ enum vehicleRideSlots_t : __int32
 };
 
 uint16 BG_VehiclesGetSlotTagName(int slotIndex);
+#endif
 
 
 // bg_slidemove

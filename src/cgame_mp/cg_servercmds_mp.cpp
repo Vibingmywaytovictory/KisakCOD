@@ -40,8 +40,8 @@ void __cdecl CG_ParseServerInfo(int32_t localClientNum)
     info = CL_GetConfigString(localClientNum, 0);
 
     cgs = CG_GetLocalClientStaticGlobals(localClientNum);
-    strncpy(cgs->szHostName, Info_ValueForKey(info, "sv_hostname"), 0x100u);
-    strncpy(cgs->gametype, Info_ValueForKey(info, "g_gametype"), 0x20u);
+    I_strncpyz(cgs->szHostName, Info_ValueForKey(info, "sv_hostname"), sizeof(cgs->szHostName));
+    I_strncpyz(cgs->gametype, Info_ValueForKey(info, "g_gametype"), sizeof(cgs->gametype));
     if (!cgs->localServer)
         Dvar_SetStringByName("g_gametype", cgs->gametype);
     cgs->maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));
@@ -81,9 +81,6 @@ void __cdecl CG_ParseFog(int32_t localClientNum)
     float v5; // [esp+14h] [ebp-68h]
     float v6; // [esp+18h] [ebp-64h]
     float v7; // [esp+1Ch] [ebp-60h]
-    float v8; // [esp+24h] [ebp-58h]
-    float v9; // [esp+38h] [ebp-44h]
-    float v10; // [esp+4Ch] [ebp-30h]
     const char *info; // [esp+5Ch] [ebp-20h] BYREF
     uint8_t r; // [esp+63h] [ebp-19h]
     int32_t transitionTime; // [esp+64h] [ebp-18h]
@@ -469,7 +466,7 @@ void __cdecl CG_DeployServerCommand(int32_t localClientNum)
     case 0x43:
         v25 = Cmd_Argv(1);
         weapIndex = atoi(v25);
-        if (!weapIndex || BG_GetWeaponDef(weapIndex)->offhandClass)
+        if (!weapIndex || (BG_ValidateWeaponNumber(weapIndex) && BG_GetWeaponDef(weapIndex)->offhandClass)) // KISAK: server-supplied index; unparsed slots are NULL
             CG_SetEquippedOffHand(localClientNum, weapIndex);
         break;
     case 0x44:
@@ -740,6 +737,8 @@ void __cdecl CG_ParseScores(int32_t localClientNum)
     {
         v5 = Cmd_Argv(7 * i + 5);
         cgameGlob->scores[i].client = atoi(v5);
+        if ((uint32_t)cgameGlob->scores[i].client >= MAX_CLIENTS) // KISAK: unsigned compare, client is int32
+            cgameGlob->scores[i].client = 0;
         v6 = Cmd_Argv(7 * i + 6);
         cgameGlob->scores[i].score = atoi(v6);
         v7 = Cmd_Argv(7 * i + 7);
@@ -962,7 +961,7 @@ void __cdecl CG_ConfigStringModified(int32_t localClientNum)
                     }
                     else
                     {
-                        *((uint32_t *)cgs + num - 665) = (uint32_t)R_RegisterModel(str); // KISAKTODO: unhack typing
+                        cgs->gameModels[num - CS_MODELS] = R_RegisterModel(str);
                     }
                     break;
                 }
@@ -1165,7 +1164,6 @@ void __cdecl CG_SetTeamScore(int32_t localClientNum, uint32_t team, int32_t scor
 void CG_ReverbCmd()
 {
     int32_t fademsec; // [esp+Ch] [ebp-30h]
-    float v5; // [esp+14h] [ebp-28h]
     const char *roomstring; // [esp+24h] [ebp-18h]
     float drylevel; // [esp+28h] [ebp-14h]
     float fadetime; // [esp+2Ch] [ebp-10h]
@@ -1201,7 +1199,6 @@ void CG_DeactivateReverbCmd()
     const char *v0; // eax
     const char *v1; // eax
     int32_t v2; // [esp+4h] [ebp-20h]
-    float v3; // [esp+8h] [ebp-1Ch]
     float fadetime; // [esp+18h] [ebp-Ch]
     int32_t prio; // [esp+1Ch] [ebp-8h]
     int32_t argc; // [esp+20h] [ebp-4h]
@@ -1232,7 +1229,6 @@ void __cdecl CG_SetChannelVolCmd(int32_t localClientNum)
     const char *v3; // eax
     shellshock_parms_t *ShellshockParms; // eax
     int32_t fademsec; // [esp+0h] [ebp-2Ch]
-    float v6; // [esp+8h] [ebp-24h]
     float fadetime; // [esp+18h] [ebp-14h]
     uint32_t shockIndex; // [esp+20h] [ebp-Ch]
     int32_t prio; // [esp+24h] [ebp-8h]
@@ -1245,6 +1241,13 @@ void __cdecl CG_SetChannelVolCmd(int32_t localClientNum)
         prio = atoi(v1);
         v2 = Cmd_Argv(2);
         shockIndex = atoi(v2);
+        
+        if (shockIndex >= 16)
+        {
+            Com_PrintError(14, "CG_SetChannelVolCmd: bad shellshock index %u\n", shockIndex);
+            return;
+        }
+        
         v3 = Cmd_Argv(3);
         fadetime = atof(v3);
         if (localClientNum)
@@ -1273,7 +1276,6 @@ void CG_DeactivateChannelVolCmd()
     const char *v0; // eax
     const char *v1; // eax
     int32_t v2; // [esp+4h] [ebp-20h]
-    float v3; // [esp+8h] [ebp-1Ch]
     float fadetime; // [esp+18h] [ebp-Ch]
     int32_t prio; // [esp+1Ch] [ebp-8h]
     int32_t argc; // [esp+20h] [ebp-4h]

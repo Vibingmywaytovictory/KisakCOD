@@ -546,7 +546,7 @@ const dvar_s *G_RegisterDvars()
         "g_ScoresColor_EnemyTeam",
         0.69f,
         0.07f,
-        0.050000001f,
+        0.05f,
         1.0f,
         DVAR_TEMP,
         "Enemy team color on scoreboard");
@@ -578,7 +578,7 @@ const dvar_s *G_RegisterDvars()
         "g_ScoresColor_Axis",
         0.69f,
         0.07f,
-        0.050000001f,
+        0.05f,
         1.0f,
         DVAR_TEMP,
         "Axis team color on scoreboard");
@@ -1140,7 +1140,7 @@ void __cdecl G_XAnimUpdateEnt(gentity_s *ent)
 
 void __cdecl TeamplayInfoMessage(gentity_s *ent)
 {
-    ent->client->ps.stats[3] = -1;
+    ent->client->ps.stats[STAT_IDENT_CLIENT_NUM] = -1;
 }
 
 void __cdecl CheckTeamStatus()
@@ -1383,7 +1383,7 @@ void __cdecl G_ClientDoPerFrameNotifies(gentity_s *ent)
         Scr_Notify(ent, scr_const.weapon_change, 1u);
         client->lastWeapon = client->ps.weapon;
     }
-    if (client->ps.weaponstate == 5 && client->ps.pm_type < PM_DEAD)
+    if (client->ps.weaponstate == WEAPON_FIRING && client->ps.pm_type < PM_DEAD)
         v2 = DoPerFrameNotify(ent, 1, client->previouslyFiring, scr_const.begin_firing, scr_const.end_firing);
     else
         v2 = DoPerFrameNotify(ent, 0, client->previouslyFiring, scr_const.begin_firing, scr_const.end_firing);
@@ -1494,12 +1494,6 @@ void __cdecl ShowEntityInfo_Items(gentity_s *ent)
 
 void __cdecl G_RunFrameForEntity(gentity_s *ent)
 {
-    char *v1; // eax
-    const char *v2; // eax
-    char *v3; // eax
-    const char *v4; // eax
-    char *v5; // eax
-    const char *v6; // eax
 
     iassert(ent->r.inuse);
 

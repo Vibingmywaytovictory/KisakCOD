@@ -18,7 +18,6 @@ struct ScreenPlacement;
 
 #define ACTIONSLOTS_NUM 3
 
-#define SURF_TYPECOUNT 29
 
 #define WEAPON_HINT_OFFSET 4
 
@@ -189,6 +188,7 @@ struct cg_hudelem_t // sizeof=0x238
     float color[4];                     // ...
     int32_t timeNow;                        // ...
 };
+struct hudelem_s;
 void __cdecl CG_HudElemRegisterDvars();
 void __cdecl CG_TranslateHudElemMessage(
     int32_t localClientNum,

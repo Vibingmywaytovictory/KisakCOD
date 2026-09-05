@@ -106,8 +106,6 @@ double __cdecl CG_DrawFPS(const ScreenPlacement *scrPlace, float y, meminfo_t *m
     float v8; // [esp+48h] [ebp-90h]
     float v9; // [esp+4Ch] [ebp-8Ch]
     float v10; // [esp+50h] [ebp-88h]
-    float v11; // [esp+54h] [ebp-84h]
-    float v13; // [esp+74h] [ebp-64h]
     float v14; // [esp+84h] [ebp-54h]
     float freeMem; // [esp+8Ch] [ebp-4Ch]
     int32_t fps; // [esp+90h] [ebp-48h]
@@ -480,9 +478,9 @@ void __cdecl CG_DrawMaterial(int32_t localClientNum, uint32_t drawMaterialType)
     cg_s *cgameGlob;
 
     traceMasks[0] = 0;
-    traceMasks[1] = 1;
-    traceMasks[2] = 0x2806831;
-    traceMasks[3] = 0x2810011;
+    traceMasks[1] = MASK_SOLID;
+    traceMasks[2] = MASK_SHOT;
+    traceMasks[3] = MASK_PLAYERSOLID;
 
     iassert(drawMaterialType != 0);
     bcassert(drawMaterialType, ARRAY_COUNT(traceMasks));
@@ -524,12 +522,12 @@ void __cdecl CG_DrawDebugPlayerHealth(int32_t localClientNum)
 
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
 
-    if (cgameGlob->predictedPlayerState.stats[0] && cgameGlob->predictedPlayerState.stats[2])
+    if (cgameGlob->predictedPlayerState.stats[STAT_HEALTH] && cgameGlob->predictedPlayerState.stats[STAT_MAX_HEALTH])
     {
-        health = (double)cgameGlob->predictedPlayerState.stats[0] / (double)cgameGlob->predictedPlayerState.stats[2];
+        health = (double)cgameGlob->predictedPlayerState.stats[STAT_HEALTH] / (double)cgameGlob->predictedPlayerState.stats[STAT_MAX_HEALTH];
         v4 = health - 1.0;
         if (v4 < 0.0)
-            v5 = (double)cgameGlob->predictedPlayerState.stats[0] / (double)cgameGlob->predictedPlayerState.stats[2];
+            v5 = (double)cgameGlob->predictedPlayerState.stats[STAT_HEALTH] / (double)cgameGlob->predictedPlayerState.stats[STAT_MAX_HEALTH];
         else
             v5 = 1.0;
         v3 = 0.0 - health;

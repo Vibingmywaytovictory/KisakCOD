@@ -8,11 +8,26 @@
 #include <xanim/xmodel.h>
 #include <win32/win_local.h>
 #
+
+extern bool g_anyFastFileLoaded;
+
 enum $D93A52C218787A3ED865FD745137F4B3 : int32_t
 {
     DM_MEMORY_TEMP = 0x0,
     DM_MEMORY_VIRTUAL = 0x1,
     DM_MEMORY_PHYSICAL = 0x2,
+};
+
+enum $A9FDED199653E5E1C469F04B28023DED : int32_t
+{
+    DB_ZONE_CODE_LOC   = 0,
+    DB_ZONE_COMMON_LOC = (1 << 0),
+    DB_ZONE_CODE       = (1 << 1),
+    DB_ZONE_COMMON     = (1 << 2),
+    DB_ZONE_GAME       = (1 << 3),
+    DB_ZONE_MOD        = (1 << 4),
+    DB_ZONE_LOAD       = (1 << 5),
+    DB_ZONE_DEV        = (1 << 6)
 };
 
 struct StreamDelayInfo // sizeof=0x8

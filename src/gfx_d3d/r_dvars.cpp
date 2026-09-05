@@ -264,7 +264,7 @@
 
  const char *prof_enumNames[433]{ ":)" }; // KISAKTODO
 
- const char *s_aspectRatioNames[5] =
+ const char *s_aspectRatioNames[GFX_ASPECT_RATIO_COUNT + 1] =
  {
      "auto",
      "standard",
@@ -837,7 +837,7 @@
          DVAR_NOFLAG,
          "Max reflection intensity based on glancing angle.");
      mint.value.max = 20.0f;
-     mint.value.min = 0.050000001f;
+     mint.value.min = 0.05f;
      r_envMapExponent = Dvar_RegisterFloat("r_envMapExponent", 5.0f, mint, DVAR_NOFLAG, "Reflection exponent.");
      minu.value.max = 4.0f;
      minu.value.min = 0.0f;
@@ -1470,7 +1470,7 @@
      r_aspectRatio = Dvar_RegisterEnum(
          "r_aspectRatio",
          s_aspectRatioNames,
-         0,
+         GFX_ASPECT_RATIO_AUTO,
          DVAR_ARCHIVE | DVAR_LATCH,
          "Screen aspect ratio.  Most widescreen monitors are 16:10 instead of 16:9.");
      r_customMode = Dvar_RegisterString(

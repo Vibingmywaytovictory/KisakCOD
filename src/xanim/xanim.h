@@ -14,7 +14,9 @@
 #include <gfx_d3d/r_material.h>
 #include <gfx_d3d/r_gfx.h>
 
+#ifndef KISAK_RADIANT
 #include <game/pathnode.h>
+#endif
 
 #include <ui/ui_shared.h>
 
@@ -465,7 +467,7 @@ struct WeaponDef // sizeof=0x878
     const char* szOverlayName;
     XModel* gunXModel[16];
     XModel* handXModel;
-    const char* szXAnims[33];
+    const char* szXAnims[NUM_WEAP_ANIMS];
     const char* szModeName;
     uint16_t hideTags[8];
     uint16_t notetrackSoundMapKeys[16];

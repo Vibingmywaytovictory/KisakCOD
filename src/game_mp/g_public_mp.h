@@ -15,8 +15,6 @@
 struct game_hudelem_s;
 struct weaponParms;
 
-#define PERK_COUNT 20
-
 static const char *g_dedicatedEnumNames[4] = { "listen server", "dedicated LAN server", "dedicated internet server", NULL }; // idb
 
 struct BuiltinFunctionDef // sizeof=0xC
@@ -35,7 +33,37 @@ struct BuiltinMethodDef // sizeof=0xC
 };
 static_assert(sizeof(BuiltinMethodDef) == 0xC);
 
-static uint16_t *modNames[16] =
+enum meansOfDeath_t : int32_t
+{                                       // ...
+    MOD_UNKNOWN = 0x0,
+    MOD_PISTOL_BULLET = 0x1,
+    MOD_RIFLE_BULLET = 0x2,
+    MOD_GRENADE = 0x3,
+    MOD_GRENADE_SPLASH = 0x4,
+    MOD_PROJECTILE = 0x5,
+    MOD_PROJECTILE_SPLASH = 0x6,
+    MOD_MELEE = 0x7,
+    MOD_HEAD_SHOT = 0x8,
+    MOD_CRUSH = 0x9,
+    MOD_TELEFRAG = 0xA,
+    MOD_FALLING = 0xB,
+    MOD_SUICIDE = 0xC,
+    MOD_TRIGGER_HURT = 0xD,
+    MOD_EXPLOSIVE = 0xE,
+    MOD_IMPACT = 0xF,
+    MOD_NUM = 0x10,
+};
+
+enum HELICOPTER_STAGES : __int32
+{
+    HELICOPTER_ONFIRE = 0x0,
+    HELICOPTER_HEAVYSMOKE = 0x1,
+    HELICOPTER_SMOKING = 0x2,
+    HELICOPTER_FULLHEALTH = 0x3,
+    NUM_HELICOPTERSTAGES = 0x4,
+};
+
+static uint16_t *modNames[MOD_NUM] =
 {
     &scr_const.mod_unknown,
     &scr_const.mod_pistol_bullet,
@@ -152,27 +180,6 @@ uint32_t __cdecl G_GetNonPVSPlayerInfo(gentity_s *pSelf, float *vPosition, int32
 
 
 // g_client_script_cmd_mp
-enum meansOfDeath_t : int32_t
-{                                       // ...
-    MOD_UNKNOWN = 0x0,
-    MOD_PISTOL_BULLET = 0x1,
-    MOD_RIFLE_BULLET = 0x2,
-    MOD_GRENADE = 0x3,
-    MOD_GRENADE_SPLASH = 0x4,
-    MOD_PROJECTILE = 0x5,
-    MOD_PROJECTILE_SPLASH = 0x6,
-    MOD_MELEE = 0x7,
-    MOD_HEAD_SHOT = 0x8,
-    MOD_CRUSH = 0x9,
-    MOD_TELEFRAG = 0xA,
-    MOD_FALLING = 0xB,
-    MOD_SUICIDE = 0xC,
-    MOD_TRIGGER_HURT = 0xD,
-    MOD_EXPLOSIVE = 0xE,
-    MOD_IMPACT = 0xF,
-    MOD_NUM = 0x10,
-};
-
 void __cdecl PlayerCmd_giveWeapon(scr_entref_t entref);
 void __cdecl G_InitializeAmmo(gentity_s *pSelf, int32_t weaponIndex, uint8_t weaponModel, int32_t hadWeapon);
 int32_t __cdecl G_GetNeededStartAmmo(gentity_s *pSelf, WeaponDef *weapDef);
@@ -948,7 +955,7 @@ void __cdecl VehicleFXTest(int32_t localClientNum, const DObj_s *obj, centity_s 
 double __cdecl GetSpeed(int32_t localClientNum, centity_s *cent);
 void __cdecl VEH_SetPosition(gentity_s *ent, const float *origin, const float *vel, const float *angles);
 void __cdecl VEH_InitPhysics(gentity_s *ent);
-bool __cdecl VEH_SlideMove(gentity_s *ent, int32_t gravity);
+bool __cdecl VEH_SlideMove(gentity_s *ent, int32_t gravity, float frameTime);
 void __cdecl VEH_ClipVelocity(float *in, float *normal, float *out);
 void __cdecl VEH_BackupPosition(gentity_s *ent);
 void __cdecl VEH_TouchEntities(gentity_s *ent);

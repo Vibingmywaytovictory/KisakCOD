@@ -22,6 +22,7 @@ set(EFFECTSCORE
     "${SRC_DIR}/EffectsCore/fx_graph.cpp"
     "${SRC_DIR}/EffectsCore/fx_load_obj.cpp"
     "${SRC_DIR}/EffectsCore/fx_marks.cpp"
+    "${SRC_DIR}/EffectsCore/fx_marks.h"
     "${SRC_DIR}/EffectsCore/fx_postlight.cpp"
     "${SRC_DIR}/EffectsCore/fx_profile.cpp"
     "${SRC_DIR}/EffectsCore/fx_random.cpp"
@@ -44,11 +45,9 @@ set(BGAME
     "${SRC_DIR}/bgame/bg_mantle.cpp"
     "${SRC_DIR}/bgame/bg_misc.cpp"
     "${SRC_DIR}/bgame/bg_misctables.cpp"
-    "${SRC_DIR}/bgame/bg_perks_mp.cpp"
     "${SRC_DIR}/bgame/bg_pmove.cpp"
     "${SRC_DIR}/bgame/bg_public.h"
     "${SRC_DIR}/bgame/bg_slidemove.cpp"
-    "${SRC_DIR}/bgame/bg_vehicles_mp.cpp"
     "${SRC_DIR}/bgame/bg_weapons.cpp"
     "${SRC_DIR}/bgame/bg_weapons.h"
     "${SRC_DIR}/bgame/bg_weapons_load_obj.cpp"
@@ -464,11 +463,12 @@ set(SERVER
     "${SRC_DIR}/server/sv_world.h"
 )
 
-# snd_mss.cpp (Miles) vs snd_al.cpp (OpenAL) is selected per-project (see mp/sp/dedi
-# CMakeLists.txt) since only mp/sp ever build against OpenAL - dedi always uses Miles.
 set(SOUND
     "${SRC_DIR}/sound/snd.cpp"
+    "${SRC_DIR}/sound/snd_mss.cpp"
+    "${SRC_DIR}/sound/snd_openal.cpp"
     "${SRC_DIR}/sound/snd_driver.cpp"
+    "${SRC_DIR}/sound/snd_driver_openal.cpp"
     "${SRC_DIR}/sound/snd_driver_load_obj.cpp"
     "${SRC_DIR}/sound/snd_local.h"
     "${SRC_DIR}/sound/snd_public.h"

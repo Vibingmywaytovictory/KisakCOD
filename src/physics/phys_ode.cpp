@@ -1,4 +1,5 @@
 #include <universal/q_shared.h>
+#include <universal/surfaceflags.h>
 #include "phys_local.h"
 #include <DynEntity/DynEntity_client.h>
 #include <qcommon/mem_track.h>
@@ -1366,15 +1367,15 @@ void __cdecl Phys_PlayCollisionSound(int localClientNum, dxBody *body, uint32_t 
                 "sndClass doesn't index AUDIOPHYS_CLASSMAX\n\t%i not in [0, %i)",
                 sndClass,
                 50);
-        if (((contactList->contacts[0].surfFlags & 0x1F00000) >> 20) >= 0x1Du)
+        if (SURF_TYPEINDEX(contactList->contacts[0].surfFlags) >= 0x1Du)
             MyAssertHandler(
                 ".\\physics\\phys_ode.cpp",
                 1294,
                 0,
                 "SURF_TYPEINDEX( contactList->contacts[0].surfFlags ) doesn't index SURF_TYPECOUNT\n\t%i not in [0, %i)",
-                (contactList->contacts[0].surfFlags & 0x1F00000) >> 20,
+                SURF_TYPEINDEX(contactList->contacts[0].surfFlags),
                 29);
-        sound = cgMedia.physCollisionSound[sndClass][(contactList->contacts[0].surfFlags & 0x1F00000) >> 20];
+        sound = cgMedia.physCollisionSound[sndClass][SURF_TYPEINDEX(contactList->contacts[0].surfFlags)];
         if (sound)
             SND_AddPhysicsSound(sound, pos);
     }
@@ -1831,7 +1832,8 @@ void __cdecl Phys_RunToTime(int localClientNum, PhysWorld worldIndex, int timeNo
     }
     else
     {
-        data->timeNowLerpFrac = (timeNow - data->timeLastSnapshot) / (data->timeLastUpdate - data->timeLastSnapshot);
+        data->timeNowLerpFrac = (double)(timeNow - data->timeLastSnapshot)
+            / (double)(data->timeLastUpdate - data->timeLastSnapshot);
         if (data->timeNowLerpFrac < 0.0 || data->timeNowLerpFrac > 1.0)
             MyAssertHandler(
                 ".\\physics\\phys_ode.cpp",
@@ -2282,7 +2284,7 @@ void __cdecl Phys_ObjTraceNewPos(dxBody *body)
                 && newPos[2] == userData->savedPos[2];
             if (!v5 || userData->state <= (uint32_t)PHYS_OBJ_STATE_STUCK)
             {
-                CM_BoxTrace(&trace, userData->savedPos, newPos, mins, maxs, 0, 0x2806C91);
+                CM_BoxTrace(&trace, userData->savedPos, newPos, mins, maxs, 0, PHYS_WORLD_CLIPMASK);
                 userData->state = trace.startsolid ? PHYS_OBJ_STATE_STUCK : PHYS_OBJ_STATE_FREE;
                 if (trace.fraction < 1.0 && !trace.startsolid)
                 {
@@ -2361,7 +2363,6 @@ bool __cdecl Phys_ObjIsAsleep(dxBody *id)
 
 void __cdecl Phys_Shutdown()
 {
-    uint32_t v0; // eax
     int worldIndex; // [esp+0h] [ebp-4h]
 
     if (physInited)

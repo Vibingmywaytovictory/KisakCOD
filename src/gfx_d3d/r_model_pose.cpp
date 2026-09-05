@@ -9,6 +9,8 @@
 #include <cgame_mp/cg_local_mp.h>
 #elif KISAK_SP
 #include <cgame/cg_pose.h>
+#elif defined(KISAK_RADIANT)
+#include <cgame/cg_pose.h>
 #endif
 
 // LWSS: this function basically determines the visibility (dormancy) of Entities in the worldspace. Bodies will disappear in the edges of your FOV if you fk it up. Mounted machine guns as well. Edit with care I reverted this file lol
@@ -18,8 +20,6 @@ DObjAnimMat *R_UpdateSceneEntBounds(
     const DObj_s **pObj,
     int waitForCullState)
 {
-    float *maxs; // [esp+18h] [ebp-33Ch]
-    float *mins; // [esp+1Ch] [ebp-338h]
     int v8; // [esp+40h] [ebp-314h]
     int v9; // [esp+40h] [ebp-314h]
     int v10; // [esp+40h] [ebp-314h]
@@ -62,11 +62,6 @@ DObjAnimMat *R_UpdateSceneEntBounds(
     float xy; // [esp+C0h] [ebp-294h]
     float xx; // [esp+C4h] [ebp-290h]
     float v49[3]; // [esp+C8h] [ebp-28Ch] BYREF
-    float transWeight; // [esp+D4h] [ebp-280h]
-    float v51; // [esp+D8h] [ebp-27Ch]
-    float v52; // [esp+DCh] [ebp-278h]
-    float v53; // [esp+E0h] [ebp-274h]
-    float v54; // [esp+E4h] [ebp-270h]
     DObjAnimMat *mat; // [esp+E8h] [ebp-26Ch]
     int boneIndex; // [esp+ECh] [ebp-268h]
     uint32_t animPartBit; // [esp+F0h] [ebp-264h]

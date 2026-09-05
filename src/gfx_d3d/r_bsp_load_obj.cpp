@@ -26,6 +26,8 @@
 #elif KISAK_SP
 #include <cgame/cg_ents.h>
 #include <client/cl_scrn.h>
+#elif defined(KISAK_RADIANT)
+#include <cgame/cg_local.h>
 #endif
 
 r_globals_load_t rgl;
@@ -186,7 +188,9 @@ BOOL __cdecl R_ChooseTrisContextType()
 void __cdecl R_LoadStep(const char *description)
 {
     Com_Printf(8, "Loading %s...\n", description);
+#ifndef KISAK_RADIANT
     SCR_UpdateLoadScreen();
+#endif
 }
 
 void __cdecl R_LoadMaterials(GfxBspLoad *load)
@@ -2699,7 +2703,6 @@ static void __cdecl R_LoadMiscModel(char *(*spawnVars)[2], int spawnVarCount, in
 
 void __cdecl R_LoadEntities(uint32_t bspVersion)
 {
-    __int64 v1; // [esp-Ch] [ebp-278h]
     int spawnVarCount; // [esp+44h] [ebp-228h]
     char *startPos; // [esp+48h] [ebp-224h]
     char *spawnVars[64][2]; // [esp+4Ch] [ebp-220h] BYREF
@@ -3533,7 +3536,6 @@ uint8_t *R_LoadWorldRuntime()
     uint8_t *v2; // [esp+4h] [ebp-20h]
     uint8_t *v3; // [esp+8h] [ebp-1Ch]
     uint8_t *v4; // [esp+Ch] [ebp-18h]
-    uint8_t *v5; // [esp+10h] [ebp-14h]
     uint8_t *v6; // [esp+14h] [ebp-10h]
     uint8_t *v7; // [esp+18h] [ebp-Ch]
     uint32_t drawType; // [esp+1Ch] [ebp-8h]

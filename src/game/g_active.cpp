@@ -35,7 +35,7 @@ void __cdecl P_DamageFeedback(gentity_s *player)
     client = player->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\g_active.cpp", 29, 0, "%s", "client");
-    if (client->ps.pm_type < 5)
+    if (client->ps.pm_type < PM_DEAD)
     {
         if (player_debugHealth->current.enabled
             && client->invulnerableActivated
@@ -175,7 +175,7 @@ void __cdecl G_DoTouchTriggers(gentity_s *ent)
 
     if (ent->scr_vehicle)
     {
-        contentMask = 8;
+        contentMask = CONTENTS_VEHICLETRIGGER;
     }
     else
     {
@@ -184,7 +184,7 @@ void __cdecl G_DoTouchTriggers(gentity_s *ent)
         {
             if (ent->client)
             {
-                contentMask = 0x40000000;
+                contentMask = CONTENTS_PLAYERTRIGGER;
             }
             else
             {
@@ -192,13 +192,13 @@ void __cdecl G_DoTouchTriggers(gentity_s *ent)
                 switch (eTeam)
                 {
                 case TEAM_AXIS:
-                    contentMask = 0x40000;
+                    contentMask = CONTENTS_AXISTRIGGER;
                     break;
                 case TEAM_ALLIES:
-                    contentMask = 0x80000;
+                    contentMask = CONTENTS_ALLIESTRIGGER;
                     break;
                 case TEAM_NEUTRAL:
-                    contentMask = 0x100000;
+                    contentMask = CONTENTS_NEUTRALTRIGGER;
                     break;
                 default:
                     return;
@@ -208,7 +208,7 @@ void __cdecl G_DoTouchTriggers(gentity_s *ent)
         }
         else
         {
-            contentMask = 0x400000;
+            contentMask = CONTENTS_NONSENTIENTTRIGGER;
         }
     }
 
@@ -294,7 +294,7 @@ bool __cdecl IsLiveGrenade(gentity_s *ent)
 {
     WeaponDef *WeaponDef; // r31
 
-    if (ent->s.eType != 3)
+    if (ent->s.eType != ET_MISSILE)
         return 0;
     WeaponDef = BG_GetWeaponDef(ent->s.index.item - ((int)ent->s.index.item >> 7 << 7));
     if (!WeaponDef)
@@ -418,7 +418,7 @@ void __cdecl ClientEvents(gentity_s *ent, int oldEventSequence)
                     if (v11 && (ent->flags & 3) == 0)
                     {
                         ent->health = 0;
-                        v11->ps.stats[0] = 0;
+                        v11->ps.stats[STAT_HEALTH] = 0;
                         player_die(ent, ent, ent, 100000, 12, v8, 0, HITLOC_NONE);
                     }
                     break;
@@ -430,7 +430,7 @@ void __cdecl ClientEvents(gentity_s *ent, int oldEventSequence)
                     if (v7 == 81 || v7 == 82 || v7 == 83 || v7 == 85 || v7 >= 86 && v7 <= 114)
                     {
                         v12 = ent->client;
-                        if ((v12->ps.pm_flags & 2) == 0 && (v12->pers.cmd.buttons & 0x800) == 0)
+                        if ((v12->ps.pm_flags & 2) == 0 && (v12->pers.cmd.buttons & BUTTON_ADS) == 0)
                         {
                             sentient = ent->sentient;
                             if (sentient)
@@ -465,7 +465,7 @@ void __cdecl ClientEvents(gentity_s *ent, int oldEventSequence)
         }
         damage = 1.1f;
     LABEL_9:
-        G_Damage(ent, 0, 0, 0, 0, (int)((float)client->ps.stats[2] * damage), 0, 11, 0xFFFFFFFF, HITLOC_NONE, 0, 0);
+        G_Damage(ent, 0, 0, 0, 0, (int)((float)client->ps.stats[STAT_MAX_HEALTH] * damage), DAMAGE_NOFLAG, MOD_FALLING, 0xFFFFFFFF, HITLOC_NONE, 0, 0);
         goto LABEL_46;
     }
 }
@@ -588,7 +588,6 @@ void __cdecl ClientThink_real(gentity_s *ent)
     gclient_s *client; // r30
     usercmd_s *p_cmd; // r25
     unsigned int v5; // r11
-    int v6; // r11
     long double v7; // fp2
     int eventSequence; // r28
     double v9; // fp0
@@ -639,24 +638,24 @@ void __cdecl ClientThink_real(gentity_s *ent)
     client->ps.pm_flags = v5;
     if (client->noclip)
     {
-        v6 = 2;
+        client->ps.pm_type = PM_NOCLIP;
     }
     else if (client->ufo)
     {
-        v6 = 3;
+        client->ps.pm_type = PM_UFO;
     }
     else if (level.mpviewer)
     {
-        v6 = 4;
+        client->ps.pm_type = PM_MPVIEWER;
     }
-    else
-    {
-        //v6 = (_cntlzw((unsigned int)ent->tagInfo) & 0x20) == 0;
-        v6 = (ent->tagInfo != 0);
-        if (client->ps.stats[0] <= 0)
-            v6 += 5;
-    }
-    client->ps.pm_type = (pmtype_t)v6;
+	else if (client->ps.stats[STAT_HEALTH] <= 0)
+	{
+		client->ps.pm_type = ent->tagInfo ? PM_DEAD_LINKED : PM_DEAD;
+	}
+	else
+	{
+		client->ps.pm_type = ent->tagInfo ? PM_NORMAL_LINKED : PM_NORMAL;
+	}
     v7 = floor((g_gravity->current.value + 0.5f));
     eventSequence = client->ps.eventSequence;
     v9 = (float)(client->ps.aimSpreadScale * (float)0.0039215689);
@@ -668,7 +667,7 @@ void __cdecl ClientThink_real(gentity_s *ent)
     v39.ps = &client->ps;
     memcpy(&v39.cmd, p_cmd, sizeof(v39.cmd));
     memcpy(&v39.oldcmd, &client->pers.oldcmd, sizeof(v39.oldcmd));
-    if (client->ps.pm_type < 5)
+    if (client->ps.pm_type < PM_DEAD)
         clipmask = ent->clipmask;
     else
         clipmask = 8454161;
@@ -721,10 +720,10 @@ void __cdecl ClientThink_real(gentity_s *ent)
     useButtonDone = client->useButtonDone;
     client->oldbuttons = buttons;
     if (!useButtonDone)
-        *p_oldbuttons = buttons & 0xFFFFFFD7;
+        *p_oldbuttons = buttons & ~(BUTTON_USE | BUTTON_USE_RELOAD);
     v25 = p_cmd->buttons;
     *p_buttons = v25;
-    if ((v25 & 0x28) == 0)
+    if ((v25 & (BUTTON_USE | BUTTON_USE_RELOAD)) == 0)
         client->useButtonDone = 0;
     p_buttonsSinceLastFrame = &client->buttonsSinceLastFrame;
     HIDWORD(v29) = client->ps.locationSelectionInfo;
@@ -735,7 +734,7 @@ void __cdecl ClientThink_real(gentity_s *ent)
     client->buttonsSinceLastFrame = v29;
     if (HIDWORD(v29))
     {
-        if ((v29 & 0x10000) != 0)
+        if ((v29 & BUTTON_LOC_CONFIRM) != 0)
         {
             v29 = p_cmd->selectedLocation[1];
             v30 = p_cmd->selectedLocation[0];
@@ -766,14 +765,14 @@ void __cdecl ClientThink_real(gentity_s *ent)
         }
         else
         {
-            if ((v29 & 0x20000) == 0)
+            if ((v29 & BUTTON_LOC_CANCEL) == 0)
             {
             LABEL_34:
                 v33 = *p_buttonsSinceLastFrame;
-                v34 = *p_latched_buttons & 0x1300;
-                *p_buttons &= 0x1300u;
+                v34 = *p_latched_buttons & (BUTTON_PRONE | BUTTON_CROUCH | BUTTON_TEMP_STANCE);
+                *p_buttons &= BUTTON_PRONE | BUTTON_CROUCH | BUTTON_TEMP_STANCE;
                 *p_latched_buttons = v34;
-                *p_buttonsSinceLastFrame = v33 & 0x1300;
+                *p_buttonsSinceLastFrame = v33 & (BUTTON_PRONE | BUTTON_CROUCH | BUTTON_TEMP_STANCE);
                 goto LABEL_35;
             }
             v31 = 0;
@@ -795,7 +794,7 @@ LABEL_35:
         client->ps.pm_flags &= ~0x10000u;
         v35 = level.time;
     }
-    if (client->ps.pm_type >= 5 && v35 > client->respawnTime)
+    if (client->ps.pm_type >= PM_DEAD && v35 > client->respawnTime)
         respawn(ent);
 }
 
@@ -840,7 +839,7 @@ void __cdecl ClientEndFrame(gentity_s *ent)
         if (ent->tagInfo)
         {
             v3->ps.pm_type = PM_DEAD_LINKED;
-            if (v3->ps.stats[0] > 0)
+            if (v3->ps.stats[STAT_HEALTH] > 0)
             {
                 v3->ps.pm_type = PM_NORMAL_LINKED;
             }
@@ -856,7 +855,7 @@ void __cdecl ClientEndFrame(gentity_s *ent)
             v6 = ent->client;
             pm_type = v6->ps.pm_type;
             
-            if (pm_type == 1 || pm_type == 6)
+            if (pm_type == PM_NORMAL_LINKED || pm_type == PM_DEAD_LINKED)
             {
                 --v6->ps.pm_type;
             }
@@ -873,7 +872,7 @@ void __cdecl ClientEndFrame(gentity_s *ent)
     }
     P_DamageFeedback(ent);
     ent->client->ps.moveSpeedScaleMultiplier = ent->client->pers.moveSpeedScaleMultiplier;
-    ent->client->ps.stats[0] = ent->health;
+    ent->client->ps.stats[STAT_HEALTH] = ent->health;
     v8 = ent->client;
     ent->s.loopSound = 0;
     G_PlayerStateToEntityStateExtrapolate(&v8->ps, &ent->s, v8->ps.commandTime, 1);
@@ -928,7 +927,7 @@ void __cdecl G_UpdatePlayerTriggers(gentity_s *ent)
         Client_ClaimNode(ent);
         Sentient_BanNearNodes(ent->sentient);
         client = ent->client;
-        if (!client->noclip && !client->ufo && client->ps.pm_type < 5 && !level.mpviewer)
+        if (!client->noclip && !client->ufo && client->ps.pm_type < PM_DEAD && !level.mpviewer)
             G_DoTouchTriggers(ent);
     }
 }

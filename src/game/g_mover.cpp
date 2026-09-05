@@ -44,7 +44,7 @@ gentity_s *__cdecl G_TestEntityPosition(gentity_s *ent, float *vOrigin)
 
     if (ent->clipmask)
     {
-        if ((ent->r.contents & 0x4000000) != 0)
+        if ((ent->r.contents & CONTENTS_CORPSE) != 0)
             return 0;
         mask = ent->clipmask;
     }
@@ -261,7 +261,6 @@ void __cdecl G_MoverTeam(gentity_s *ent)
     float *v5; // [esp+18h] [ebp-54h]
     float *currentOrigin; // [esp+1Ch] [ebp-50h]
     float *v7; // [esp+20h] [ebp-4Ch]
-    trajectory_t *p_pos; // [esp+24h] [ebp-48h]
     float move[3]; // [esp+28h] [ebp-44h] BYREF
     float origin[3]; // [esp+34h] [ebp-38h] BYREF
     float amove[3]; // [esp+40h] [ebp-2Ch] BYREF
@@ -512,9 +511,9 @@ char __cdecl G_MoverPush(gentity_s *pusher, float *move, float *amove, gentity_s
                 break;
             }
 #ifdef KISAK_MP
-            G_Damage(ent, pusher, pusher, 0, 0, 99999, 0, 9, 0xFFFFFFFF, HITLOC_NONE, 0, 0, 0);
+            G_Damage(ent, pusher, pusher, 0, 0, 99999, DAMAGE_NOFLAG, MOD_CRUSH, 0xFFFFFFFF, HITLOC_NONE, 0, 0, 0);
 #elif KISAK_SP
-            G_Damage(ent, pusher, pusher, 0, 0, 99999, 0, 9, 0xFFFFFFFF, HITLOC_NONE, 0, 0);
+            G_Damage(ent, pusher, pusher, 0, 0, 99999, DAMAGE_NOFLAG, MOD_CRUSH, 0xFFFFFFFF, HITLOC_NONE, 0, 0);
 #endif
         }
     }

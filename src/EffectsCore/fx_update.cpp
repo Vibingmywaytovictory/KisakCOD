@@ -679,8 +679,6 @@ void __cdecl FX_UpdateEffectPartial(
     uint16_t* trailElemStop)
 {
     int32_t v10; // edx
-    double v11; // [esp+4h] [ebp-3Ch]
-    uint32_t v12; // [esp+14h] [ebp-2Ch]
     uint16_t v13; // [esp+14h] [ebp-2Ch]
     uint16_t v14; // [esp+18h] [ebp-28h]
     const FxEffectDef* def; // [esp+1Ch] [ebp-24h]
@@ -1127,7 +1125,6 @@ void __cdecl FX_NextElementPosition_NoExternalForces(
     float* posWorld)
 {
     const char* v5; // eax
-    double v6; // [esp+10h] [ebp-10h]
     float normUpdateEnd; // [esp+18h] [ebp-8h]
     float normUpdateBegin; // [esp+1Ch] [ebp-4h]
 
@@ -1147,11 +1144,7 @@ void __cdecl FX_IntegrateVelocity(const FxUpdateElem *update, float t0, float t1
 {
     const char *v5; // eax
     const char *v6; // eax
-    char *v7; // eax
-    char *v8; // eax
     double v9; // [esp+18h] [ebp-80h]
-    int32_t v10; // [esp+20h] [ebp-78h]
-    int32_t v11; // [esp+24h] [ebp-74h]
     float integralScale; // [esp+64h] [ebp-34h]
     float startPoint; // [esp+68h] [ebp-30h]
     float endPoint; // [esp+6Ch] [ebp-2Ch]
@@ -1591,8 +1584,8 @@ void __cdecl FX_SpawnImpactEffect(
         msecOnImpact,
         update->posWorld,
         axis,
-        4095,
-        2047,
+        FX_DOBJ_HANDLE_NONE,
+        FX_BONE_INDEX_NONE,
         255,
         update->effect->owner,
         ENTITYNUM_NONE);
@@ -1655,8 +1648,8 @@ void __cdecl FX_SpawnDeathEffect(FxSystem* system, FxUpdateElem* update)
         update->msecUpdateBegin,
         frame.origin,
         orientPrev.axis,
-        4095,
-        2047,
+        FX_DOBJ_HANDLE_NONE,
+        FX_BONE_INDEX_NONE,
         255,
         update->effect->owner,
         ENTITYNUM_NONE);
@@ -1784,7 +1777,6 @@ uint8_t __cdecl FX_ProcessEmitting(
     float v10; // [esp+28h] [ebp-A8h]
     FxEffect* effect; // [esp+38h] [ebp-98h]
     float v12; // [esp+40h] [ebp-90h]
-    float v13; // [esp+48h] [ebp-88h]
     const FxElemDef* elemDef; // [esp+6Ch] [ebp-64h]
     float maxDistPerEmit; // [esp+70h] [ebp-60h]
     float lerp; // [esp+74h] [ebp-5Ch]
@@ -1837,8 +1829,8 @@ uint8_t __cdecl FX_ProcessEmitting(
             msecAtSpawn,
             frameElemNow.origin,
             axisSpawn,
-            4095,
-            2047,
+            FX_DOBJ_HANDLE_NONE,
+            FX_BONE_INDEX_NONE,
             255,
             update->effect->owner,
             ENTITYNUM_NONE);
@@ -2216,7 +2208,7 @@ void __cdecl FX_UpdateEffectBolt(FxSystem *system, FxEffect *effect)
     orientation_t orient; // [esp+8h] [ebp-34h] BYREF
     bool temporalBitsValid; // [esp+3Bh] [ebp-1h]
 
-    if (effect->boltAndSortOrder.boneIndex != 0x7FF)
+    if (effect->boltAndSortOrder.boneIndex != FX_BONE_INDEX_NONE)
     {
         localClientNum = system->localClientNum;
         temporalBitsValid = FX_GetBoltTemporalBits(localClientNum, effect->boltAndSortOrder.dobjHandle) == effect->boltAndSortOrder.temporalBits;
@@ -2235,8 +2227,8 @@ void __cdecl FX_UpdateEffectBolt(FxSystem *system, FxEffect *effect)
         else
         {
             FX_StopEffect(system, effect);
-            effect->boltAndSortOrder.boneIndex = 0x7FF;
-            effect->boltAndSortOrder.dobjHandle = 0xFFF;
+            effect->boltAndSortOrder.boneIndex = FX_BONE_INDEX_NONE;
+            effect->boltAndSortOrder.dobjHandle = FX_DOBJ_HANDLE_NONE;
         }
     }
 }
@@ -2307,7 +2299,7 @@ void __cdecl FX_UpdateEffect(FxSystem* system, FxEffect* effect)
 
 bool __cdecl FX_ShouldProcessEffect(FxSystem *system, FxEffect *effect, bool nonBoltedEffectsOnly)
 {
-    return (!nonBoltedEffectsOnly || effect->boltAndSortOrder.boneIndex == 0x7FF)
+    return (!nonBoltedEffectsOnly || effect->boltAndSortOrder.boneIndex == FX_BONE_INDEX_NONE)
         && InterlockedExchange(&effect->frameCount, system->frameCount) != system->frameCount;
 }
 

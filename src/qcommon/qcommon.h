@@ -5,6 +5,12 @@
 
 #include "../universal/q_shared.h"
 
+#ifdef KISAK_SP
+static const int PHYS_WORLD_CLIPMASK = 0x280E491;
+#elif KISAK_MP
+static const int PHYS_WORLD_CLIPMASK = 0x2806C91;
+#endif
+
 typedef enum
 {
     SE_NONE = 0x0,
@@ -216,7 +222,12 @@ void Com_Shutdown(const char* finalmsg);
 void __cdecl Debug_Frame(int localClientNum);
 
 void __cdecl Com_InitPlayerProfiles(int localClientNum);
+#ifdef KISAK_RADIANT
+// Radiant build: cmdlib.cpp provides Com_PrintMessage as a varargs console printer.
+void Com_PrintMessage(const char *fmt, ...);
+#else
 void __cdecl Com_PrintMessage(int channel, const char* msg, int error);
+#endif
 void __cdecl Com_LogPrintMessage(int channel, const char* msg);
 void Com_OpenLogFile();
 void Com_DPrintf(int channel, const char* fmt, ...);
@@ -1211,8 +1222,17 @@ struct ShowCollisionBrushPt // sizeof=0x14
 };
 struct winding_t // sizeof=0x34
 {
+#ifdef KISAK_RADIANT
+    // CoD4Radiant's source named these ptCount/pts (its assert strings embed them);
+    // the anonymous unions add the editor names as zero-cost aliases with an
+    // identical layout, so engine code keeps numpoints/p and radiant code can
+    // stringize its asserts 1:1.
+    union { int   numpoints; int   ptCount;   };
+    union { float p[4][3];   float pts[4][3]; };
+#else
     int numpoints;
     float p[4][3];
+#endif
 };
 struct cLeaf_t // sizeof=0x2C
 {                                       // ...
@@ -1545,6 +1565,10 @@ inline char * stristr(const char *haystack, const char *needle)
 inline int __cdecl RETURN_ZERO32()
 {
     return 0;
+}
+inline int RETURN_ONE(int i = 0)
+{
+    return 1;
 }
 // LWSS: Note: Commonly used as a nullsub()
 inline void __cdecl KISAK_NULLSUB()

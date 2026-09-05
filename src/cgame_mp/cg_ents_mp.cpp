@@ -576,7 +576,6 @@ void __cdecl CG_AddPacketEntity(int32_t localClientNum, int32_t entnum)
     float angles[3]; // [esp+74h] [ebp-14h]
     bool entMoved; // [esp+83h] [ebp-5h]
     uint32_t eType; // [esp+84h] [ebp-4h]
-    int32_t savedregs; // [esp+88h] [ebp+0h] BYREF
 
     cent = CG_GetEntity(localClientNum, entnum);
     eType = cent->nextState.eType;
@@ -1298,8 +1297,8 @@ XAnim_s *__cdecl CG_GetMG42Anims(centity_s *cent)
     pAnims = XAnimCreateAnims("MG42", 3u, (void *(__cdecl *)(int))Hunk_AllocXAnimClient);
     iassert(pAnims);
     XAnimBlend(pAnims, 0, "root", 1u, 2u, 0);
-    BG_CreateXAnim(pAnims, 1u, (char *)weapDef->szXAnims[1]);
-    BG_CreateXAnim(pAnims, 2u, (char *)weapDef->szXAnims[3]);
+    BG_CreateXAnim(pAnims, 1u, (char *)weapDef->szXAnims[WEAP_ANIM_IDLE]);
+    BG_CreateXAnim(pAnims, 2u, (char *)weapDef->szXAnims[WEAP_ANIM_FIRE]);
     return pAnims;
 }
 
@@ -1551,7 +1550,6 @@ void __cdecl CG_EntityEffects(int32_t localClientNum, centity_s *cent)
 void __cdecl CG_AddEntityLoopSound(int32_t localClientNum, const centity_s *cent)
 {
     const char *ConfigString; // eax
-    char *v3; // eax
     float midpoint[3]; // [esp+0h] [ebp-1Ch] BYREF
     float origin[3]; // [esp+Ch] [ebp-10h] BYREF
     GfxBrushModel *bmodel; // [esp+18h] [ebp-4h]
@@ -1812,7 +1810,6 @@ void __cdecl CG_LoopFx(int32_t localClientNum, centity_s *cent)
 
 void __cdecl CG_PrimaryLight(int32_t localClientNum, centity_s *cent)
 {
-    const char *v2; // eax
     GfxLight *light; // [esp+2Ch] [ebp-34h]
     float oldColor[4]; // [esp+30h] [ebp-30h] BYREF
     const ComPrimaryLight *refLight; // [esp+40h] [ebp-20h]

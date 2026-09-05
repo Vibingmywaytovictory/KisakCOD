@@ -201,7 +201,7 @@ void __cdecl Cmd_Give_f(gentity_s *ent)
             if (strlen(name))
             {
                 if (!(give_all = I_stricmp(name, "all") == 0) && I_strnicmp(name, "health", 6)
-                    || (!amount ? (ent->health = ent->client->ps.stats[2]) : (ent->health += amount), give_all))
+                    || (!amount ? (ent->health = ent->client->ps.stats[STAT_MAX_HEALTH]) : (ent->health += amount), give_all))
                 {
                     if (!give_all && I_stricmp(name, "weapons"))
                         goto LABEL_49;
@@ -526,7 +526,7 @@ void __cdecl Cmd_Kill_f(gentity_s *ent)
         bgs = &level_bgs;
         ent->flags &= ~(FL_GODMODE|FL_DEMI_GODMODE);
         ent->health = 0;
-        ent->client->ps.stats[0] = 0;
+        ent->client->ps.stats[STAT_HEALTH] = 0;
         player_die(ent, ent, ent, 100000, 12, 0, 0, HITLOC_NONE, 0);
         if (bgs != &level_bgs)
             MyAssertHandler(".\\game_mp\\g_cmds_mp.cpp", 695, 0, "%s\n\t(bgs) = %p", "(bgs == &level_bgs)", bgs);
@@ -568,7 +568,7 @@ void __cdecl StopFollowing(gentity_s *ent)
         vMaxs[0] = 8.0;
         vMaxs[1] = 8.0;
         vMaxs[2] = 8.0;
-        G_TraceCapsule(&trace, vPos, vMins, vMaxs, vEnd, ENTITYNUM_NONE, 0x810011);
+        G_TraceCapsule(&trace, vPos, vMins, vMaxs, vEnd, ENTITYNUM_NONE, MASK_DEADSOLID);
         Vec3Lerp(vPos, vEnd, trace.fraction, vPos);
         client->ps.clientNum = ent - g_entities;
         client->ps.eFlags &= 0xFFFFFCFF;
@@ -619,8 +619,7 @@ int32_t __cdecl Cmd_FollowCycle_f(gentity_s *ent, int32_t dir)
             clientNum = level.maxclients - 1;
         if (SV_GetArchivedClientInfo(clientNum, &ent->client->sess.archiveTime, &ps, &v5))
         {
-            if ((ps.otherFlags & POF_PLAYER) == 0)
-                MyAssertHandler(".\\game_mp\\g_cmds_mp.cpp", 823, 0, "%s", "ps.otherFlags & POF_PLAYER");
+            iassert(ps.otherFlags & POF_PLAYER);
             if (G_ClientCanSpectateTeam(ent->client, v5.team))
             {
                 ent->client->spectatorClient = clientNum;
@@ -782,15 +781,11 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
     const char *v3; // eax
     const char *v4; // eax
     const char *v5; // eax
-    int32_t v6; // eax
-    int32_t v7; // eax
-    int32_t v8; // eax
     const char *v9; // eax
     const char *v10; // eax
     const char *v11; // eax
     const char *v12; // eax
     const char *v13; // eax
-    const char *v14; // eax
     const char *v15; // eax
     char *GameTypeNameForScript; // eax
     char *v17; // eax
@@ -1063,7 +1058,7 @@ void __cdecl Cmd_Vote_f(gentity_s *ent)
         ent->client->ps.eFlags |= 0x100000u;
     }
     SV_Cmd_ArgvBuffer(1, msg, 64);
-    if (msg[0] == 121 || msg[1] == 89 || msg[1] == 49)
+    if (msg[0] == 'y' || msg[0] == 'Y' || msg[0] == '1')
     {
         if (g_oldVoting->current.enabled)
         {
@@ -1367,7 +1362,6 @@ void Cmd_VisionSetNaked_f()
     char *v2; // eax
     float v3; // [esp+0h] [ebp-1Ch]
     int32_t v4; // [esp+4h] [ebp-18h]
-    float v5; // [esp+8h] [ebp-14h]
     int32_t duration; // [esp+18h] [ebp-4h]
 
     duration = 1000;
@@ -1394,7 +1388,6 @@ void Cmd_VisionSetNight_f()
     char *v2; // eax
     float v3; // [esp+0h] [ebp-1Ch]
     int32_t v4; // [esp+4h] [ebp-18h]
-    float v5; // [esp+8h] [ebp-14h]
     int32_t duration; // [esp+18h] [ebp-4h]
 
     duration = 1000;

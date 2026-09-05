@@ -1,4 +1,5 @@
 #include <universal/q_shared.h>
+#include <universal/surfaceflags.h>
 #include <qcommon/qcommon.h>
 
 #include "dynentity_client.h"
@@ -995,7 +996,7 @@ void __cdecl DynEntCl_EntityImpactEvent(
                 DynEntCl_PlayImpactEffects(
                     localClientNum,
                     sourceEntityNum,
-                    (trace->surfaceFlags & 0x1F00000) >> 20,
+                    SURF_TYPEINDEX(trace->surfaceFlags),
                     hitPos,
                     trace->normal);
             obj = Com_GetClientDObj(cent->nextState.number, localClientNum);
@@ -1181,7 +1182,7 @@ char __cdecl DynEntCl_DynEntImpactEvent(
         DynEntCl_PlayImpactEffects(
             localClientNum,
             sourceEntityNum,
-            (trace.surfaceFlags & 0x1F00000) >> 20,
+            SURF_TYPEINDEX(trace.surfaceFlags),
             hitPos,
             trace.normal);
     }
@@ -1237,7 +1238,7 @@ dxBody *__cdecl DynEntCl_CreatePhysObj(const DynEntityDef *dynEntDef, const GfxP
     }
     else
     {
-        Com_PrintWarning(1, "DynEntCl_CreatePhysObj: Unable to create physic object.");
+        Com_PrintWarning(1, "DynEntCl_CreatePhysObj: Unable to create physic object.\n");
         return 0;
     }
 }
@@ -1329,7 +1330,7 @@ void __cdecl DynEntCl_TestPhysicsEntities(
 
     memset((uint8_t *)&trace, 0, sizeof(trace));
     trace.fraction = 1.0;
-    CG_LocationalTraceEntitiesOnly(&trace, start, end, sourceEntityNum, 0x2806831);
+    CG_LocationalTraceEntitiesOnly(&trace, start, end, sourceEntityNum, MASK_SHOT);
     if (trace.hitType)
     {
         Vec3Lerp(start, end, trace.fraction, hitPos);
@@ -1759,4 +1760,4 @@ void DynEntCl_WakeUpAroundPlayer(int localClientNum)
         } while ((uint32_t)drawType < DYNENT_DRAW_COUNT);
     }
 }
-#endif 
+#endif

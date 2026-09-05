@@ -166,7 +166,6 @@ Inserts the current value of a variable as command text
 ===============
 */
 void Cmd_Vstr_f(void) {
-	char* v;
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf(0, "vstr <variablename> : execute a variable command\n");
@@ -208,34 +207,34 @@ static void LoadXAssets()
 
 #if 0
     zoneInfo[0].name = gfxCfg.codeFastFileName;
-    zoneInfo[0].allocFlags = 2;
+    zoneInfo[0].allocFlags = DB_ZONE_CODE;
     zoneInfo[0].freeFlags = 0;
     zoneCount = 1;
     if (gfxCfg.localizedCodeFastFileName)
     {
         zoneInfo[zoneCount].name = gfxCfg.localizedCodeFastFileName;
-        zoneInfo[zoneCount].allocFlags = 0;
+        zoneInfo[zoneCount].allocFlags = DB_ZONE_CODE_LOC;
         zoneInfo[zoneCount++].freeFlags = 0;
     }
     if (gfxCfg.uiFastFileName)
     {
         zoneInfo[zoneCount].name = gfxCfg.uiFastFileName;
-        zoneInfo[zoneCount].allocFlags = 8;
+        zoneInfo[zoneCount].allocFlags = DB_ZONE_GAME;
         zoneInfo[zoneCount++].freeFlags = 0;
     }
     zoneInfo[zoneCount].name = gfxCfg.commonFastFileName;
-    zoneInfo[zoneCount].allocFlags = 4;
+    zoneInfo[zoneCount].allocFlags = DB_ZONE_COMMON;
     zoneInfo[zoneCount++].freeFlags = 0;
     if (gfxCfg.localizedCommonFastFileName)
     {
         zoneInfo[zoneCount].name = gfxCfg.localizedCommonFastFileName;
-        zoneInfo[zoneCount].allocFlags = 1;
+        zoneInfo[zoneCount].allocFlags = DB_ZONE_COMMON_LOC;
         zoneInfo[zoneCount++].freeFlags = 0;
     }
     if (gfxCfg.modFastFileName)
     {
         zoneInfo[zoneCount].name = gfxCfg.modFastFileName;
-        zoneInfo[zoneCount].allocFlags = 16;
+        zoneInfo[zoneCount].allocFlags = DB_ZONE_MOD;
         zoneInfo[zoneCount++].freeFlags = 0;
     }
     DB_LoadXAssets(zoneInfo, zoneCount, 0);
@@ -420,7 +419,7 @@ void Cmd_Dumpraw_f(void)
         }
         tmp = tmp.substr(0, ext);
         zinfo.name = tmp.c_str();
-        zinfo.allocFlags = 64;
+        zinfo.allocFlags = DB_ZONE_DEV;
         zinfo.freeFlags = 0;
 
         Com_SyncThreads();
@@ -671,10 +670,10 @@ void __cdecl Cbuf_SV_Execute()
             sv_cmd_text.cmdsize -= counta;
             memmove(src, &src[counta], sv_cmd_text.cmdsize);
         }
+#ifndef KISAK_RADIANT
         SV_WaitServer();
-
         iassert( !com_inServerFrame );
-
+#endif
         Cmd_ExecuteServerString(dst);
     }
 }
@@ -1216,8 +1215,10 @@ void __cdecl Cmd_ExecuteSingleCommand(int32_t  localClientNum, int32_t  controll
                     {
                         if (itr->function == Cbuf_AddServerText_f)
                         {
+#ifndef KISAK_RADIANT
                             SV_WaitServer();
                             iassert( !com_inServerFrame );
+#endif
                             Cmd_ExecuteServerString(text);
                         }
                         else
@@ -1245,9 +1246,11 @@ void __cdecl Cmd_ExecuteSingleCommand(int32_t  localClientNum, int32_t  controll
             {
                 if (!Dvar_Command() && (!com_sv_running || !com_sv_running->current.enabled || !SV_GameCommand()))
                 {
+#ifndef KISAK_RADIANT
                     CL_ForwardCommandToServer(localClientNum, text);
                     Cmd_EndTokenizedString();
                     return;
+#endif
                 }
             }
 
@@ -1303,6 +1306,8 @@ void __cdecl Cmd_Exec_f()
         if (I_stricmp(pathname, "config_mp.cfg"))
 #elif KISAK_SP
         if (I_stricmp(pathname, "config.cfg"))
+#elif defined(KISAK_RADIANT)
+        if (I_stricmp(pathname, "config.cfg"))
 #endif
         {
             if ((!IsFastFileLoad() || !Cmd_ExecFromFastFile(localClientNum, 0, filename))
@@ -1340,8 +1345,14 @@ char __cdecl Cmd_ExecFromFastFile(int32_t  localClientNum, int32_t  controllerIn
 {
     RawFile *rawfile; // [esp+4h] [ebp-4h]
 
+#ifdef KISAK_MP
     if (!DB_IsMinimumFastFileLoaded())
         return 0;
+#elif KISAK_SP
+	if (!g_anyFastFileLoaded)
+		return 0;
+#endif
+
     rawfile = DB_FindXAssetHeader(ASSET_TYPE_RAWFILE, filename).rawfile;
     if (!rawfile)
         return 0;

@@ -307,7 +307,7 @@ void __cdecl CL_MapLoading(const char *mapname)
     clientActive_t *LocalClientGlobals; // [esp+Ch] [ebp-10h]
     int32_t localClientNum; // [esp+10h] [ebp-Ch]
     int32_t localClientNuma; // [esp+10h] [ebp-Ch]
-    netsrc_t localClientNumb; // [esp+10h] [ebp-Ch]
+    int localClientNumb; // [esp+10h] [ebp-Ch]
     clientConnection_t *clc; // [esp+14h] [ebp-8h]
     clientConnection_t *clca; // [esp+14h] [ebp-8h]
 
@@ -398,12 +398,9 @@ void __cdecl CL_ResetSkeletonCache(int32_t localClientNum)
 
 void __cdecl CL_ClearState(int32_t localClientNum)
 {
-    clientActive_t *dst; // [esp+0h] [ebp-4h]
-
-    if (localClientNum < 1)
+    if (localClientNum < MAX_LOCAL_CLIENTS)
     {
-        dst = CL_GetLocalClientGlobals(localClientNum);
-        memset((uint8_t *)dst, 0, sizeof(clientActive_t));
+        memset(CL_GetLocalClientGlobals(localClientNum), 0, sizeof(clientActive_t));
     }
     Com_ClientDObjClearAllSkel();
 }
@@ -543,7 +540,7 @@ void __cdecl CL_ForwardCommandToServer(int32_t localClientNum, const char *strin
     }
 }
 
-void __cdecl CL_RequestAuthorization(netsrc_t localClientNum)
+void __cdecl CL_RequestAuthorization(int localClientNum)
 {
     //__int16 v1; // ax
     //const char *v2; // eax
@@ -799,8 +796,8 @@ void __cdecl CL_Vid_Restart_f()
             DB_ResetZoneSize(0);
             Com_sprintf(zoneName, 0x40u, "%s_load", mapname);
             zoneInfo[0].name = zoneName;
-            zoneInfo[0].allocFlags = 32;
-            zoneInfo[0].freeFlags = 96;
+            zoneInfo[0].allocFlags = DB_ZONE_LOAD;
+            zoneInfo[0].freeFlags = DB_ZONE_LOAD | DB_ZONE_DEV;
             DB_LoadXAssets(zoneInfo, 1u, 0);
             DB_SyncXAssets();
             DB_UpdateDebugZone();
@@ -904,8 +901,8 @@ void __cdecl LoadMapLoadscreen(const char *mapname)
     DB_ResetZoneSize(0);
     Com_sprintf(zoneName, 0x40u, "%s_load", mapname);
     zoneInfo[0].name = zoneName;
-    zoneInfo[0].allocFlags = 32;
-    zoneInfo[0].freeFlags = 96;
+    zoneInfo[0].allocFlags = DB_ZONE_LOAD;
+    zoneInfo[0].freeFlags = DB_ZONE_LOAD | DB_ZONE_DEV;
     DB_LoadXAssets(zoneInfo, 1u, 0);
     DB_SyncXAssets();
     DB_UpdateDebugZone();
@@ -992,16 +989,14 @@ void __cdecl CL_DownloadsComplete(int32_t localClientNum)
 }
 
 uint8_t msgBuffer[2048];
-void __cdecl CL_CheckForResend(netsrc_t localClientNum)
+void __cdecl CL_CheckForResend(int localClientNum)
 {
-    int32_t v1; // eax
     const char *v2; // eax
     char *v3; // eax
     const char *v4; // eax
     const char *v5; // eax
     const char *v6; // eax
     int32_t v7; // [esp+0h] [ebp-1188h]
-    char md5Str[36]; // [esp+2Ch] [ebp-115Ch] BYREF
     uint8_t dst[1244]; // [esp+50h] [ebp-1138h] BYREF
     connstate_t connectionState; // [esp+52Ch] [ebp-C5Ch]
     char dest[1028]; // [esp+530h] [ebp-C58h] BYREF
@@ -1017,7 +1012,6 @@ void __cdecl CL_CheckForResend(netsrc_t localClientNum)
 
     unsigned char *pSteamClientTicket = NULL;
     uint32 steamClientTicketSize = 0;
-    char steamIDbuf[25];
     unsigned char steamTicketBase64[2048]{ 0 };
     bool got;
     unsigned char steamTicketDecodeBuf[1024]{ 0 };
@@ -1059,7 +1053,7 @@ void __cdecl CL_CheckForResend(netsrc_t localClientNum)
                 iassert(b64_decode(steamTicketBase64, strlen((char *)steamTicketBase64), steamTicketDecodeBuf) == steamClientTicketSize);
                 v2 = va("getchallenge 0 \"%s\" \"%llu\"", steamTicketBase64, Steam_GetClientSteamID64());
 
-                NET_OutOfBandPrint(localClientNum, clc->serverAddress, v2);
+                NET_OutOfBandPrint((netsrc_t)localClientNum, clc->serverAddress, v2);
                 break;
             case CA_CHALLENGING:
                 v3 = Dvar_InfoString(localClientNum, 2);
@@ -1080,13 +1074,21 @@ void __cdecl CL_CheckForResend(netsrc_t localClientNum)
                 pktlen = count + 10;
                 memcpy(pkt, src, count + 10);
                 //PbClientConnecting(2, pkt, &pktlen);
-                NET_OutOfBandData(localClientNum, clc->serverAddress, src, count + 10);
+                NET_OutOfBandData((netsrc_t)localClientNum, clc->serverAddress, src, count + 10);
                 dvar_modifiedFlags &= ~2u;
                 break;
             case CA_SENDINGSTATS:
                 MSG_Init(&buf, msgBuffer, 2048);
                 MSG_WriteString(&buf, "stats");
                 c = CL_HighestPriorityStatPacket(clc);
+                if (c < 0)
+                {
+                    // KISAK: nothing eligible to send this frame. Should be unreachable (the statResponse
+                    // handler never leaves the mask at 0 in this state, and the 100ms resend gate guarantees
+                    // an older stamp), but index -1 read 1240 bytes before the stat buffer and wrote
+                    // statPacketSendTime[-1], so skip the frame rather than trust it.
+                    break;
+                }
                 if (c > 6)
                     MyAssertHandler(
                         ".\\client_mp\\cl_main_mp.cpp",
@@ -1116,7 +1118,7 @@ void __cdecl CL_CheckForResend(netsrc_t localClientNum)
                 MSG_WriteData(&buf, (unsigned char*)data, v7);
                 clc->statPacketSendTime[c] = cls.realtime;
                 clc->lastPacketSentTime = cls.realtime;
-                NET_OutOfBandData(localClientNum, clc->serverAddress, buf.data, buf.cursize);
+                NET_OutOfBandData((netsrc_t)localClientNum, clc->serverAddress, buf.data, buf.cursize);
                 break;
             default:
                 Com_Error(ERR_FATAL, "CL_CheckForResend: bad connstate");
@@ -1166,7 +1168,7 @@ void __cdecl CL_DisconnectError(char *message)
     Com_Error(ERR_SERVERDISCONNECT, v2);
 }
 
-char __cdecl CL_ConnectionlessPacket(netsrc_t localClientNum, netadr_t from, msg_t *msg, int32_t time)
+char __cdecl CL_ConnectionlessPacket(int localClientNum, netadr_t from, msg_t *msg, int32_t time)
 {
     const char *v5; // eax
     char success; // [esp+3h] [ebp-9h]
@@ -1393,7 +1395,7 @@ void __cdecl CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 }
 
 char printBuf[2048];
-char __cdecl CL_DispatchConnectionlessPacket(netsrc_t localClientNum, netadr_t from, msg_t *msg, int32_t time)
+char __cdecl CL_DispatchConnectionlessPacket(int localClientNum, netadr_t from, msg_t *msg, int32_t time)
 {
     const char *v5; // eax
     const char *v6; // eax
@@ -1455,7 +1457,7 @@ char __cdecl CL_DispatchConnectionlessPacket(netsrc_t localClientNum, netadr_t f
                     {
                         v9 = Cmd_Argv(1);
                         v10 = va("%s", v9);
-                        NET_OutOfBandPrint(localClientNum, from, v10);
+                        NET_OutOfBandPrint((netsrc_t)localClientNum, from, v10);
                         return 1;
                     }
                     if (!I_stricmp(c, "keyAuthorize"))
@@ -1599,7 +1601,9 @@ char __cdecl CL_DispatchConnectionlessPacket(netsrc_t localClientNum, netadr_t f
                     clca = CL_GetLocalClientConnection(localClientNum);
                     v7 = Cmd_Argv(1);
                     statPacketsNeeded = atoi(v7);
-                    if (statPacketsNeeded)
+                    // KISAK: test the 7-bit mask, not the raw value. A reply such as 128 used to leave
+                    // statPacketsToSend == 0 while still in CA_SENDINGSTATS, which drove the packet picker to -1.
+                    if (statPacketsNeeded & 0x7F)
                     {
                         clca->statPacketsToSend = statPacketsNeeded & 0x7F;
                     }
@@ -1646,7 +1650,7 @@ char __cdecl CL_DispatchConnectionlessPacket(netsrc_t localClientNum, netadr_t f
                         autoupdateStarted = 1;
                     }
                     Netchan_Setup(
-                        localClientNum,
+                        (netsrc_t)localClientNum,
                         &clc->netchan,
                         from,
                         localClientNum + g_qport,
@@ -1823,7 +1827,7 @@ void __cdecl CL_WriteDemoMessage(int32_t localClientNum, msg_t *msg, int32_t hea
     FS_Write((char *)&msg->data[headerBytes], len, clc->demofile);
 }
 
-char __cdecl CL_PacketEvent(netsrc_t localClientNum, netadr_t from, msg_t *msg, int32_t time)
+char __cdecl CL_PacketEvent(int localClientNum, netadr_t from, msg_t *msg, int32_t time)
 {
     connstate_t connstate; // [esp+4h] [ebp-18h]
     int32_t savedServerMessageSequence; // [esp+8h] [ebp-14h]
@@ -2036,9 +2040,8 @@ void __cdecl CL_WWWDownload()
     }
 }
 
-void __cdecl CL_CheckForUpdateKeyAuth(netsrc_t localClientNum)
+void __cdecl CL_CheckForUpdateKeyAuth(int localClientNum)
 {
-    int32_t v1; // eax
     clientConnection_t *clc; // [esp+0h] [ebp-4h]
 
     if (localClientNum)
@@ -2060,7 +2063,7 @@ void __cdecl CL_CheckForUpdateKeyAuth(netsrc_t localClientNum)
     }
 }
 
-void __cdecl CL_Frame(netsrc_t localClientNum)
+void __cdecl CL_Frame(int localClientNum)
 {
     connstate_t connstate; // [esp+34h] [ebp-4h]
 
@@ -2554,9 +2557,6 @@ void __cdecl CL_PlayLogo_f()
     float v5; // [esp+8h] [ebp-48h]
     float v6; // [esp+Ch] [ebp-44h]
     float v7; // [esp+10h] [ebp-40h]
-    float v8; // [esp+14h] [ebp-3Ch]
-    float v9; // [esp+24h] [ebp-2Ch]
-    float v10; // [esp+34h] [ebp-1Ch]
     const char *name; // [esp+4Ch] [ebp-4h]
 
     if (Cmd_Argc() != 5)
@@ -2846,8 +2846,11 @@ void __cdecl CL_Record_f()
                     0,
                     (const uint8_t *)buf.data + 4,
                     &(*compressedBuf)[4],
-                    buf.cursize - 4)
+                    buf.cursize - 4,
+                    sizeof(*compressedBuf) - 4)
                     + 4;
+                if (compressedSize < 4)
+                    Com_Error(ERR_DROP, "Overflow compressed msg buf writing demo gamestate");
                 type = 0;
                 FS_Write((char *)&type, 1u, clc->demofile);
                 len = clc->serverMessageSequence;
@@ -2977,7 +2980,6 @@ void __cdecl CL_RconInit()
 
 void CL_RconLogin()
 {
-    uint32_t v0; // [esp+Ch] [ebp-Ch]
     const char *password; // [esp+14h] [ebp-4h]
 
     if (Cmd_Argc() == 3)
@@ -4013,7 +4015,7 @@ int32_t __cdecl CL_GetPingQueueCount()
     return count;
 }
 
-int32_t __cdecl CL_UpdateDirtyPings(netsrc_t localClientNum, uint32_t source)
+int32_t __cdecl CL_UpdateDirtyPings(int localClientNum, uint32_t source)
 {
     serverInfo_t *v3; // edx
     ping_t *v4; // eax
@@ -4088,7 +4090,7 @@ int32_t __cdecl CL_UpdateDirtyPings(netsrc_t localClientNum, uint32_t source)
                     cl_pinglist[ja].start = Sys_Milliseconds();
                     cl_pinglist[ja].time = 0;
                     cl_pinglist[ja].info[0] = 0;
-                    NET_OutOfBandPrint(localClientNum, cl_pinglist[ja].adr, "getinfo xxx");
+                    NET_OutOfBandPrint((netsrc_t)localClientNum, cl_pinglist[ja].adr, "getinfo xxx");
                     ++slots;
                 }
             }

@@ -40,7 +40,6 @@ void __cdecl CG_AddPlayerSpriteDrawSurfs(int32_t localClientNum, const centity_s
     team_t iTeam; // [esp+1Ch] [ebp-Ch]
     playerState_s *ps; // [esp+20h] [ebp-8h]
     const char *pszIcon; // [esp+24h] [ebp-4h]
-    int32_t savedregs; // [esp+28h] [ebp+0h] BYREF
     cg_s *cgameGlob;
 
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
@@ -243,8 +242,6 @@ void __cdecl CG_Player(int32_t localClientNum, centity_s *cent)
 }
 void __cdecl CG_PlayerTurretPositionAndBlend(int32_t localClientNum, centity_s *cent)
 {
-    char *AnimDebugName; // eax
-    char *v3; // eax
     int32_t v4; // eax
     double v5; // st7
     float v6; // [esp+18h] [ebp-1ACh]
@@ -425,7 +422,7 @@ void __cdecl CG_PlayerTurretPositionAndBlend(int32_t localClientNum, centity_s *
                                             end[1] = cent->pose.origin[1];
                                             end[2] = cent->pose.origin[2];
                                             start[2] = pTurretCEnt->pose.origin[2];
-                                            CG_TraceCapsule(&trace, start, vec3_origin, vec3_origin, end, cent->nextState.number, 0x2810011);
+                                            CG_TraceCapsule(&trace, start, vec3_origin, vec3_origin, end, cent->nextState.number, MASK_PLAYERSOLID);
                                             if (trace.fraction < 1.0)
                                             {
                                                 Vec3Lerp(start, end, trace.fraction, endpos);
@@ -708,7 +705,7 @@ bool __cdecl CG_IsPlayerDead(int32_t localClientNum)
 
     iassert(cgameGlob->bgs.clientinfo[cgameGlob->clientNum].infoValid);
 
-    return !cgameGlob->nextSnap->ps.stats[0]
+    return !cgameGlob->nextSnap->ps.stats[STAT_HEALTH]
         || (cgameGlob->nextSnap->ps.otherFlags & 4) == 0
         || (cgameGlob->nextSnap->ps.otherFlags & 2) != 0;
 }
@@ -808,7 +805,7 @@ bool __cdecl CG_IsWeaponVisible(int32_t localClientNum, centity_s *cent, XModel 
     iassert(cent);
 
     CG_CalcWeaponVisTrace(weapModel, origin, forward, stock, end, &weapLen);
-    CG_TraceCapsule(&trace, stock, vec3_origin, vec3_origin, end, cent->nextState.number, 4097);
+    CG_TraceCapsule(&trace, stock, vec3_origin, vec3_origin, end, cent->nextState.number, CONTENTS_SOLID | CONTENTS_AI_NOSIGHT);
 
     iassert(cg_drawWVisDebug);
 
@@ -828,7 +825,7 @@ bool __cdecl CG_IsWeaponVisible(int32_t localClientNum, centity_s *cent, XModel 
     eye[0] = cgameGlob->refdef.vieworg[0];
     eye[1] = cgameGlob->refdef.vieworg[1];
     eye[2] = cgameGlob->refdef.vieworg[2];
-    CG_TraceCapsule(&trace, eye, vec3_origin, vec3_origin, stock, cent->nextState.number, 4097);
+    CG_TraceCapsule(&trace, eye, vec3_origin, vec3_origin, stock, cent->nextState.number, CONTENTS_SOLID | CONTENTS_AI_NOSIGHT);
     if (cg_drawWVisDebug->current.enabled)
     {
         if (trace.fraction == 1.0)

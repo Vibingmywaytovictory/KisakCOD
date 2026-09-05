@@ -2177,7 +2177,7 @@ void MdlPrvDropToFloor()
     mins[1] = -5.0f;
     mins[2] = -5.0f;
 
-    CG_TraceCapsule(&trace, center, mins, maxs, end, -1, 1);
+    CG_TraceCapsule(&trace, center, mins, maxs, end, -1, MASK_SOLID);
 
     if (!trace.allsolid && trace.fraction != 1.0)
     {
@@ -2323,7 +2323,7 @@ void __cdecl MdlPrvControlsGamepad(int localClientNum, double forward, double si
     v12 = (float)((float)v11 * (float)0.001);
     if (v12 == 0.0)
         v12 = 0.015;
-    if (cgArray[0].predictedPlayerState.pm_type != 4)
+    if (cgArray[0].predictedPlayerState.pm_type != PM_MPVIEWER)
     {
         if (g_mdlprv.system.walkaboutActive
             && Key_IsDown(localClientNum, 16)
@@ -2520,7 +2520,7 @@ void __cdecl CG_ModelPreviewerHandleKeyEvents(int localClientNum, int key, int d
             "%s\n\t(localClientNum) = %i",
             "(localClientNum == 0)",
             localClientNum);
-    if (cgArray[0].predictedPlayerState.pm_type == 4)
+    if (cgArray[0].predictedPlayerState.pm_type == PM_MPVIEWER)
     {
         switch (key)
         {
@@ -2682,7 +2682,7 @@ bool __cdecl CG_ModelPreviewerNeedsVieworgInterpSkipped(int localClientNum)
             "%s\n\t(localClientNum) = %i",
             "(localClientNum == 0)",
             localClientNum);
-    return cgArray[0].predictedPlayerState.pm_type == 4;
+    return cgArray[0].predictedPlayerState.pm_type == PM_MPVIEWER;
 }
 
 void __cdecl CG_AddModelPreviewerModel(int frametime)
@@ -2727,7 +2727,7 @@ void __cdecl CG_AddModelPreviewerModel(int frametime)
         CG_ModPrvApplyDelta(v9);
         DObjUpdateClientInfo(g_mdlprv.model.currentObj, v9, center);
         memset(&g_mdlprv.model.pose, 0, sizeof(g_mdlprv.model.pose));
-        g_mdlprv.model.pose.eType = 17;
+        g_mdlprv.model.pose.eType = ET_EVENTS;
         g_mdlprv.model.currentEntity.info.pose = &g_mdlprv.model.pose;
         g_mdlprv.model.pose.ragdollHandle = g_mdlprv.model.ragdoll;
         //g_mdlprv.model.pose.isRagdoll = (_cntlzw(g_mdlprv.model.ragdoll) & 0x20) == 0;

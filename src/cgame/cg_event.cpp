@@ -1,4 +1,5 @@
 #include <universal/q_shared.h>
+#include <universal/surfaceflags.h>
 #include "cg_local.h"
 #include "cg_public.h"
 
@@ -62,7 +63,6 @@ void __cdecl CG_PlayBoltedEffect(
 void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t event)
 {
     const char *ConfigString; // eax
-    char *v4; // eax
     float innerRadius_4; // [esp+4h] [ebp-150h]
     float innerRadius_4a; // [esp+4h] [ebp-150h]
     float innerRadius_4b; // [esp+4h] [ebp-150h]
@@ -76,11 +76,6 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
     float p_4d; // [esp+Ch] [ebp-148h]
     float p_4e; // [esp+Ch] [ebp-148h]
     float p_4f; // [esp+Ch] [ebp-148h]
-    snapshot_s *v24; // [esp+B0h] [ebp-A4h]
-    snapshot_s *v25; // [esp+B4h] [ebp-A0h]
-    snapshot_s *v26; // [esp+B8h] [ebp-9Ch]
-    snapshot_s *v27; // [esp+BCh] [ebp-98h]
-    snapshot_s *v28; // [esp+C0h] [ebp-94h]
     snapshot_s *nextSnap; // [esp+C8h] [ebp-8Ch]
     snd_alias_list_t *v30; // [esp+CCh] [ebp-88h] BYREF
     FxEffectDef *def; // [esp+D0h] [ebp-84h] BYREF
@@ -106,11 +101,6 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
     float *position; // [esp+148h] [ebp-Ch]
     const playerState_s *ps; // [esp+14Ch] [ebp-8h]
     uint32_t weaponIdx; // [esp+150h] [ebp-4h]
-    int SoundAliasSeed;
-    const char *v85;
-    int v86;
-    int v88;
-    const char *v90;
 
     if (event)
     {
@@ -452,7 +442,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                 return;
             case EV_FIRE_WEAPON_MG42:
                 eType = ET_PLAYER;
-                CG_StartShakeCamera(localClientNum, 0.050000001f, 100, cent->pose.origin, 100.0f);
+                CG_StartShakeCamera(localClientNum, 0.05f, 100, cent->pose.origin, 100.0f);
                 CG_FireWeapon(localClientNum, cent, event, scr_const.tag_flash, 0, &cgameGlob->nextSnap->ps);
                 attackerCent = CG_GetEntity(localClientNum, eventParm);
                 if (attackerCent->nextValid
@@ -481,10 +471,11 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
             case EV_SOUND_ALIAS_NOTIFY_AS_MASTER:
                 if (cent->nextState.eventParm)
                 {
-                    SoundAliasSeed = Com_GetSoundAliasSeed();
+                    int SoundAliasSeed = Com_GetSoundAliasSeed();
                     Com_SetSoundAliasSeed(cgArray[0].snap->serverCommandSequence + cent->nextState.number);
-                    v85 = CL_GetConfigString(localClientNum, cent->nextState.eventParm + CS_SOUNDALIASES);
-                    v86 = cent->nextState.number;
+                    const char *v85 = CL_GetConfigString(localClientNum, cent->nextState.eventParm + CS_SOUNDALIASES);
+                    int v86 = cent->nextState.number;
+                    int v88;
                     if (event == EV_SOUND_ALIAS_NOTIFY)
                         v88 = CG_PlaySoundAliasByName(localClientNum, v86, cent->nextState.lerp.pos.trBase, v85);
                     else
@@ -500,7 +491,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                 {
                     if (cgArray[0].demoType != DEMO_TYPE_CLIENT)
                     {
-                        v90 = CL_GetConfigString(localClientNum, cent->nextState.eventParm + CS_SOUNDALIASES);
+                        const char *v90 = CL_GetConfigString(localClientNum, cent->nextState.eventParm + CS_SOUNDALIASES);
                         if (v90)
                         {
                             SND_AddLengthNotify(SND_FindPlaybackId((const snd_alias_t *)cent->nextState.number, v90), (const snd_alias_t *)cent->nextState.number, SndLengthNotify_Script);
@@ -845,7 +836,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                     CG_PlayEntitySoundAlias(localClientNum, ent->number, weaponDef->detonateSound);
                 return;
             case EV_NIGHTVISION_WEAR:
-                if (isPlayerView && ((ps->eFlags & 0x300) != 0 || !*weaponDef->szXAnims[26]))
+                if (isPlayerView && ((ps->eFlags & 0x300) != 0 || !*weaponDef->szXAnims[WEAP_ANIM_NIGHTVISION_WEAR]))
                     CG_PlayClientSoundAlias(localClientNum, cgMedia.nightVisionOn);
                 if (isPlayerView)
                     CG_PlayEntitySoundAlias(localClientNum, ent->number, weaponDef->nightVisionWearSoundPlayer);
@@ -853,7 +844,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                     CG_PlayEntitySoundAlias(localClientNum, ent->number, weaponDef->nightVisionWearSound);
                 return;
             case EV_NIGHTVISION_REMOVE:
-                if (isPlayerView && ((ps->eFlags & 0x300) != 0 || !*weaponDef->szXAnims[27]))
+                if (isPlayerView && ((ps->eFlags & 0x300) != 0 || !*weaponDef->szXAnims[WEAP_ANIM_NIGHTVISION_REMOVE]))
                     CG_PlayClientSoundAlias(localClientNum, cgMedia.nightVisionOff);
                 if (isPlayerView)
                     CG_PlayEntitySoundAlias(localClientNum, ent->number, weaponDef->nightVisionRemoveSoundPlayer);
@@ -1294,7 +1285,6 @@ void __cdecl CG_PlayFx(int32_t localClientNum, centity_s *cent, const float *ang
 
 void __cdecl CG_PlayFxOnTag(int32_t localClientNum, centity_s *cent, int32_t eventParm)
 {
-    uint32_t ConfigstringConst; // eax
     uint16_t tagName; // [esp+0h] [ebp-1Ch] BYREF
     int32_t dobjHandle; // [esp+4h] [ebp-18h]
     const char *tagAndEffect; // [esp+8h] [ebp-14h]

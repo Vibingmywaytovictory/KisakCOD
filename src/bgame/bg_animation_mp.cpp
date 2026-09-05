@@ -319,7 +319,6 @@ void __cdecl BG_InitWeaponStrings()
 void __cdecl BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData)
 {
     int32_t v3; // eax
-    int32_t v4; // eax
     parseInfo_t *v5; // [esp+24h] [ebp-18h]
     int32_t partIndex; // [esp+28h] [ebp-14h]
     parseInfo_t *token; // [esp+2Ch] [ebp-10h]
@@ -1174,7 +1173,7 @@ void __cdecl BG_AnimUpdatePlayerStateConditions(pmove_t *pmove)
 
     BG_SetConditionValue(ps->clientNum, 4u, ps->viewangles[0] > 0.0);
 
-    if ((pmove->cmd.buttons & 1) != 0)
+    if ((pmove->cmd.buttons & BUTTON_ATTACK) != 0)
         BG_SetConditionValue(ps->clientNum, 6u, 1u);
     else
         BG_SetConditionValue(ps->clientNum, 6u, 0);
@@ -1352,7 +1351,7 @@ void __cdecl BG_Player_DoControllersInternal(const entityState_s *es, const clie
             if (fLeanFrac != 0.0)
                 vHeadAngles[2] = vHeadAngles[2] * 0.5;
             tag_origin_angles[0] = tag_origin_angles[0] + es->fTorsoPitch;
-            v14 = vTorsoAngles[1] * 0.01745329238474369f;
+            v14 = DEG2RAD( vTorsoAngles[1] );
             c = cos(v14);
             s = sin(v14);
             tag_origin_offset = (1.0f - c) * -24.0f + tag_origin_offset;
@@ -2207,10 +2206,6 @@ void BG_FinalizePlayerAnims()
 {
     char *v0; // eax
     char *AnimName; // eax
-    int v2; // eax
-    int v3; // eax
-    int v4; // eax
-    int v5; // eax
     double v6; // st7
     double v7; // st7
     double moveSpeed; // [esp+10h] [ebp-60h]
@@ -2429,7 +2424,6 @@ void __cdecl BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pL
     int32_t v8; // eax
     int32_t v9; // eax
     int32_t v10; // eax
-    const char *v11; // [esp+0h] [ebp-1C8h]
     animScriptParseMode_t newParseMode; // [esp+8Ch] [ebp-13Ch]
     animScriptItem_t *currentScriptItem; // [esp+90h] [ebp-138h]
     int32_t oldState; // [esp+94h] [ebp-134h]

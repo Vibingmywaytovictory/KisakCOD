@@ -74,7 +74,6 @@ void __cdecl R_ChangeStreamSource(
     uint32_t vertexOffset,
     uint32_t vertexStride)
 {
-    const char *v5; // eax
     int hr; // [esp+0h] [ebp-8h]
     IDirect3DDevice9 *device; // [esp+4h] [ebp-4h]
 
@@ -444,8 +443,6 @@ void  R_DeriveWorldViewMatrix(GfxCmdBufSourceState *source)
 {
     GfxMatrix world;
     GfxViewParms *p_viewParms; // [esp+44h] [ebp-10h]
-    GfxCodeMatrices *activeMatrices; // [esp+4Ch] [ebp-8h]
-    GfxCodeMatrices *retaddr; // [esp+54h] [ebp+0h]
 
     //activeMatrices = retaddr;
     p_viewParms = &source->viewParms;
@@ -488,9 +485,6 @@ void  R_DeriveWorldViewProjectionMatrix(GfxCmdBufSourceState *source)
     float *mat20; // [esp-8h] [ebp-60h]
     GfxMatrix mat;
     GfxViewParms *p_viewParms; // [esp+48h] [ebp-10h]
-    int v6; // [esp+4Ch] [ebp-Ch]
-    GfxCodeMatrices *activeMatrices; // [esp+50h] [ebp-8h]
-    GfxCodeMatrices *retaddr; // [esp+58h] [ebp+0h]
 
     //activeMatrices = retaddr;
     p_viewParms = &source->viewParms;
@@ -529,7 +523,6 @@ void  R_GenerateWorldOutdoorLookupMatrix(
     float worldOffset[4]; // [esp+34h] [ebp-4Ch] BYREF
     float zInTimesInvViewTimesOutdoorLookup[4]; // [esp+44h] [ebp-3Ch] BYREF
     float zInTimesInvView[4]; // [esp+54h] [ebp-2Ch] BYREF
-    GfxCodeMatrices *activeMatrices; // [esp+74h] [ebp-Ch]
 
     const float awayBias = r_outdoorAwayBias->current.value;
     const float downBias = r_outdoorDownBias->current.value;
@@ -2124,7 +2117,9 @@ void __cdecl R_SetViewportStruct(GfxCmdBufSourceState *source, const GfxViewport
 {
     iassert(viewport->width > 0);
     iassert(viewport->height > 0);
+#ifndef KISAK_RADIANT
     iassert(source->viewportBehavior == GFX_USE_VIEWPORT_FOR_VIEW);
+#endif
 
     source->sceneViewport = *viewport;
     source->viewMode = VIEW_MODE_NONE;
@@ -2284,7 +2279,20 @@ GfxViewportBehavior __cdecl R_ViewportBehaviorForRenderTarget(GfxRenderTargetId 
     iassert(s_viewportBehaviorForRenderTarget);
     bcassert(renderTargetId, R_RENDERTARGET_COUNT);
 
+#ifdef KISAK_RADIANT
+    // FAITHFUL to the CoD4Radiant editor: its R_SetRenderTarget (IDB 0x5397a0) and
+    // R_SetupRenderTarget (IDB 0x539670) compute viewportBehavior INLINE as
+    // `id != SHADOWMAP_SUN && id != SHADOWMAP_SPOT` — i.e. every target except the two shadowmaps
+    // is FULL (FRAME_BUFFER included). The s_viewportBehaviorForRenderTarget table below is the
+    // CoD3 *game* variant (FRAME_BUFFER/SCENE = FOR_VIEW); used in the editor it made the plain-2D
+    // texture browser read its viewport from the stale sceneViewport (rendered into a small
+    // top-left rectangle). Use the editor's inline rule so FRAME_BUFFER resolves to FULL.
+    return (renderTargetId != R_RENDERTARGET_SHADOWMAP_SUN && renderTargetId != R_RENDERTARGET_SHADOWMAP_SPOT)
+               ? GFX_USE_VIEWPORT_FULL
+               : GFX_USE_VIEWPORT_FOR_VIEW;
+#else
     return s_viewportBehaviorForRenderTarget[renderTargetId];
+#endif
 }
 
 void __cdecl R_SetRenderTarget(GfxCmdBufContext context, GfxRenderTargetId newTargetId)

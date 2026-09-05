@@ -1,4 +1,5 @@
 #include <universal/q_shared.h>
+#include <universal/surfaceflags.h>
 #include "qcommon.h"
 #include "threads.h"
 
@@ -134,8 +135,6 @@ void __cdecl CM_Trace(
     uint32_t model,
     int brushmask)
 {
-    const char *v7; // eax
-    const char *v8; // eax
     cmodel_t *cmod; // [esp+78h] [ebp-ECh]
     traceWork_t tw; // [esp+7Ch] [ebp-E8h] BYREF
     float offset[3]; // [esp+12Ch] [ebp-38h]
@@ -208,7 +207,7 @@ void __cdecl CM_Trace(
     iassert( results->surfaceFlags != SURF_INVALID );
     oldSurfaceFlags = results->surfaceFlags;
     oldFrac = results->fraction;
-    results->surfaceFlags = -1;
+    results->surfaceFlags = SURF_INVALID;
     if (*end == *start && end[1] == start[1] && end[2] == start[2])
     {
         tw.isPoint = 0;
@@ -275,7 +274,7 @@ void __cdecl CM_Trace(
     }
     else
     {
-        if (results->surfaceFlags != -1 && oldFrac != results->fraction)
+        if (results->surfaceFlags != SURF_INVALID && oldFrac != results->fraction)
             MyAssertHandler(
                 ".\\qcommon\\cm_trace.cpp",
                 1476,
@@ -453,7 +452,7 @@ void __cdecl CM_TestBoxInBrush(const traceWork_t *tw, cbrush_t *brush, trace_t *
         trace->allsolid = 1;
         trace->fraction = 0.0;
         trace->contents = brush->contents;
-        trace->surfaceFlags = 0;
+        trace->surfaceFlags = SURF_NONE;
     }
 }
 
@@ -514,7 +513,7 @@ void __cdecl CM_TestCapsuleInCapsule(const traceWork_t *tw, trace_t *trace)
         trace->startsolid = 1;
         trace->allsolid = 1;
         trace->fraction = 0.0;
-        trace->surfaceFlags = 0;
+        trace->surfaceFlags = SURF_NONE;
         return;
     }
     Vec3Sub(p2, bottom, tmp);
@@ -524,7 +523,7 @@ void __cdecl CM_TestCapsuleInCapsule(const traceWork_t *tw, trace_t *trace)
         trace->startsolid = 1;
         trace->allsolid = 1;
         trace->fraction = 0.0;
-        trace->surfaceFlags = 0;
+        trace->surfaceFlags = SURF_NONE;
         return;
     }
     fHeightDiff = tw->extents.start[2] - offset[2];
@@ -542,7 +541,7 @@ void __cdecl CM_TestCapsuleInCapsule(const traceWork_t *tw, trace_t *trace)
             trace->startsolid = 1;
             trace->allsolid = 1;
             trace->fraction = 0.0;
-            trace->surfaceFlags = 0;
+            trace->surfaceFlags = SURF_NONE;
         }
     }
 }
@@ -603,7 +602,6 @@ void __cdecl CM_TraceThroughLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *
 
 bool __cdecl CM_TraceThroughLeafBrushNode(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace)
 {
-    __int64 _FFFFFFFC; // [esp-4h] [ebp-48h]
     float absmin[3]; // [esp+Ch] [ebp-38h] BYREF
     float start[4]; // [esp+18h] [ebp-2Ch] BYREF
     float end[4]; // [esp+28h] [ebp-1Ch] BYREF
@@ -1008,7 +1006,7 @@ void __cdecl CM_TraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_
         {
             trace->allsolid = 1;
             trace->fraction = 0.0;
-            trace->surfaceFlags = 0;
+            trace->surfaceFlags = SURF_NONE;
         }
     }
 }
@@ -1188,7 +1186,7 @@ int __cdecl CM_TraceSphereThroughSphere(
                     trace->normal[2] = vNormal[2];
                     trace->contents = tw->threadInfo.box_brush->contents;
                     trace->walkable = 0;
-                    trace->surfaceFlags = 0;
+                    trace->surfaceFlags = SURF_NONE;
                     return 0;
                 }
             }
@@ -1209,7 +1207,7 @@ int __cdecl CM_TraceSphereThroughSphere(
         trace->walkable = 0;
         Vec3NormalizeTo(vDelta, trace->normal);
         trace->contents = tw->threadInfo.box_brush->contents;
-        trace->surfaceFlags = 0;
+        trace->surfaceFlags = SURF_NONE;
         Vec3Sub(vEnd, vStationary, vDelta);
         if (fRadiusSqrd >= Vec3LengthSq(vDelta))
             trace->allsolid = 1;
@@ -1293,7 +1291,7 @@ int __cdecl CM_TraceCylinderThroughCylinder(
                         trace->normal[1] = vNormal[1];
                         trace->normal[2] = vNormal[2];
                         trace->contents = tw->threadInfo.box_brush->contents;
-                        trace->surfaceFlags = 0;
+                        trace->surfaceFlags = SURF_NONE;
                         trace->walkable = 0;
                         return 0;
                     }
@@ -1326,7 +1324,7 @@ int __cdecl CM_TraceCylinderThroughCylinder(
             vDelta[2] = 0.0;
             Vec3NormalizeTo(vDelta, trace->normal);
             trace->contents = tw->threadInfo.box_brush->contents;
-            trace->surfaceFlags = 0;
+            trace->surfaceFlags = SURF_NONE;
             Vec3Sub(tw->extents.end, vStationary, vDelta);
             iassert( fTotalHeight >= 0 );
             v10 = I_fabs(vDelta[2]);
@@ -1601,13 +1599,9 @@ int __cdecl CM_BoxSightTrace(
     uint32_t model,
     int brushmask)
 {
-    const char *v7; // eax
-    const char *v8; // eax
     double v9; // st7
     double v10; // st7
     float v12; // [esp+14h] [ebp-13Ch]
-    float v13; // [esp+18h] [ebp-138h]
-    float v14; // [esp+1Ch] [ebp-134h]
     cmodel_t *cmod; // [esp+5Ch] [ebp-F4h]
     traceWork_t tw; // [esp+60h] [ebp-F0h] BYREF
     float offset[3]; // [esp+110h] [ebp-40h]
