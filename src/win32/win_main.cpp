@@ -393,6 +393,38 @@ void Sys_SpawnQuitProcess()
 	}
 }
 
+// Set from the console control handler, which Windows runs on its own thread.
+// Polled by the main game loop so the actual shutdown happens on the main thread.
+static volatile long s_quitRequested = 0;
+
+bool Sys_QuitRequested()
+{
+    return s_quitRequested != 0;
+}
+
+// Windows allows roughly five seconds after this returns before it kills the
+// process, so do nothing here except ask the main loop to quit.
+BOOL WINAPI Sys_ConsoleCtrlHandler(DWORD ctrlType)
+{
+    switch (ctrlType)
+    {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+        // Deliberately swallowed, matching the previous SetConsoleCtrlHandler(nullptr,
+        // true): a stray Ctrl+C should not take a live server down.
+        return TRUE;
+
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        InterlockedExchange(&s_quitRequested, 1);
+        return TRUE;
+
+    default:
+        return FALSE;
+    }
+}
+
 void __cdecl  Sys_Quit()
 {
 	Sys_EnterCriticalSection(CRITSECT_COM_ERROR);
@@ -770,7 +802,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN |
 		ENABLE_LVB_GRID_WORLDWIDE);
 
-	SetConsoleCtrlHandler(nullptr, true);
+	// The line above deletes SC_CLOSE from the console's system menu, which used to
+	// be enough to disable the X button. Under the Windows 11 terminal host the
+	// window is not ours, so the X still fires and the process is sent
+	// CTRL_CLOSE_EVENT. With no handler for it the server just sits there until
+	// Windows puts up "not responding" and force-kills it, losing the log and any
+	// clean shutdown. Handle it, and quit from the main thread.
+	SetConsoleCtrlHandler(Sys_ConsoleCtrlHandler, true);
 
 	freopen("CONIN$", "r", stdin);
 	freopen("CONOUT$", "w", stdout);
@@ -845,6 +883,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 				// run the game
 				Com_Frame();
+
+				// Console window closed (or the machine is shutting down): tear
+				// down properly from this thread rather than be force-killed.
+				if (Sys_QuitRequested())
+					Com_Quit_f();
 
 				// LWSS: Punkbuster stuff
 				//if (!com_dedicated || !com_dedicated->integer) {
