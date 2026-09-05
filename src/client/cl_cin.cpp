@@ -87,7 +87,9 @@ void __cdecl SCR_StopCinematic(int32_t localClientNum)
                     localClientNum,
                     1);
             clientUIActives[localClientNum].connectionState = CA_DISCONNECTED;
-            if (nextmap->current.integer)
+            // Aliased string pointer again: always true, so a cinematic ending
+            // with no nextmap set queued an empty command line.
+            if (nextmap->current.string[0])
             {
                 v1 = va("%s\n", nextmap->current.string);
                 Cbuf_AddText(0, v1);

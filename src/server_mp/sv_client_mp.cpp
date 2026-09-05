@@ -60,9 +60,6 @@ void __cdecl SV_AuthorizeRequest(netadr_t from, int challenge, const char *cdkey
 {
     const char *v3; // eax
     const char *v4; // eax
-    char v5; // [esp+3h] [ebp-419h]
-    char *v6; // [esp+8h] [ebp-414h]
-    char *integer; // [esp+Ch] [ebp-410h]
     const dvar_s *v8; // [esp+10h] [ebp-40Ch]
     char game[1027]; // [esp+14h] [ebp-408h] BYREF
     bool allowAnonymous; // [esp+417h] [ebp-5h]
@@ -73,16 +70,13 @@ void __cdecl SV_AuthorizeRequest(netadr_t from, int challenge, const char *cdkey
     {
         game[0] = 0;
         v8 = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT, "File sysytem base game name");
-        if (v8 && v8->current.integer)
-        {
-            integer = (char*)v8->current.integer;
-            v6 = game;
-            do
-            {
-                v5 = *integer;
-                *v6++ = *integer++;
-            } while (v5);
-        }
+        // current.integer is the aliased string pointer, so this guard was
+        // always true; and the copy it guarded ran to the source NUL with no
+        // regard for the size of game[]. fs_game is DVAR_INIT, so only the
+        // operator can set it, but an unbounded copy into a fixed buffer is
+        // not worth keeping for that reason alone.
+        if (v8)
+            I_strncpyz(game, v8->current.string, sizeof(game));
         v3 = NET_AdrToString(from);
         Com_DPrintf(15, "sending getIpAuthorize for %s\n", v3);
         allowAnonymous = Dvar_GetBool("sv_allowAnonymous");

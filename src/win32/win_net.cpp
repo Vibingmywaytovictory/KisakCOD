@@ -647,7 +647,12 @@ void __cdecl NET_OpenSocks(u_short port)
 		Com_PrintError(16, "NET_OpenSocks: connect: %s\n", v3);
 		return;
 	}
-	rfc1929 = net_socksUsername->current.integer || net_socksPassword->current.integer;
+	// These are string dvars, so current.integer is the aliased pointer and was
+	// always non-null: the client offered RFC1929 username/password auth to
+	// every SOCKS5 proxy, even with no credentials set, and a proxy that does
+	// not support that method answers 0xFF and the connection fails. The
+	// negotiation further down already measures these with strlen.
+	rfc1929 = net_socksUsername->current.string[0] || net_socksPassword->current.string[0];
 	buf[0] = 5;
 	if (rfc1929)
 	{

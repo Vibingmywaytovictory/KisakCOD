@@ -1179,7 +1179,11 @@ void __cdecl SV_SetSystemInfoConfig()
 
     v0 = Dvar_InfoString_Big(8);
     I_strncpyz(dest, v0, 0x2000);
-    if (!fs_gameDirVar->current.integer)
+    // Was !fs_gameDirVar->current.integer, which reads the aliased string
+    // pointer and is therefore never true, so the empty key below was never
+    // published. It exists so a client coming from a modded server sees
+    // fs_game explicitly cleared rather than simply absent.
+    if (!fs_gameDirVar->current.string[0])
     {
         if (strlen(dest) + strlen("\\fs_game\\\\") <= 0x400)
             I_strncat(dest, 1024, "\\fs_game\\\\");
