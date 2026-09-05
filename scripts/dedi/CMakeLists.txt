@@ -58,9 +58,18 @@ add_executable(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC KISAK_MP KISAK_DEDICATED DEDICATED)
 
+# 32-bit image, but on 64-bit Windows /LARGEADDRESSAWARE lifts the user-space
+# ceiling from 2 GB to 4 GB.
+target_link_options(${PROJECT_NAME} PRIVATE /LARGEADDRESSAWARE)
+
 # We need all of the pre/post-build commands
 include(${SCRIPTS_DIR}/pre_build.cmake)
 include(${SCRIPTS_DIR}/post_build.cmake)
 
+if (USE_ASAN)
+    target_compile_options(${PROJECT_NAME} PRIVATE /fsanitize=address)
+    target_link_options(${PROJECT_NAME} PRIVATE /fsanitize=address)
+else()
 # Tracey
-include(${SCRIPTS_DIR}/extern/tracy.cmake)
+    include(${SCRIPTS_DIR}/extern/tracy.cmake)
+endif()
