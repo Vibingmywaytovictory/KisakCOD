@@ -708,6 +708,12 @@ struct client_t // sizeof was 0xA5638 in the original binary; extended below
     // Appended past the original 0xA5638 layout, so nothing may assume that
     // size any more -- see SV_ChangeMaxClients.
     int32_t mutelevel;
+
+    // Client command allowance left inside the current flood protect
+    // window, from CoD4x (AGPLv3). Stock CoD4 has no counter: any command
+    // arriving inside the window is dropped. Appended past the original
+    // 0xA5638 layout, like mutelevel above.
+    int32_t floodprotect;
 };
 
 //sv_init_mp

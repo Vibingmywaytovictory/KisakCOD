@@ -1671,18 +1671,47 @@ int __cdecl SV_ClientCommand(client_t *cl, msg_t *msg, int fromOldServer)
     {
         if (!I_strncmp("team ", s, 5) || !I_strncmp("score ", s, 6) || !I_strncmp("mr ", s, 3))
             floodprotect = 0;
-        if (fromOldServer
-            || cl->header.state >= 4
-            && cl->header.netchan.remoteAddress.type != NA_LOOPBACK
-            && sv_floodProtect->current.enabled
-            && svs.time < cl->nextReliableTime
-            && floodprotect)
+        // Stock drops every command that lands inside the 800ms window, which
+        // catches a player clicking through a class menu as readily as it
+        // catches a flood. CoD4x spends an allowance instead: sv_floodProtect
+        // commands may arrive inside one window before the rest are dropped.
+        // At the default of 1 the allowance is zero and this is the stock
+        // gate exactly.
+        if (floodprotect)
+        {
+            const int32_t burst = sv_floodProtect->current.integer;
+            const bool gated = cl->header.state >= CS_ACTIVE
+                && cl->header.netchan.remoteAddress.type != NA_LOOPBACK
+                && burst > 0;
+
+            if (gated && svs.time < cl->nextReliableTime)
+            {
+                if (cl->floodprotect > 0)
+                {
+                    --cl->floodprotect;
+                }
+                else
+                {
+                    clientOk = 0;
+                    Com_DPrintf(15, "client text ignored for %s: %s\n", cl->name, s);
+                }
+            }
+            else
+            {
+                // Window elapsed, or this client is not subject to the check:
+                // hand back a full allowance.
+                cl->floodprotect = burst - 1;
+            }
+
+            cl->nextReliableTime = svs.time + 800;
+        }
+
+        // Commands replayed from a previous server are never executed.
+        if (fromOldServer)
         {
             clientOk = 0;
             Com_DPrintf(15, "client text ignored for %s: %s\n", cl->name, s);
         }
-        if (floodprotect)
-            cl->nextReliableTime = svs.time + 800;
         SV_ExecuteClientCommand(cl, s, clientOk, fromOldServer);
         cl->lastClientCommand = seq;
         Com_sprintf(cl->lastClientCommandString, 0x400u, "%s", s);

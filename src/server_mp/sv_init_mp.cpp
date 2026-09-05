@@ -709,11 +709,18 @@ void __cdecl SV_Init()
     sv_maxRate = Dvar_RegisterInt("sv_maxRate", 5000, (DvarLimits)0x61A800000000LL, 5u, "Maximum bit rate");
     sv_minPing = Dvar_RegisterInt("sv_minPing", 0, (DvarLimits)0x3E700000000LL, 5u, "Minimum ping allowed on the server");
     sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, (DvarLimits)0x3E700000000LL, 5u, "Maximum ping allowed on the server");
-    sv_floodProtect = Dvar_RegisterBool(
+    // Was a bool. It is now how many client commands one player may send
+    // inside a single 800ms window before the rest are dropped: 0 disables
+    // the protection, and 1 -- the default -- is exactly the stock hard
+    // gate, so nothing changes until an admin raises it. Prints as "1" in
+    // the serverinfo either way.
+    sv_floodProtect = Dvar_RegisterInt(
         "sv_floodProtect",
         1,
+        0,
+        30,
         DVAR_SERVERINFO | DVAR_ARCHIVE,
-        "Prevent malicious lagging by flooding the server with commands");
+        "Client commands allowed per 800ms window; 0 disables the check, 1 is one command");
     sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, 0, "Print client commands in the log file");
     sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 4u, "Allow anonymous access");
     sv_disableClientConsole = Dvar_RegisterBool(
