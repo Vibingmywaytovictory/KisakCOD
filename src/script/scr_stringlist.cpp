@@ -568,8 +568,27 @@ int SL_GetRefStringLen(RefString* refString)
 {
 	int len = (uint8_t)(refString->byteLen - 1);
 
-	while (refString->str[len])
+	// byteLen carries only the low byte of the length, so the terminator is
+	// found by stepping in units of 256. That is exact for a live string and
+	// endless for a dead one: on a freed or reused node there may be no zero
+	// byte at any multiple of 256, and len is a signed int, so it wraps and
+	// walks the same addresses again forever. A refcount bug used to reach
+	// here and hang the server at 100% CPU with nothing logged. Bound it to
+	// the arena the string must live in and say so instead.
+	const int maxLen = (int)(sizeof(scrMemTreeGlob.nodes) - 1);
+
+	while (len <= maxLen && refString->str[len])
 		len += 256;
+
+	if (len > maxLen)
+	{
+		Com_PrintError(CON_CHANNEL_SCRIPT,
+		               "SL_GetRefStringLen: unterminated string at %p, byteLen %u. "
+		               "This means a handle was released more often than it was "
+		               "referenced.\n",
+		               (void *)refString->str, (uint32_t)refString->byteLen);
+		return (uint8_t)(refString->byteLen - 1);
+	}
 
 	// lwss add some asserts for sanity
 	iassert((uintptr_t)refString->str >= (uintptr_t)&scrMemTreeGlob.nodes[0] && (uintptr_t)refString->str < (uintptr_t)&scrMemTreeGlob.nodes[MEMORY_NODE_COUNT]);

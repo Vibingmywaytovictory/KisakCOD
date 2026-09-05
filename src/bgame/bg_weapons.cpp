@@ -178,11 +178,34 @@ void __cdecl BG_FreeWeaponDefStrings()
 
 void __cdecl BG_ShutdownWeaponDefFiles()
 {
-    if (*(_BYTE *)fs_gameDirVar->current.integer)
+    // Release exactly what BG_LoadWeaponDef allocated, and nothing else.
+    //
+    // Only BG_LoadWeaponDef_LoadObj interns these strings, through
+    // SL_GetStringOfSize and SL_GetLowercaseString, and the reference it
+    // takes is the one freed below. BG_LoadWeaponDef_FastFile takes none:
+    // Load_ScriptStringCustom rewrites each zone-local index into a handle
+    // owned by the zone's own string list, and the WeaponDef only points at
+    // it.
+    //
+    // This used to test fs_gameDirVar alone, on the assumption that a mod
+    // means the weapon files were parsed from text. That holds for the
+    // client, but the dedicated server compiles the text path out entirely
+    // and always loads from the fastfile -- so with a mod set it released
+    // strings it had never referenced, once per weapon, until a shared
+    // handle underflowed to zero and was freed while the zone still pointed
+    // at it. The next release of that handle then read a dead RefString,
+    // whose byteLen no longer terminated SL_GetRefStringLen's len += 256
+    // walk, and the server spun at 100% inside G_ShutdownGame -- on quit,
+    // on map_rotate, and at the end of every match.
+    //
+    // The condition now mirrors BG_LoadWeaponDef exactly. Keep them in step.
+#ifndef DEDICATED
+    if (fs_gameDirVar->current.string[0] || !IsFastFileLoad())
     {
         BG_ClearSurfaceTypeSounds();
         BG_FreeWeaponDefStrings();
     }
+#endif
     bg_lastParsedWeaponIndex = 0;
 }
 
