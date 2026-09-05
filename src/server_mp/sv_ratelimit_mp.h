@@ -37,6 +37,7 @@ enum SvRateLimitBucket
     SV_RATELIMIT_STATUS,
     SV_RATELIMIT_INFO,
     SV_RATELIMIT_RCON,
+    SV_RATELIMIT_CHALLENGE,
 
     SV_RATELIMIT_BUCKET_COUNT
 };
@@ -44,14 +45,16 @@ enum SvRateLimitBucket
 // Registers the dvars and clears the pool. Safe to call more than once.
 void __cdecl SV_RateLimitInit();
 
-// True if `from` has already had `burst` packets inside `periodMsec`. LAN and
-// loopback addresses are never limited, so a local admin cannot lock themself
-// out and a LAN server browser stays responsive.
-bool __cdecl SV_RateLimitAddress(netadr_t from, int32_t burst, int32_t periodMsec);
+// True if `from` has already had `burst` packets of this category inside
+// `periodMsec`. Each category has its own allowance per address, so a server
+// browser hammering getstatus cannot spend the budget the getchallenge
+// behind it needs. LAN and loopback addresses are never limited, so a local
+// admin cannot lock themself out and a LAN browser stays responsive.
+bool __cdecl SV_RateLimitAddress(netadr_t from, SvRateLimitBucket category, int32_t burst, int32_t periodMsec);
 
 // True if the server as a whole has already emitted `burst` of this reply
 // inside `periodMsec`, regardless of who asked.
-bool __cdecl SV_RateLimitGlobal(SvRateLimitBucket bucket, int32_t burst, int32_t periodMsec);
+bool __cdecl SV_RateLimitGlobal(SvRateLimitBucket category, int32_t burst, int32_t periodMsec);
 
 // sv_queryIgnoreTime in milliseconds, for callers building a per-address
 // period out of it. Same name and meaning as CoD4x's dvar.

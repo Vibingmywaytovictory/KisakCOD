@@ -261,7 +261,7 @@ void __cdecl SVC_RemoteCommand(netadr_t from)
     // cannot deny rcon to an administrator elsewhere. CoD4x adds a global
     // rcon bucket on top, which reintroduces exactly that denial; the ceiling
     // below is applied to rejected attempts only instead.
-    if (SV_RateLimitAddress(from, 10, 1000))
+    if (SV_RateLimitAddress(from, SV_RATELIMIT_RCON, 10, 1000))
         return;
 
     {

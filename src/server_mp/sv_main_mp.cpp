@@ -695,7 +695,7 @@ void __cdecl SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
         // server is a usable amplifier for a flood aimed at someone else.
         // Per-address first, then a ceiling on how much status traffic the
         // server will emit at all, since spoofed sources defeat the former.
-        if (SV_RateLimitAddress(from, 2, SV_QueryIgnoreTime())
+        if (SV_RateLimitAddress(from, SV_RATELIMIT_STATUS, 2, SV_QueryIgnoreTime())
             || SV_RateLimitGlobal(SV_RATELIMIT_STATUS, 20, 20000))
         {
             SV_Cmd_EndTokenizedString();
@@ -714,7 +714,7 @@ void __cdecl SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
         // infoResponse is smaller than statusResponse, so it amplifies less
         // and server browsers send it far more often. Looser limits, same
         // shape. These are CoD4x's numbers.
-        if (SV_RateLimitAddress(from, 4, SV_QueryIgnoreTime())
+        if (SV_RateLimitAddress(from, SV_RATELIMIT_INFO, 4, SV_QueryIgnoreTime())
             || SV_RateLimitGlobal(SV_RATELIMIT_INFO, 100, 100000))
         {
             SV_Cmd_EndTokenizedString();
@@ -726,6 +726,25 @@ void __cdecl SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     }
     else if (!I_stricmp(c, "getchallenge"))
     {
+        // The most expensive thing an unauthenticated packet can ask this
+        // server to do. SV_GetChallenge takes a slot in the 1024 entry
+        // challenge table, reads ban.txt and the temporary ban list off disk,
+        // and verifies a Steam ticket -- all before anyone has proved they
+        // are a real client. Unlimited, a flood evicts the pending challenges
+        // of players who are genuinely connecting and turns each datagram
+        // into two file reads and a Steam API call.
+        //
+        // Generous by design: connecting is a legitimate thing to do and a
+        // client sends this a few times per attempt, so the per-address
+        // allowance covers a handful of retries and the global ceiling sits
+        // far above what a filling server needs.
+        if (SV_RateLimitAddress(from, SV_RATELIMIT_CHALLENGE, 5, 2000)
+            || SV_RateLimitGlobal(SV_RATELIMIT_CHALLENGE, 50, 200))
+        {
+            SV_Cmd_EndTokenizedString();
+            return;
+        }
+
         SV_UpdateLastTimeMasterServerCommunicated(from);
         SV_GetChallenge(from);
     }

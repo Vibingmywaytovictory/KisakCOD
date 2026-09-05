@@ -33,12 +33,20 @@
 // Power of two: the hash is masked with this, not divided.
 #define SV_RATELIMIT_HASH_SIZE 4096
 
+// One address gets a separate allowance per query kind. CoD4x keeps a single
+// bucket per address and passes a different burst and period from each call
+// site, so whichever query an address sent last drains the budget the others
+// need: a server browser refreshing getstatus and getinfo eats the allowance
+// the getchallenge behind it is about to want, and the connect then fails for
+// a reason that has nothing to do with the player. Found by flooding rcon from
+// one address and watching every getchallenge from it be refused afterwards.
 struct SvLeakyBucket
 {
     netadrtype_t     type;      // NA_BAD marks the entry as free
     uint8_t          ip[4];
-    uint32_t         lastTime;  // Sys_Milliseconds, wraps every ~49 days
-    int32_t          burst;
+    uint32_t         lastSeen;  // any category, for reclaiming the entry
+    uint32_t         lastTime[SV_RATELIMIT_BUCKET_COUNT];
+    int32_t          burst[SV_RATELIMIT_BUCKET_COUNT];
     int32_t          hash;
     SvLeakyBucket   *prev;
     SvLeakyBucket   *next;
@@ -46,7 +54,9 @@ struct SvLeakyBucket
 
 static SvLeakyBucket  g_svRateBuckets[SV_RATELIMIT_MAX_BUCKETS];
 static SvLeakyBucket *g_svRateHashes[SV_RATELIMIT_HASH_SIZE];
-static SvLeakyBucket  g_svRateGlobal[SV_RATELIMIT_BUCKET_COUNT];
+
+static uint32_t g_svRateGlobalTime[SV_RATELIMIT_BUCKET_COUNT];
+static int32_t  g_svRateGlobalBurst[SV_RATELIMIT_BUCKET_COUNT];
 
 // Mixed into the address hash so a caller cannot pick addresses that all land
 // in one chain and turn the lookup into a linear scan.
@@ -71,7 +81,8 @@ void __cdecl SV_RateLimitInit()
 
     Com_Memset(g_svRateBuckets, 0, sizeof(g_svRateBuckets));
     Com_Memset(g_svRateHashes, 0, sizeof(g_svRateHashes));
-    Com_Memset(g_svRateGlobal, 0, sizeof(g_svRateGlobal));
+    Com_Memset(g_svRateGlobalTime, 0, sizeof(g_svRateGlobalTime));
+    Com_Memset(g_svRateGlobalBurst, 0, sizeof(g_svRateGlobalBurst));
 
     // NA_BAD is 1 in this tree, not 0, so a zeroed pool is not a free pool.
     for (uint32_t i = 0; i < ARRAY_COUNT(g_svRateBuckets); ++i)
@@ -108,11 +119,45 @@ static void SV_RateLimitUnlink(SvLeakyBucket *bucket)
         bucket->next->prev = bucket->prev;
 }
 
-// Finds the bucket for this address, or takes over an expired one. Returns
-// null only when every bucket is live, meaning more distinct addresses are
-// mid-window than the pool holds. The caller then fails closed and drops the
-// packet: under a flood that wide, refusing to answer is the whole point.
-static SvLeakyBucket *SV_RateLimitBucketFor(const netadr_t *address, int32_t burst, int32_t periodMsec)
+// The leaky bucket proper: drain one token per period, refuse once `burst`
+// tokens are outstanding. Operates on one category's counters, whether those
+// belong to an address entry or to the global pair.
+static bool SV_RateLimitDrain(uint32_t *lastTime, int32_t *outstanding, int32_t burst, int32_t periodMsec)
+{
+    const uint32_t now = Sys_Milliseconds();
+
+    // Signed difference of unsigned times, so the millisecond counter wrapping
+    // reads as a large interval rather than a negative one.
+    const int32_t interval = (int32_t)(now - *lastTime);
+    const int32_t expired = interval / periodMsec;
+    const int32_t expiredRemainder = interval % periodMsec;
+
+    if (expired > *outstanding)
+    {
+        *outstanding = 0;
+        *lastTime = now;
+    }
+    else
+    {
+        *outstanding -= expired;
+        *lastTime = now - expiredRemainder;
+    }
+
+    if (*outstanding < burst)
+    {
+        ++*outstanding;
+        return false;
+    }
+
+    return true;
+}
+
+// Finds the entry for this address, or takes over one nothing has used for
+// longer than staleAfterMsec. Returns null only when every entry is live,
+// meaning more distinct addresses are mid-window than the pool holds. The
+// caller then fails closed and drops the packet: under a flood that wide,
+// refusing to answer is the whole point.
+static SvLeakyBucket *SV_RateLimitEntryFor(const netadr_t *address, int32_t staleAfterMsec)
 {
     const int32_t hash = SV_RateLimitHash(address);
     const uint32_t now = Sys_Milliseconds();
@@ -120,18 +165,17 @@ static SvLeakyBucket *SV_RateLimitBucketFor(const netadr_t *address, int32_t bur
     for (SvLeakyBucket *bucket = g_svRateHashes[hash]; bucket; bucket = bucket->next)
     {
         if (bucket->type == NA_IP && !memcmp(bucket->ip, address->ip, sizeof(bucket->ip)))
+        {
+            bucket->lastSeen = now;
             return bucket;
+        }
     }
 
     for (uint32_t i = 0; i < ARRAY_COUNT(g_svRateBuckets); ++i)
     {
         SvLeakyBucket *bucket = &g_svRateBuckets[i];
 
-        // Signed difference of unsigned times, so the millisecond counter
-        // wrapping reads as a large interval rather than a negative one.
-        const int32_t interval = (int32_t)(now - bucket->lastTime);
-
-        if (bucket->type != NA_BAD && interval > burst * periodMsec)
+        if (bucket->type != NA_BAD && (int32_t)(now - bucket->lastSeen) > staleAfterMsec)
         {
             SV_RateLimitUnlink(bucket);
             Com_Memset(bucket, 0, sizeof(*bucket));
@@ -142,9 +186,14 @@ static SvLeakyBucket *SV_RateLimitBucketFor(const netadr_t *address, int32_t bur
         {
             bucket->type = NA_IP;
             memcpy(bucket->ip, address->ip, sizeof(bucket->ip));
-            bucket->lastTime = now;
-            bucket->burst = 0;
+            bucket->lastSeen = now;
             bucket->hash = hash;
+
+            for (uint32_t c = 0; c < SV_RATELIMIT_BUCKET_COUNT; ++c)
+            {
+                bucket->lastTime[c] = now;
+                bucket->burst[c] = 0;
+            }
 
             bucket->prev = nullptr;
             bucket->next = g_svRateHashes[hash];
@@ -161,42 +210,16 @@ static SvLeakyBucket *SV_RateLimitBucketFor(const netadr_t *address, int32_t bur
     return nullptr;
 }
 
-// The leaky bucket proper: drain one token per period, refuse once `burst`
-// tokens are outstanding.
-static bool SV_RateLimitBucket(SvLeakyBucket *bucket, int32_t burst, int32_t periodMsec)
-{
-    if (!bucket)
-        return true;
-
-    const uint32_t now = Sys_Milliseconds();
-    const int32_t interval = (int32_t)(now - bucket->lastTime);
-    const int32_t expired = interval / periodMsec;
-    const int32_t expiredRemainder = interval % periodMsec;
-
-    if (expired > bucket->burst)
-    {
-        bucket->burst = 0;
-        bucket->lastTime = now;
-    }
-    else
-    {
-        bucket->burst -= expired;
-        bucket->lastTime = now - expiredRemainder;
-    }
-
-    if (bucket->burst < burst)
-    {
-        ++bucket->burst;
-        return false;
-    }
-
-    return true;
-}
-
-bool __cdecl SV_RateLimitAddress(netadr_t from, int32_t burst, int32_t periodMsec)
+bool __cdecl SV_RateLimitAddress(netadr_t from, SvRateLimitBucket category, int32_t burst, int32_t periodMsec)
 {
     if (!sv_queryLimit || !sv_queryLimit->current.enabled)
         return false;
+
+    if (category < 0 || category >= SV_RATELIMIT_BUCKET_COUNT)
+    {
+        iassert(category >= 0 && category < SV_RATELIMIT_BUCKET_COUNT);
+        return false;
+    }
 
     // A bot address is the server talking to itself.
     if (from.type != NA_IP || Sys_IsLANAddress(from))
@@ -205,22 +228,27 @@ bool __cdecl SV_RateLimitAddress(netadr_t from, int32_t burst, int32_t periodMse
     if (periodMsec < 1)
         periodMsec = 1;
 
-    return SV_RateLimitBucket(SV_RateLimitBucketFor(&from, burst, periodMsec), burst, periodMsec);
+    SvLeakyBucket *bucket = SV_RateLimitEntryFor(&from, burst * periodMsec);
+
+    if (!bucket)
+        return true;
+
+    return SV_RateLimitDrain(&bucket->lastTime[category], &bucket->burst[category], burst, periodMsec);
 }
 
-bool __cdecl SV_RateLimitGlobal(SvRateLimitBucket bucket, int32_t burst, int32_t periodMsec)
+bool __cdecl SV_RateLimitGlobal(SvRateLimitBucket category, int32_t burst, int32_t periodMsec)
 {
     if (!sv_queryLimit || !sv_queryLimit->current.enabled)
         return false;
 
-    if (bucket < 0 || bucket >= SV_RATELIMIT_BUCKET_COUNT)
+    if (category < 0 || category >= SV_RATELIMIT_BUCKET_COUNT)
     {
-        iassert(bucket >= 0 && bucket < SV_RATELIMIT_BUCKET_COUNT);
+        iassert(category >= 0 && category < SV_RATELIMIT_BUCKET_COUNT);
         return false;
     }
 
     if (periodMsec < 1)
         periodMsec = 1;
 
-    return SV_RateLimitBucket(&g_svRateGlobal[bucket], burst, periodMsec);
+    return SV_RateLimitDrain(&g_svRateGlobalTime[category], &g_svRateGlobalBurst[category], burst, periodMsec);
 }
