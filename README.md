@@ -7,6 +7,10 @@ Aimed towards mod developers and COD4 enthusiasts.
 
 ![licimg](./GPLv3_Logo.png)
 
+> **Licensing note for this fork:** KisakCOD's own code is GPLv3. Code ported from
+> [CoD4x_Server](https://github.com/callofduty4x/CoD4x_Server) is AGPLv3, and the
+> combined work carries AGPLv3's network-source requirement. See [LICENSING.md](./LICENSING.md).
+
 ### Development Blog
 Learn about the Development of KisakCOD here: [https://lwss.github.io/Duty-Of-Kisak/](https://lwss.github.io/Duty-Of-Kisak/)
 
