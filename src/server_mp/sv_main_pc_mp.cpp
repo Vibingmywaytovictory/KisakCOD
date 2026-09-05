@@ -322,6 +322,11 @@ void __cdecl SV_VoicePacket(netadr_t from, msg_t *msg)
     if (ClientByAddress && ClientByAddress->header.state != 1)
     {
         ClientByAddress->lastPacketTime = svs.time;
+        // Muted at either level: drop the packet here rather than at the mixer,
+        // so a muted player costs the server nothing. lastPacketTime is still
+        // updated above, otherwise muting a player would time them out.
+        if (ClientByAddress->mutelevel != 0)
+            return;
         if (ClientByAddress->header.state >= 4)
         {
             if (!ClientByAddress->gentity)

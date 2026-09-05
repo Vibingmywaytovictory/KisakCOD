@@ -5,6 +5,7 @@
 #include <universal/q_shared.h>
 #include <server_mp/sv_script_fs_mp.h>
 #include "g_scr_builtins_mp.h"
+#include "g_vote_mp.h"
 #include "g_main_mp.h"
 
 #include "g_public_mp.h"
@@ -507,6 +508,7 @@ const dvar_s *G_RegisterDvars()
     voice_localEcho = Dvar_RegisterBool("voice_localEcho", false, DVAR_ARCHIVE, "Echo voice chat back to the player");
     voice_deadChat = Dvar_RegisterBool("voice_deadChat", false, DVAR_ARCHIVE, "Allow dead players to talk to living players");
     g_allowVote = Dvar_RegisterBool("g_allowVote", true, DVAR_NOFLAG, "Enable voting on this server");
+    G_InitVoteRestrictions();
     g_listEntity = Dvar_RegisterBool("g_listEntity", false, DVAR_NOFLAG, "List the entities");
     g_deadChat = Dvar_RegisterBool("g_deadChat", false, DVAR_ARCHIVE, "Allow dead players to chat with living players");
     g_voiceChatTalkingDuration = Dvar_RegisterInt(

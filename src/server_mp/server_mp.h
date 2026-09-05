@@ -641,7 +641,7 @@ struct clientSnapshot_t // sizeof=0x2F84
     int serverTime;
 };
 
-struct client_t // sizeof=0xA5638
+struct client_t // sizeof was 0xA5638 in the original binary; extended below
 {                                       // ...
     clientHeader_t header;              // ...
     const char *dropReason;
@@ -701,6 +701,13 @@ struct client_t // sizeof=0xA5638
     uint8_t statPacketsReceived; // ...
     bool tempPacketDebugging;
     // padding byte
+
+    // Server-side moderation mute, from CoD4x (AGPLv3): 0 = unrestricted,
+    // 1 = voice blocked, 2 = voice and text chat blocked. Distinct from
+    // muteList above, which is one player choosing not to hear another.
+    // Appended past the original 0xA5638 layout, so nothing may assume that
+    // size any more -- see SV_ChangeMaxClients.
+    int32_t mutelevel;
 };
 
 //sv_init_mp

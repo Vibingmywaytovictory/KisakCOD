@@ -7,6 +7,9 @@
 #include <server/sv_game.h>
 #include <qcommon/cmd.h>
 #include "g_utils_mp.h"
+#include "g_vote_mp.h"
+#include <server_mp/server_mp.h>
+#include <server_mp/sv_moderation_mp.h>
 #include <script/scr_vm.h>
 
 
@@ -653,6 +656,14 @@ void __cdecl G_Say(gentity_s *ent, gentity_s *target, int32_t mode, char *chatTe
     int32_t color; // [esp+54h] [ebp-A4h]
     char text[156]; // [esp+58h] [ebp-A0h] BYREF
 
+    // Server-side mute. Enforced here rather than in Cmd_Say_f so that the
+    // script-side sayall/sayteam player methods are covered by the same check.
+    if (ent->s.number < MAX_CLIENTS && svs.clients[ent->s.number].mutelevel >= MUTELEVEL_ALL)
+    {
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"You are muted\"", 101));
+        return;
+    }
+
     pszTeamString = "";
     if (mode == 1 && ent->client->sess.cs.team != TEAM_AXIS)
         mode = ent->client->sess.cs.team == TEAM_ALLIES;
@@ -825,7 +836,7 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, v3);
             return;
         }
-        if (ent->client->sess.voteCount >= 3)
+        if (ent->client->sess.voteCount >= G_VoteMaxVotes())
         {
             v4 = va("%c \"GAME_MAXVOTESCALLED\"", 101);
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, v4);
@@ -848,6 +859,12 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, v9);
         return;
     }
+    // Server policy is checked ahead of the g_oldVoting split so that disabling a
+    // vote type holds under script voting too, where the gametype would otherwise
+    // never hear about the restriction.
+    if (!G_VoteAllowedType(ent, arg1))
+        return;
+
     if (!g_oldVoting->current.enabled)
     {
         Scr_VoteCalled(ent, arg1, arg2, arg3);
@@ -886,6 +903,10 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
         }
         if (!I_stricmp(arg2, g_gametype->current.string))
             arg2[0] = 0;
+        // Blanked above when it matches what is already running, so only a real
+        // gametype change is put to the whitelist.
+        if (arg2[0] && !G_VoteAllowedGametype(ent, arg2))
+            return;
         SV_Cmd_ArgvBuffer(3, arg3, 256);
         if (!IsFastFileLoad() && !SV_MapExists(arg3))
             goto LABEL_36;
@@ -898,6 +919,8 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, v15);
             return;
         }
+        if (arg3[0] && !G_VoteAllowedMap(ent, arg3))
+            return;
         if (arg3[0])
         {
             if (arg2[0])
@@ -926,6 +949,8 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
     {
         if (!Scr_IsValidGameType(arg2))
             goto LABEL_31;
+        if (!G_VoteAllowedGametype(ent, arg2))
+            return;
         Com_sprintf(level.voteString, 0x400u, "%s %s; map_restart", arg1, arg2);
         v18 = Scr_GetGameTypeNameForScript(arg2);
         Com_sprintf(level.voteDisplayString, 0x400u, "GAME_VOTE_MAP\x15%s", v18);
@@ -944,7 +969,7 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
     LABEL_91:
         v20 = va("%c \"GAME_CALLEDAVOTE\x15%s\"", 101, ent->client->sess.cs.name);
         SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, v20);
-        level.voteTime = level.time + 30000;
+        level.voteTime = level.time + G_VoteDurationMsec();
         level.voteYes = 1;
         level.voteNo = 0;
         for (i = 0; i < level.maxclients; ++i)
@@ -968,6 +993,8 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEMAPINVALID\x15%s\"", 101));
             return;
         }
+        if (!G_VoteAllowedMap(ent, arg2))
+            return;
         Com_sprintf(level.voteString, 0x400u, "%s %s", arg1, arg2);
         Com_sprintf(level.voteDisplayString, 0x400u, "GAME_VOTE_MAP\x15%s", arg2);
         goto LABEL_91;
@@ -977,6 +1004,8 @@ void __cdecl Cmd_CallVote_f(gentity_s *ent)
         || !I_stricmp(arg1, "tempBanUser")
         || !I_stricmp(arg1, "tempBanClient"))
     {
+        if (!G_VoteAllowedKickPlayerCount(ent))
+            return;
         kicknum = 64;
         if (I_stricmp(arg1, "kick") && I_stricmp(arg1, "tempBanUser"))
         {
