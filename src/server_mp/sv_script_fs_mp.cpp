@@ -148,6 +148,16 @@ static void SV_ScriptFS_Close(scriptFile_t *f)
 
 void __cdecl SV_ScriptFS_CloseAll()
 {
+    // Called from G_ShutdownGame. On the quit path SV_Shutdown runs before
+    // FS_Shutdown so the filesystem is still up, but this is shutdown code
+    // reaching into another subsystem -- do not assume that ordering holds on
+    // every path.
+    if (!FS_Initialized())
+    {
+        memset(s_scriptFiles, 0, sizeof(s_scriptFiles));
+        return;
+    }
+
     for (int32_t i = 0; i < MAX_SCRIPT_FILEHANDLES; ++i)
         SV_ScriptFS_Close(&s_scriptFiles[i]);
 }
@@ -409,10 +419,52 @@ void __cdecl GScr_FS_WriteLine()
     Scr_AddBool(written == len);
 }
 
-// CoD4x registers these from scr_vm_main.c the same way. fs_fcloseall and
-// fs_remove exist there too and are deliberately not carried over yet: the first
-// is redundant now that G_ShutdownGame closes everything, and the second is a
-// delete primitive that deserves its own thought about the sandbox.
+// fs_fcloseall()
+void __cdecl GScr_FS_FCloseAll()
+{
+    if (Scr_GetNumParam() != 0)
+    {
+        Scr_Error("Usage: fs_fcloseall();");
+        return;
+    }
+
+    SV_ScriptFS_CloseAll();
+}
+
+// fs_remove( <filename> ) -> bool
+void __cdecl GScr_FS_Remove()
+{
+    if (Scr_GetNumParam() != 1)
+    {
+        Scr_Error("Usage: fs_remove( <filename> );");
+        return;
+    }
+
+    char path[MAX_QPATH];
+    if (!SV_ScriptFS_SanitizePath(Scr_GetString(0), path, sizeof(path)))
+    {
+        Scr_ParamError(0, "fs_remove: illegal path. Script files live under scriptdata/; "
+                          "'..', absolute paths and drive letters are refused.");
+        return;
+    }
+
+    // Deleting a file that is currently open would leave a dangling handle, so
+    // refuse rather than half-succeed. CoD4x does not check this.
+    for (int32_t i = 0; i < MAX_SCRIPT_FILEHANDLES; ++i)
+    {
+        if (s_scriptFiles[i].fsHandle && !I_stricmp(s_scriptFiles[i].name, path))
+        {
+            Scr_ParamError(0, "fs_remove: file is currently open");
+            return;
+        }
+    }
+
+    Scr_AddBool(FS_Delete(path));
+}
+
+// CoD4x registers these from scr_vm_main.c the same way. Its aliases for the
+// same functions (openfile/closefile/fprintln/freadln) are not carried over --
+// they are older spellings of the fs_* names and nothing needs both.
 void __cdecl Scr_AddScriptFileFunctions()
 {
     Scr_AddFunction("fs_fopen", GScr_FS_FOpen, 0);
@@ -420,4 +472,6 @@ void __cdecl Scr_AddScriptFileFunctions()
     Scr_AddFunction("fs_testfile", GScr_FS_TestFile, 0);
     Scr_AddFunction("fs_readline", GScr_FS_ReadLine, 0);
     Scr_AddFunction("fs_writeline", GScr_FS_WriteLine, 0);
+    Scr_AddFunction("fs_fcloseall", GScr_FS_FCloseAll, 0);
+    Scr_AddFunction("fs_remove", GScr_FS_Remove, 0);
 }

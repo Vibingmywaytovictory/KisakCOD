@@ -21,6 +21,8 @@ void __cdecl GScr_FS_FClose();
 void __cdecl GScr_FS_TestFile();
 void __cdecl GScr_FS_ReadLine();
 void __cdecl GScr_FS_WriteLine();
+void __cdecl GScr_FS_FCloseAll();
+void __cdecl GScr_FS_Remove();
 
 // Drop every handle a script left open. Called when the VM shuts down so
 // handles do not leak across a map change.
