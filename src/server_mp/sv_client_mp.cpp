@@ -158,6 +158,27 @@ void __cdecl SV_GetChallenge(netadr_t from)
         challenge->connected = 0;
         i = oldest;
     }
+    // LAN clients are not authorized, which is what retail does and what
+    // SV_ShouldAuthorizeAddress has always encoded -- it is only reached from
+    // SV_AuthorizeRequest now, because the Steam port replaced the call here
+    // with an unconditional ticket check. That made a local dedicated server
+    // impossible to connect to: there is no Steam game-server auth on a LAN box,
+    // BeginAuthSession fails, and the client renders the refusal as "Key Code is
+    // not valid" -- which sends people hunting for a CD key problem that does not
+    // exist.
+    //
+    // Still gated by net_lanauthorize, so a server that wants tickets from
+    // everyone sets it and gets the strict path back. Sys_IsLANAddress only
+    // matches loopback and RFC1918, so a server on a public address is
+    // unaffected either way.
+    if (!SV_ShouldAuthorizeAddress(from))
+    {
+        Com_DPrintf(15, "LAN client from %s, skipping Steam ticket check\n", NET_AdrToString(from));
+        challenge->pingTime = svs.time;
+        NET_OutOfBandPrint(NS_SERVER, from, va("challengeResponse %i", challenge->challenge));
+        return;
+    }
+
     //cdkeyHash = (char *)SV_Cmd_Argv(2);
     clientSteamTicketBase64 = (char *)SV_Cmd_Argv(2);
     char *clientSteamID64 = (char *)SV_Cmd_Argv(3);

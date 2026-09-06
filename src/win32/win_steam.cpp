@@ -258,7 +258,13 @@ bool Steam_CheckClientTicket(const void* pAuthTicket, uint32 authTicketLen, uint
 
 void Steam_OnClientDropped(uint64_t steamID64)
 {
-	iassert(steamID64);
+	// Bots and LAN clients carry no Steam id, and both get dropped like anyone
+	// else, so this is a normal case rather than a broken one. It asserted on
+	// every bot disconnect -- visible in the dedicated server log as
+	// win_steam.cpp:261 -- and then called EndAuthSession on id 0 for a session
+	// that was never begun.
+	if (!steamID64)
+		return;
 
 	CSteamID sid;
 	sid.SetFromUint64(steamID64);
