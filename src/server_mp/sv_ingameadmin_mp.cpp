@@ -52,10 +52,20 @@ int32_t __cdecl Cmd_GetInvokerPower()
     // The console is not a player and is not power limited. Anything reading
     // this to decide whether to allow something must treat -1 as full authority,
     // which is what AUTH_POWER_MAX gives it.
-    if (g_invokerClientNum < 0)
+    if (g_invokerClientNum < 0 || g_invokerClientNum >= MAX_CLIENTS)
         return AUTH_POWER_MAX;
 
-    return g_invokerPower;
+    // LIVE, not the value captured at dispatch. The captured one is stale the
+    // moment a command changes the invoker's own power, and login is exactly
+    // that command: the first live test logged "admin kisaktest (power 1):
+    // logged in" for a login that granted 100, because the snapshot predated
+    // the grant. An audit line that under-reports the power an action ran with
+    // is worse than no number at all.
+    //
+    // g_invokerPower is still kept, as the power the dispatcher authorised
+    // against, so a later de-escalation cannot retroactively justify a command
+    // that was already allowed.
+    return Auth_GetClPower(&svs.clients[g_invokerClientNum]);
 }
 
 const char *__cdecl Cmd_GetInvokerName()
