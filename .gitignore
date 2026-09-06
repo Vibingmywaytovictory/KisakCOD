@@ -30,6 +30,7 @@ build-dedi/
 build-mp/
 build-sp/
 build-radiant-selftest/
+build-asan/
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
