@@ -13,6 +13,8 @@
 
 #ifdef WIN32
 #include <win32/win_steam.h>
+
+bool __cdecl Sys_IsLANAddress(netadr_t adr);
 #else
 #error Steam Auth for Arch
 #endif
@@ -349,7 +351,21 @@ void __cdecl CL_Connect_f()
                     clc->serverAddress.ip[3],
                     v1);
                 //if (NET_IsLocalAddress(clc->serverAddress) || CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum))
-                if (NET_IsLocalAddress(clc->serverAddress) || CL_CDKeyValidate(clc->serverAddress))
+                //
+                // NET_IsLocalAddress is NA_LOOPBACK and NA_BOT only -- the
+                // in-process server of a listen game. Connecting to 127.0.0.1 or
+                // a machine on the LAN goes over real UDP as NA_IP, so it fell
+                // through to CL_CDKeyValidate, which is Steam_UpdateClientAuthTicket
+                // now. With no Steam client that fails and the connect is refused
+                // before a single packet leaves, with the stock "Key Code is not
+                // valid" string -- which is why it looks like a licensing problem
+                // and why entering a real CD key changes nothing.
+                //
+                // Same exemption as the server's SV_ShouldAuthorizeAddress, same
+                // dvar, so the two ends agree about who needs a ticket.
+                if (NET_IsLocalAddress(clc->serverAddress)
+                    || (!net_lanauthorize->current.enabled && Sys_IsLANAddress(clc->serverAddress))
+                    || CL_CDKeyValidate(clc->serverAddress))
                 {
                     if (Com_HasPlayerProfile())
                     {
