@@ -180,7 +180,10 @@ gclient_s *__cdecl G_GetPlayerState(int32_t clientNum)
 
 int32_t __cdecl G_GetClientSize()
 {
-    return 12676;
+    // Was a literal 12676, the 1.0 sizeof(gclient_s). The server asserts this
+    // against its own view of the size, which only means anything if it is the
+    // real one.
+    return (int32_t)sizeof(gclient_s);
 }
 
 void __cdecl G_FreeEntities()
@@ -324,7 +327,8 @@ void __cdecl G_InitGame(int32_t levelTime, int32_t randomSeed, int32_t restart, 
     level.num_entities = 72;
     level.firstFreeEnt = 0;
     level.lastFreeEnt = 0;
-    SV_LocateGameData(level.gentities, level.num_entities, 628, &level.clients->ps, 12676);
+    SV_LocateGameData(level.gentities, level.num_entities, sizeof(gentity_s),
+        &level.clients->ps, sizeof(gclient_s));
 
     G_ParseHitLocDmgTable();
     BG_LoadPenetrationDepthTable();

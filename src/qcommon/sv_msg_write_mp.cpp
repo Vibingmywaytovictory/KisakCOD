@@ -31,10 +31,10 @@ const NetField eventEntityStateFields[59] =
   { NETF(attackerEntityNum), 10, 0u },
   { NETF(lerp.apos.trBase[0]), -100, 0u },
   { NETF(clientNum), 7, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(lerp.u.anonymous.data[2]), 32, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(solid), 24, 0u },
   { NETF(lerp.apos.trBase[1]), -100, 0u },
   { NETF(lerp.apos.trBase[2]), -100, 0u },
@@ -104,7 +104,7 @@ const NetField playerEntityStateFields[59] =
   { NETF(fTorsoPitch), 0, 0u },
   { NETF(fWaistPitch), 0, 0u },
   { NETF(solid), 24, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(eventParm), -93, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
@@ -122,7 +122,7 @@ const NetField playerEntityStateFields[59] =
   { NETF(lerp.pos.trDelta[2]), 0, 1u },
   { NETF(surfType), 8, 1u },
   { NETF(un1), 8, 1u },
-  { NETF(index), 10, 1u },
+  { NETF(index), MAX_ITEMLIST_BITS, 1u },
   { NETF(lerp.apos.trDelta[0]), 0, 1u },
   { NETF(lerp.apos.trDelta[1]), 0, 1u },
   { NETF(lerp.apos.trDelta[2]), 0, 1u },
@@ -172,7 +172,7 @@ const NetField corpseEntityStateFields[59] =
   { NETF(eventParms[1]), -93, 1u },
   { NETF(eventParms[0]), -93, 1u },
   { NETF(eventParms[2]), -93, 1u },
-  { NETF(weapon), 7, 1u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 1u },
   { NETF(weaponModel), 4, 1u },
   { NETF(eventParms[3]), -93, 1u },
   { NETF(solid), 24, 1u },
@@ -184,7 +184,7 @@ const NetField corpseEntityStateFields[59] =
   { NETF(surfType), 8, 1u },
   { NETF(un1), 8, 1u },
   { NETF(otherEntityNum), 10, 1u },
-  { NETF(index), 10, 1u },
+  { NETF(index), MAX_ITEMLIST_BITS, 1u },
   { NETF(lerp.apos.trDelta[0]), 0, 1u },
   { NETF(lerp.apos.trDelta[1]), 0, 1u },
   { NETF(lerp.apos.trDelta[2]), 0, 1u },
@@ -222,7 +222,7 @@ const NetField itemEntityStateFields[59] =
   { NETF(lerp.apos.trDelta[0]), 0, 2u },
   { NETF(lerp.apos.trDelta[1]), 0, 2u },
   { NETF(lerp.apos.trDelta[2]), 0, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.apos.trBase[2]), -100, 0u },
   { NETF(groundEntityNum), -96, 0u },
   { NETF(lerp.pos.trDuration), 32, 0u },
@@ -233,7 +233,7 @@ const NetField itemEntityStateFields[59] =
   { NETF(eventSequence), 8, 0u },
   { NETF(events[0]), -94, 0u },
   { NETF(eventParms[0]), -93, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(surfType), 8, 0u },
   { NETF(otherEntityNum), 10, 0u },
@@ -289,12 +289,12 @@ const NetField soundBlendEntityStateFields[59] =
   { NETF(events[0]), -94, 0u },
   { NETF(events[1]), -94, 0u },
   { NETF(events[2]), -94, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(eventParms[1]), -93, 0u },
   { NETF(eventParms[0]), -93, 0u },
   { NETF(eventParms[2]), -93, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(events[3]), -94, 0u },
@@ -336,7 +336,7 @@ const NetField scriptMoverStateFields[59] =
   { NETF(lerp.pos.trBase[2]), -90, 0u },
   { NETF(eventSequence), 8, 0u },
   { NETF(lerp.pos.trTime), -97, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.pos.trDuration), 32, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trBase[1]), -100, 0u },
@@ -367,7 +367,7 @@ const NetField scriptMoverStateFields[59] =
   { NETF(groundEntityNum), -96, 0u },
   { NETF(clientNum), 7, 0u },
   { NETF(eventParm), -93, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(surfType), 8, 0u },
   { NETF(otherEntityNum), 10, 0u },
   { NETF(lerp.u.anonymous.data[0]), 32, 0u },
@@ -415,12 +415,12 @@ const NetField loopFxEntityStateFields[59] =
   { NETF(events[0]), -94, 0u },
   { NETF(events[1]), -94, 0u },
   { NETF(events[2]), -94, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(eventParms[1]), -93, 0u },
   { NETF(eventParms[0]), -93, 0u },
   { NETF(eventParms[2]), -93, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(events[3]), -94, 0u },
@@ -475,7 +475,7 @@ const NetField fxStateFields[59] =
   { NETF(lerp.apos.trDelta[0]), 0, 0u },
   { NETF(lerp.apos.trDelta[1]), 0, 0u },
   { NETF(lerp.apos.trDelta[2]), 0, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(groundEntityNum), -96, 0u },
   { NETF(lerp.pos.trDuration), 32, 0u },
   { NETF(solid), 24, 0u },
@@ -484,7 +484,7 @@ const NetField fxStateFields[59] =
   { NETF(eventSequence), 8, 0u },
   { NETF(events[0]), -94, 0u },
   { NETF(eventParms[0]), -93, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(surfType), 8, 0u },
   { NETF(otherEntityNum), 10, 0u },
@@ -538,11 +538,11 @@ const NetField missileEntityStateFields[59] =
   { NETF(surfType), 8, 0u },
   { NETF(lerp.apos.trDelta[2]), 0, 0u },
   { NETF(lerp.u.missile.launchTime), -97, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(eventParms[0]), -93, 0u },
   { NETF(events[0]), -94, 0u },
   { NETF(events[1]), -94, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(clientNum), 7, 0u },
   { NETF(eventParms[1]), -93, 0u },
   { NETF(events[2]), -94, 0u },
@@ -883,7 +883,7 @@ void __cdecl TRACK_msg()
     track_static_alloc_internal((void *)corpseEntityStateFields, 944, "corpseEntityStateFields", 9);
     track_static_alloc_internal((void *)missileEntityStateFields, 944, "missileEntityStateFields", 9);
     track_static_alloc_internal((void *)itemEntityStateFields, 944, "itemEntityStateFields", 9);
-    track_static_alloc_internal((void *)playerStateFields, 2256, "playerStateFields", 9);
+    track_static_alloc_internal((void *)playerStateFields, sizeof(playerStateFields), "playerStateFields", 9);
     track_static_alloc_internal((void *)fxStateFields, 944, "fxStateFields", 9);
     track_static_alloc_internal((void *)scriptMoverStateFields, 944, "scriptMoverStateFields", 9);
     track_static_alloc_internal((void *)msg_hData, 1024, "msg_hData", 9);
@@ -2256,7 +2256,7 @@ void __cdecl MSG_WriteDeltaPlayerstate(
             MSG_WriteBit1(msg);
         }
     }
-    numFields = 141;
+    numFields = ARRAY_COUNT(playerStateFields);
     lastChangedFieldNum = 0;
     fieldNum = 0;
     field = (NetField *)playerStateFields;
@@ -2519,7 +2519,7 @@ void __cdecl MSG_WriteDeltaPlayerstate(
         SV_PacketDataIsUnknown(snapInfo->clientNum, msg);
         if (sv_debugPacketContents->current.enabled)
             Com_Printf(16, "%s", "sending weaponmodels\n");
-        for (fieldNum = 0; fieldNum < 128; ++fieldNum)
+        for (fieldNum = 0; fieldNum < ARRAY_COUNT(to->weaponmodels); ++fieldNum)
             MSG_WriteByte(msg, to->weaponmodels[fieldNum]);
     }
     v5 = MSG_GetUsedBitCount(msg);

@@ -1238,7 +1238,7 @@ const gitem_s *__cdecl BG_FindItemForWeapon(uint32_t weapon, int32_t model)
 {
 
     bcassert(weapon, BG_GetNumWeapons());
-    return &bg_itemlist[(weapon + (model * 128))];
+    return &bg_itemlist[(weapon + (model * MAX_WEAPONS))];
 }
 
 const gitem_s *__cdecl G_FindItem(const char *pickupName, int32_t model)
@@ -1247,7 +1247,7 @@ const gitem_s *__cdecl G_FindItem(const char *pickupName, int32_t model)
 
     iIndex = G_GetWeaponIndexForName(pickupName);
     if (iIndex)
-        return &bg_itemlist[(iIndex + (model * 128))];
+        return &bg_itemlist[(iIndex + (model * MAX_WEAPONS))];
     else
         return 0;
 }
@@ -1287,7 +1287,7 @@ bool __cdecl BG_CanItemBeGrabbed(const entityState_s *ent, const playerState_s *
     if ((ps->weapFlags & 0x80) != 0)
         return 0;
 
-    if (ent->index.brushmodel < 1 || ent->index.brushmodel >= 2048)
+    if (ent->index.brushmodel < 1 || ent->index.brushmodel >= MAX_ITEMLIST)
     {
         Com_Error(ERR_DROP, va("BG_CanItemBeGrabbed: index out of range (index is %i, eType is %i)", ent->index.brushmodel, ent->eType));
     }
@@ -1329,7 +1329,7 @@ bool __cdecl WeaponEntCanBeGrabbed(
     {
         iassert(ps);
 
-        if ((Com_BitCheckAssert(ps->weapons, weapIdx, 16) || BG_PlayerHasCompatibleWeapon(ps, weapIdx))
+        if ((Com_BitCheckAssert(ps->weapons, weapIdx, MAX_WEAPONMASK_BYTES) || BG_PlayerHasCompatibleWeapon(ps, weapIdx))
             && HaveRoomForAmmo(ps, weapIdx))
         {
             return true;
@@ -1339,7 +1339,7 @@ bool __cdecl WeaponEntCanBeGrabbed(
     {
         iassert(ps);
 
-        if (!Com_BitCheckAssert(ps->weapons, weapIdx, 16))
+        if (!Com_BitCheckAssert(ps->weapons, weapIdx, MAX_WEAPONMASK_BYTES))
             return true;
     }
     return false;
@@ -1379,13 +1379,13 @@ bool __cdecl BG_PlayerHasRoomForEntAllAmmoTypes(const entityState_s *ent, const 
     iassert(ent);
     iassert(ps);
 
-    if (ent->index.brushmodel < 1 || ent->index.brushmodel >= 2048)
+    if (ent->index.brushmodel < 1 || ent->index.brushmodel >= MAX_ITEMLIST)
     {
         v2 = va("BG_PlayerHasRoomForAllAmmoTypesOfEnt: index out of range (index is %i, eType is %i)", ent->index.brushmodel, ent->eType);
         Com_Error(ERR_DROP, v2);
     }
 
-    v3 = ent->index.brushmodel % 128;
+    v3 = ent->index.brushmodel % MAX_WEAPONS;
     weapIdx = v3;
     if (!v3)
         return false;

@@ -31,7 +31,60 @@
 #define BUTTON_LOC_SELECTING  (1 << 20)  // location-selection UI active
 #define BUTTON_BIT_COUNT 21
 
-#define MAX_WEAPONS_BITS 7
+// Weapon count. These live together because they are one decision, not five:
+// the pool size, the bit width on the wire, the owned-weapon bitmask, and the
+// item list are all derived from MAX_WEAPONS and the static_asserts below hold
+// them to it. They were 128 / 7 bits in retail, which stock content already
+// filled to 116 -- every attachment variant of a gun is its own weapon asset,
+// so a handful of new guns exhausts it.
+//
+// Raising MAX_WEAPONS IS A PROTOCOL CHANGE and a stock 1.7 client can no longer
+// connect: playerState.weapon, offHandIndex and entityState.weapon all widen,
+// the owned-weapon mask gains dwords (and netfields with them), and item entity
+// indices need more bits. That was a deliberate decision for this fork.
+//
+// NUM_WEAP_ALTMODELS is the number of world model variants an item index can
+// carry; the index packs as model * MAX_WEAPONS + weapon. Retail sized
+// bg_itemlist for all 16 but only ever sent 10 bits of index, so models 8 and
+// up were quietly untransmittable. MAX_ITEMLIST_BITS covers the whole table now.
+//
+// 256 rather than more, because usercmd_s carries weapon and offHandIndex as
+// uint8_t and 256 is exactly what those hold. Going further means widening the
+// client-to-server command struct, which is the direction where a mistake shows
+// up as desync rather than as something visible, and it doubles the
+// weaponmodels blob that MSG sends whole whenever any entry changes.
+#define MAX_WEAPONS 256
+#define MAX_WEAPONS_BITS 8
+#define NUM_WEAP_ALTMODELS 16
+
+#define MAX_WEAPONMASK_DWORDS (MAX_WEAPONS / 32)
+#define MAX_WEAPONMASK_BYTES  (MAX_WEAPONS / 8)
+
+#define MAX_ITEMLIST (NUM_WEAP_ALTMODELS * MAX_WEAPONS)
+#define MAX_ITEMLIST_BITS 12
+
+// The model an item index belongs to. It used to fold in a * MAX_WEAPONS that
+// both call sites applied a second time; see the asserts in BG_CanItemBeGrabbed
+// and BG_PlayerHasRoomForEntAllAmmoTypes, whose text is recovered verbatim from
+// the 1.0 binary and reads ITEM_WEAPMODEL(item) * MAX_WEAPONS + weapIdx.
+#define ITEM_WEAPMODEL(x) ((x) / MAX_WEAPONS)
+
+static_assert((1 << MAX_WEAPONS_BITS) == MAX_WEAPONS,
+    "MAX_WEAPONS_BITS must send the whole weapon index");
+static_assert((1 << MAX_ITEMLIST_BITS) == MAX_ITEMLIST,
+    "MAX_ITEMLIST_BITS must send the whole item index");
+static_assert(MAX_WEAPONS % 32 == 0,
+    "the owned-weapon bitmask is whole dwords");
+
+// Ammo and clip counts are a SEPARATE limit from MAX_WEAPONS, and they did not
+// move with it. Both are indexed by name, so every attachment variant of a gun
+// shares one entry and they scale with distinct guns rather than weapon assets.
+// The caps are the wire format: MSG_ReadDeltaPlayerState carries ammo as 4
+// groups of 16 and ammoclip as 8 groups of 16, and playerState sizes both
+// arrays at 128.
+#define MAX_AMMO_TYPES    64
+#define MAX_WEAPON_CLIPS  128
+
 #define GENTITYNUM_BITS 10
 
 #define MSG_FIELD_ORIGINY -91

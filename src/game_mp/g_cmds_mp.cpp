@@ -258,7 +258,7 @@ void __cdecl Cmd_Give_f(gentity_s *ent)
                                         it_ent->active = 1;
                                         if (it->giType == IT_WEAPON)
                                         {
-                                            weapDef = BG_GetWeaponDef(it_ent->item[0].index % 128);
+                                            weapDef = BG_GetWeaponDef(it_ent->item[0].index % MAX_WEAPONS);
                                             if (weapDef->offhandClass == OFFHAND_CLASS_FLASH_GRENADE)
                                             {
                                                 ent->client->ps.offhandSecondary = PLAYER_OFFHAND_SECONDARY_FLASH;

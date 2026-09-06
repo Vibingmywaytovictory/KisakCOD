@@ -33,7 +33,7 @@ uint8_t g_currentSnapshotPlayerStateFields[64];
 bool newDataReady;
 uint32_t bitsUsedPerEType[256];
 uint32_t bitsUsedForPlayerstates[7];
-int playerStateFieldsChanged[161];
+int playerStateFieldsChanged[ARRAY_COUNT(playerStateFields) + 1];
 bool s_packetDataEnabled;
 bool g_archivingSnapshot;
 int s_floatBitsCompressed[60];
@@ -41,7 +41,10 @@ int s_originDeltaBits[8];
 int s_originZDeltaBits[8];
 int s_originZFullBits[17];
 int s_originFullBits[17];
-uint32_t networkEntityFieldsChanged[23][160];
+// Second dimension is a field number, and playerStateFields is the longest
+// table that indexes it. It was a literal 160 against a 141 entry table -- the
+// commented out numFields lines above are where that nearly overflowed already.
+uint32_t networkEntityFieldsChanged[23][ARRAY_COUNT(playerStateFields)];
 uint32_t currentSnapshotNetworkEntityFieldsChanged[23][160];
 uint32_t bitsUsedForServerCommands;
 int s_currentEntType;
@@ -865,7 +868,10 @@ void __cdecl SV_WriteEntityFieldNumbers()
                 FS_Printf(f, "sent as full %i bits, but number only needed %i bits: %i times\n", 16, i, s_originZFullBits[i]);
         }
         FS_Printf(f, "Last PS field changed in snapshot:\n");
-        for (i = 0; i < 0xA0; ++i)
+        // Was a literal 0xA0 against a 141 entry field table, so it indexed
+        // playerStateFields past the end for any non zero slot above it. Both
+        // bounds come from the table now.
+        for (i = 0; i < ARRAY_COUNT(playerStateFields); ++i)
         {
             if (playerStateFieldsChanged[i])
                 FS_Printf(f, "%10i times - field %i [%s]\n", playerStateFieldsChanged[i], i, playerStateFields[i].name);
@@ -897,7 +903,7 @@ void __cdecl SV_GetAnalyzeEntityFields(int analyzeEntityType, NetFieldList *stat
         case 20:
             stateFields->array = playerStateFields;
             //*numFields = 160;
-            *numFields = 141;
+            *numFields = ARRAY_COUNT(playerStateFields);
             break;
         case 21:
             stateFields->array = hudElemFields;

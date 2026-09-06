@@ -910,9 +910,9 @@ struct playerState_s // sizeof=0x2F64
     int32_t stats[MAX_STATS];               // XREF: SV_GetClientPositionAtTime(int,int,float * const)+E9/r
     int32_t ammo[128];
     int32_t ammoclip[128];
-    uint32_t weapons[4];
-    uint32_t weaponold[4];
-    uint32_t weaponrechamber[4];
+    uint32_t weapons[MAX_WEAPONMASK_DWORDS];
+    uint32_t weaponold[MAX_WEAPONMASK_DWORDS];
+    uint32_t weaponrechamber[MAX_WEAPONMASK_DWORDS];
     float proneDirection;
     float proneDirectionPitch;
     float proneTorsoPitch;
@@ -954,7 +954,7 @@ struct playerState_s // sizeof=0x2F64
     int32_t hudElemLastAssignedSoundID;
     objective_t objective[16];          // XREF: _memmove+2E8/o
     // _memcpy+2E8/o ...
-    uint8_t weaponmodels[128];
+    uint8_t weaponmodels[MAX_WEAPONS];
     int32_t deltaTime;
     int32_t killCamEntity;                  // XREF: SpectatorClientEndFrame(gentity_s *)+163/w
     // SpectatorClientEndFrame(gentity_s *)+17B/w
@@ -962,7 +962,21 @@ struct playerState_s // sizeof=0x2F64
     // XREF: SV_Shutdown(char const *):loc_5D1039/o
     // TRACK_sv_main(void)+A/o ...
 };
-static_assert(sizeof(playerState_s) == 0x2F64);
+// Retail was 0x2F64. The three owned-weapon masks each gained
+// MAX_WEAPONMASK_DWORDS - 4 dwords when MAX_WEAPONS was raised, and that is the
+// only intended difference -- expressed rather than restated so this still
+// catches accidental drift.
+static_assert(sizeof(playerState_s)
+    == 0x2F64 + 3 * (MAX_WEAPONMASK_DWORDS - 4) * sizeof(uint32_t)
+            + (MAX_WEAPONS - 128) * sizeof(uint8_t));
+
+// ammo and ammoclip are indexed by ammo/clip index, not by weapon, which is why
+// they did not grow with MAX_WEAPONS. What bounds them is the wire format, and
+// BG_SetupAmmoIndexes/BG_SetupClipIndexes refuse to hand out an index past it.
+static_assert(MAX_AMMO_TYPES <= sizeof(playerState_s::ammo) / sizeof(int32_t),
+    "ammo index cap must fit playerState::ammo");
+static_assert(MAX_WEAPON_CLIPS <= sizeof(playerState_s::ammoclip) / sizeof(int32_t),
+    "clip index cap must fit playerState::ammoclip");
 
 #elif KISAK_SP
 enum pmtype_t : __int32
@@ -1043,9 +1057,9 @@ struct playerState_s
     int stats[4];
     int ammo[128];
     int ammoclip[128];
-    uint32_t weapons[4];
-    uint32_t weaponold[4];
-    uint32_t weaponrechamber[4];
+    uint32_t weapons[MAX_WEAPONMASK_DWORDS];
+    uint32_t weaponold[MAX_WEAPONMASK_DWORDS];
+    uint32_t weaponrechamber[MAX_WEAPONMASK_DWORDS];
     float proneDirection;
     float proneDirectionPitch;
     float proneTorsoPitch;
@@ -1090,7 +1104,7 @@ struct playerState_s
     float dofViewmodelStart;
     float dofViewmodelEnd;
     int hudElemLastAssignedSoundID;
-    uint8_t weaponmodels[128];
+    uint8_t weaponmodels[MAX_WEAPONS];
     playerState_s_hud hud;
 };
 #endif
@@ -2400,8 +2414,8 @@ WeaponDef *__cdecl BG_LoadDefaultWeaponDef_FastFile();
 
 
 // bg_misctables
-extern gitem_s bg_itemlist[2048];
-extern int itemRegistered[2048];
+extern gitem_s bg_itemlist[MAX_ITEMLIST];
+extern int itemRegistered[MAX_ITEMLIST];
 
 const float playerMins[] = { -15.0, -15.0, 0.0 };
 const float playerMaxs[] = { 15.0, 15.0, 70.0 };

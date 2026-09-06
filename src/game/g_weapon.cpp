@@ -637,7 +637,7 @@ int __cdecl G_GivePlayerWeapon(playerState_s *pPS, int iWeaponIndex, uint8_t alt
         MyAssertHandler(".\\game\\g_weapon.cpp", 597, 0, "%s", "pPS");
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
     }
-    if (Com_BitCheckAssert(pPS->weapons, iWeaponIndex, 16))
+    if (Com_BitCheckAssert(pPS->weapons, iWeaponIndex, MAX_WEAPONMASK_BYTES))
         return 0;
     weapDef = BG_GetWeaponDef(iWeaponIndex);
     if (weapDef->weapClass == WEAPCLASS_TURRET)
@@ -654,9 +654,9 @@ int __cdecl G_GivePlayerWeapon(playerState_s *pPS, int iWeaponIndex, uint8_t alt
             "%s\n\t(weapDef->szDisplayName) = %s",
             "(!level.clientIsSpawning)",
             weapDef->szDisplayName);
-    Com_BitSetAssert(pPS->weapons, iWeaponIndex, 16);
-    Com_BitClearAssert(pPS->weaponrechamber, iWeaponIndex, 16);
-    Com_BitClearAssert(pPS->weaponold, iWeaponIndex, 16);
+    Com_BitSetAssert(pPS->weapons, iWeaponIndex, MAX_WEAPONMASK_BYTES);
+    Com_BitClearAssert(pPS->weaponrechamber, iWeaponIndex, MAX_WEAPONMASK_BYTES);
+    Com_BitClearAssert(pPS->weaponold, iWeaponIndex, MAX_WEAPONMASK_BYTES);
     pPS->weaponmodels[iWeaponIndex] = altModelIndex;
     if (weapDef->weapClass == WEAPCLASS_ITEM)
         return 1;
@@ -690,10 +690,10 @@ int __cdecl G_GivePlayerWeapon(playerState_s *pPS, int iWeaponIndex, uint8_t alt
         {
             if (!pPS)
                 MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-            if (Com_BitCheckAssert(pPS->weapons, iCurrIndex, 16))
+            if (Com_BitCheckAssert(pPS->weapons, iCurrIndex, MAX_WEAPONMASK_BYTES))
                 break;
-            Com_BitSetAssert(pPS->weapons, iCurrIndex, 16);
-            Com_BitClearAssert(pPS->weaponrechamber, iWeaponIndex, 16);
+            Com_BitSetAssert(pPS->weapons, iCurrIndex, MAX_WEAPONMASK_BYTES);
+            Com_BitClearAssert(pPS->weaponrechamber, iWeaponIndex, MAX_WEAPONMASK_BYTES);
             pPS->weaponmodels[iCurrIndex] = altModelIndex;
         }
         return 1;

@@ -20,13 +20,13 @@
 //uint32_t bg_lastParsedWeaponIndex 828010e4     bg_weapons.obj
 
 int surfaceTypeSoundListCount;
-WeaponDef *bg_weaponDefs[128];
+WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
 const float MY_RELOADSTART_INTERUPT_IGNORE_FRAC = 0.4f;
 
-WeaponDef *bg_weapAmmoTypes[128];
-WeaponDef *bg_sharedAmmoCaps[128];
-WeaponDef *bg_weapClips[128];
+WeaponDef *bg_weapAmmoTypes[MAX_WEAPONS];
+WeaponDef *bg_sharedAmmoCaps[MAX_WEAPONS];
+WeaponDef *bg_weapClips[MAX_WEAPONS];
 uint32_t bg_numAmmoTypes;
 uint32_t bg_numSharedAmmoCaps;
 uint32_t bg_numWeapClips;
@@ -222,7 +222,7 @@ void __cdecl BG_ClearWeaponDef()
     bg_numSharedAmmoCaps = 1;
     bg_weapClips[0] = bg_weaponDefs[0];
     bg_numWeapClips = 1;
-    for (itemIdx = 1; itemIdx < 2048; ++itemIdx)
+    for (itemIdx = 1; itemIdx < MAX_ITEMLIST; ++itemIdx)
         bg_itemlist[itemIdx].giType = IT_BAD;
     BG_LoadPlayerAnimTypes();
 #ifdef KISAK_MP
@@ -252,8 +252,8 @@ void __cdecl BG_FillInWeaponItems(uint32_t weapIndex)
 {
     int32_t model; // [esp+0h] [ebp-8h]
 
-    for (model = 0; model < 16; ++model)
-        bg_itemlist[128 * model + weapIndex].giType = IT_WEAPON;
+    for (model = 0; model < NUM_WEAP_ALTMODELS; ++model)
+        bg_itemlist[MAX_WEAPONS * model + weapIndex].giType = IT_WEAPON;
 }
 
 void __cdecl BG_SetupAmmoIndexes(uint32_t weapIndex)
@@ -270,6 +270,16 @@ void __cdecl BG_SetupAmmoIndexes(uint32_t weapIndex)
             return;
         }
     }
+    // MSG carries ammo as 4 groups of 16, so index 64 and up never arrives.
+    if (index >= MAX_AMMO_TYPES)
+    {
+        Com_Error(ERR_DROP,
+            "Exceeded limit of %i ammo names, at '%s'. Ammo names are shared"
+            " between attachment variants of the same gun, so this is a limit"
+            " on distinct guns, not on weapon count.",
+            MAX_AMMO_TYPES, weapDef->szAmmoName);
+    }
+
     bg_weapAmmoTypes[index] = weapDef;
     weapDef->iAmmoIndex = index;
     ++bg_numAmmoTypes;
@@ -338,6 +348,17 @@ void __cdecl BG_SetupClipIndexes(uint32_t weapIndex)
             return;
         }
     }
+    // MSG_ReadDeltaPlayerState carries ammoclip as 8 groups of 16, so a clip
+    // index past 128 would simply never reach the client. Fail loudly instead.
+    if (index >= MAX_WEAPON_CLIPS)
+    {
+        Com_Error(ERR_DROP,
+            "Exceeded limit of %i weapon clip names, at '%s'. Clip names are"
+            " shared between attachment variants of the same gun, so this is a"
+            " limit on distinct guns, not on weapon count.",
+            MAX_WEAPON_CLIPS, weapDef->szClipName);
+    }
+
     bg_weapClips[index] = weapDef;
     weapDef->iClipIndex = index;
     ++bg_numWeapClips;
@@ -487,7 +508,7 @@ int32_t __cdecl BG_GetFirstAvailableOffhand(const playerState_s *ps, int32_t off
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, weapIndex, 16)
+            if (Com_BitCheckAssert(ps->weapons, weapIndex, MAX_WEAPONMASK_BYTES)
                 && (ps->throwBackGrenadeTimeLeft > 0 || BG_WeaponAmmo(ps, weapIndex) > 0))
             {
                 BG_AssertOffhandIndexOrNone(weapIndex);
@@ -510,7 +531,7 @@ int32_t __cdecl BG_GetFirstEquippedOffhand(const playerState_s *ps, int32_t offh
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, weapIndex, 16))
+            if (Com_BitCheckAssert(ps->weapons, weapIndex, MAX_WEAPONMASK_BYTES))
                 return weapIndex;
         }
     }
@@ -539,7 +560,7 @@ bool __cdecl BG_IsWeaponValid(const playerState_s *ps, uint32_t weaponIndex)
     
     iassert(ps);
 
-    return Com_BitCheckAssert(ps->weapons, weaponIndex, 16);
+    return Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES);
 }
 
 bool __cdecl BG_WeaponBlocksProne(uint32_t weapIndex)
@@ -555,11 +576,11 @@ int32_t __cdecl BG_TakePlayerWeapon(playerState_s *ps, uint32_t weaponIndex, int
 
     iassert(ps);
 
-    if (!Com_BitCheckAssert(ps->weapons, weaponIndex, 16))
+    if (!Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES))
         return 0;
 
     weapDef = BG_GetWeaponDef(weaponIndex);
-    Com_BitClearAssert(ps->weapons, weaponIndex, 16);
+    Com_BitClearAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES);
 
     if (takeAwayAmmo)
     {
@@ -573,7 +594,7 @@ int32_t __cdecl BG_TakePlayerWeapon(playerState_s *ps, uint32_t weaponIndex, int
     {
         iassert(ps);
 
-        if (!Com_BitCheckAssert(ps->weapons, curWeaponIndex, 16))
+        if (!Com_BitCheckAssert(ps->weapons, curWeaponIndex, MAX_WEAPONMASK_BYTES))
             break;
 
         if (takeAwayAmmo)
@@ -582,7 +603,7 @@ int32_t __cdecl BG_TakePlayerWeapon(playerState_s *ps, uint32_t weaponIndex, int
             ps->ammoclip[BG_ClipForWeapon(curWeaponIndex)] = 0;
         }
 
-        Com_BitClearAssert(ps->weapons, curWeaponIndex, 16);
+        Com_BitClearAssert(ps->weapons, curWeaponIndex, MAX_WEAPONMASK_BYTES);
     }
 
     if (weaponIndex == ps->weapon)
@@ -624,7 +645,7 @@ int32_t __cdecl BG_GetAmmoPlayerMax(const playerState_s *ps, uint32_t weaponInde
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, thisWeapIdx, 16))
+            if (Com_BitCheckAssert(ps->weapons, thisWeapIdx, MAX_WEAPONMASK_BYTES))
             {
                 thisWeapDef = BG_GetWeaponDef(thisWeapIdx);
                 if (thisWeapDef->iAmmoIndex == weapDef->iAmmoIndex)
@@ -643,12 +664,12 @@ int32_t __cdecl BG_GetMaxPickupableAmmo(const playerState_s *ps, uint32_t weapon
 {
     int32_t ammo; // [esp+4h] [ebp-418h]
     int32_t ammoIndex; // [esp+8h] [ebp-414h]
-    int32_t clipCounted[128]; // [esp+Ch] [ebp-410h] BYREF
+    int32_t clipCounted[MAX_WEAPON_CLIPS]; // [esp+Ch] [ebp-410h] BYREF
     int32_t clipIndex; // [esp+20Ch] [ebp-210h]
     WeaponDef *curWeapDef; // [esp+210h] [ebp-20Ch]
     uint32_t currWeap; // [esp+214h] [ebp-208h]
     WeaponDef *weapDef; // [esp+218h] [ebp-204h]
-    int32_t ammoCounted[128]; // [esp+21Ch] [ebp-200h] BYREF
+    int32_t ammoCounted[MAX_AMMO_TYPES]; // [esp+21Ch] [ebp-200h] BYREF
 
     memset((uint8_t *)ammoCounted, 0, sizeof(ammoCounted));
     memset((uint8_t *)clipCounted, 0, sizeof(clipCounted));
@@ -662,7 +683,7 @@ int32_t __cdecl BG_GetMaxPickupableAmmo(const playerState_s *ps, uint32_t weapon
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, currWeap, 16))
+            if (Com_BitCheckAssert(ps->weapons, currWeap, MAX_WEAPONMASK_BYTES))
             {
                 curWeapDef = BG_GetWeaponDef(currWeap);
                 if (curWeapDef->iSharedAmmoCapIndex == weapDef->iSharedAmmoCapIndex)
@@ -725,7 +746,7 @@ int32_t __cdecl BG_GetTotalAmmoReserve(const playerState_s *ps, uint32_t weaponI
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, currWeap, 16))
+            if (Com_BitCheckAssert(ps->weapons, currWeap, MAX_WEAPONMASK_BYTES))
             {
                 curWeapDef = BG_GetWeaponDef(currWeap);
                 if (curWeapDef->iSharedAmmoCapIndex == weapDef->iSharedAmmoCapIndex)
@@ -1614,13 +1635,13 @@ int32_t __cdecl PM_Weapon_CheckForRechamber(playerState_s *ps, int32_t delayedAc
         bitNum = ps->weapon;
         iassert(ps);
 
-        if (Com_BitCheckAssert(ps->weaponrechamber, bitNum, 16))
+        if (Com_BitCheckAssert(ps->weaponrechamber, bitNum, MAX_WEAPONMASK_BYTES))
         {
             if (ps->weaponstate == WEAPON_RECHAMBERING)
             {
                 if (delayedAction)
                 {
-                    Com_BitClearAssert(ps->weaponrechamber, ps->weapon, 16);
+                    Com_BitClearAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
                     PM_AddEvent(ps, EV_EJECT_BRASS);
                     if (ps->weaponTime)
                         return 1;
@@ -1702,7 +1723,7 @@ void __cdecl PM_Weapon_FinishWeaponChange(pmove_t *pm, bool quick)
 
         iassert(ps);
 
-        if (Com_BitCheckAssert(ps->weapons, bitNum, 16))
+        if (Com_BitCheckAssert(ps->weapons, bitNum, MAX_WEAPONMASK_BYTES))
         {
             if ((ps->weapFlags & 0x80) != 0)
             {
@@ -1723,7 +1744,7 @@ void __cdecl PM_Weapon_FinishWeaponChange(pmove_t *pm, bool quick)
     }
     iassert(ps);
 
-    if (!Com_BitCheckAssert(ps->weapons, newweapon, 16))
+    if (!Com_BitCheckAssert(ps->weapons, newweapon, MAX_WEAPONMASK_BYTES))
         newweapon = 0;
     oldweapon = ps->weapon;
     ps->weapon = (uint8_t)newweapon;
@@ -1741,8 +1762,8 @@ void __cdecl PM_Weapon_FinishWeaponChange(pmove_t *pm, bool quick)
         weapon = ps->weapon;
         iassert(ps);
 
-        firstequip = !Com_BitCheckAssert(ps->weaponold, weapon, 16);
-        Com_BitSetAssert(ps->weaponold, ps->weapon, 16);
+        firstequip = !Com_BitCheckAssert(ps->weaponold, weapon, MAX_WEAPONMASK_BYTES);
+        Com_BitSetAssert(ps->weaponold, ps->weapon, MAX_WEAPONMASK_BYTES);
         if ((ps->pm_flags & PMF_SPRINTING) == 0 && oldweapon)
         {
             v2 = newweapon && newweapon == BG_GetWeaponDef(oldweapon)->altWeaponIndex;
@@ -1833,7 +1854,7 @@ void __cdecl BG_TakeClipOnlyWeaponIfEmpty(playerState_s *ps, int32_t weaponIndex
     {
         iassert(ps);
 
-        if (Com_BitCheckAssert(ps->weapons, weaponIndex, 16)
+        if (Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES)
             && BG_WeaponIsClipOnly(weaponIndex)
             && !ps->ammoclip[BG_ClipForWeapon(weaponIndex)]
             && !ps->ammo[BG_AmmoForWeapon(weaponIndex)]
@@ -1873,7 +1894,7 @@ void __cdecl PM_Weapon_FinishReloadStart(pmove_t *pm, int32_t delayedAction)
 
         if (ps->weaponstate == WEAPON_RELOAD_START_INTERUPT && ps->ammoclip[BG_ClipForWeapon(ps->weapon)] || !PM_Weapon_AllowReload(ps))
         {
-            Com_BitClearAssert(ps->weaponrechamber, ps->weapon, 16);
+            Com_BitClearAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
             if (weapDef->iReloadEndTime)
             {
                 ps->weaponstate = WEAPON_RELOAD_END;
@@ -1954,7 +1975,7 @@ void __cdecl PM_SetWeaponReloadAddAmmoDelay(playerState_s *ps)
     
     iassert(ps);
 
-    if (Com_BitCheckAssert(ps->weaponrechamber, bitNum, 16))
+    if (Com_BitCheckAssert(ps->weaponrechamber, bitNum, MAX_WEAPONMASK_BYTES))
     {
         if (!reloadTime)
             reloadTime = ps->weaponTime;
@@ -2012,13 +2033,13 @@ void __cdecl PM_Weapon_ReloadDelayedAction(playerState_s *ps)
     
     iassert(ps);
 
-    if (!Com_BitCheckAssert(ps->weaponrechamber, bitNum, 16))
+    if (!Com_BitCheckAssert(ps->weaponrechamber, bitNum, MAX_WEAPONMASK_BYTES))
     {
     LABEL_28:
         PM_ReloadClip(ps);
         return;
     }
-    Com_BitClearAssert(ps->weaponrechamber, ps->weapon, 16);
+    Com_BitClearAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
     PM_AddEvent(ps, EV_EJECT_BRASS);
     if (ps->weaponstate != WEAPON_RELOAD_START && ps->weaponstate != WEAPON_RELOAD_START_INTERUPT
         || weapDef->iReloadStartAddTime)
@@ -2107,7 +2128,7 @@ void __cdecl PM_Weapon_FinishReload(pmove_t *pm, int32_t delayedAction)
         {
             if (weapDef->bSegmentedReload && (pm->cmd.buttons & BUTTON_ATTACK) != 0)
                 ps->weaponstate = WEAPON_RELOADING_INTERUPT;
-            Com_BitClearAssert(ps->weaponrechamber, ps->weapon, 16);
+            Com_BitClearAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
             if (!weapDef->bSegmentedReload)
                 goto LABEL_19;
             if (ps->weaponstate != WEAPON_RELOADING_INTERUPT && PM_Weapon_AllowReload(ps))
@@ -2500,7 +2521,7 @@ void __cdecl PM_Weapon_CheckForChangeWeapon(pmove_t *pm)
                 bitNum = ps->weapon;
                 iassert(ps);
 
-                if (!Com_BitCheckAssert(ps->weapons, bitNum, 16))
+                if (!Com_BitCheckAssert(ps->weapons, bitNum, MAX_WEAPONMASK_BYTES))
                     PM_BeginWeaponChange(ps, 0, 0);
             }
         }
@@ -2527,7 +2548,7 @@ void __cdecl PM_BeginWeaponChange(playerState_s *ps, uint32_t newweapon, bool qu
 
     iassert(ps);
 
-    if (Com_BitCheckAssert(ps->weapons, newweapon, 16))
+    if (Com_BitCheckAssert(ps->weapons, newweapon, MAX_WEAPONMASK_BYTES))
     {
     LABEL_8:
         if (ps->weaponstate != WEAPON_DROPPING && ps->weaponstate != WEAPON_DROPPING_QUICK)
@@ -2549,7 +2570,7 @@ void __cdecl PM_BeginWeaponChange(playerState_s *ps, uint32_t newweapon, bool qu
 
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, oldweapon, 16) && ps->grenadeTimeLeft <= 0)
+            if (Com_BitCheckAssert(ps->weapons, oldweapon, MAX_WEAPONMASK_BYTES) && ps->grenadeTimeLeft <= 0)
             {
                 weapDefOld = BG_GetWeaponDef(oldweapon);
                 if ((ps->pm_flags & PMF_SPRINTING) != 0)
@@ -2777,7 +2798,7 @@ void __cdecl PM_Weapon_StartFiring(playerState_s *ps, int32_t delayedAction)
         if (weapDef->adsFireOnly)
             ps->weaponDelay = (int)((1.0 - ps->fWeaponPosFrac) * (1.0 / weapDef->fOOPosAnimLength[0]));
         if (weapDef->bBoltAction)
-            Com_BitSetAssert(ps->weaponrechamber, ps->weapon, 16);
+            Com_BitSetAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
         if (ps->weaponstate != WEAPON_FIRING)
         {
             if (ps->fWeaponPosFrac < 1.0)
@@ -2851,7 +2872,7 @@ int __cdecl PM_Weapon_CheckFiringAmmo(playerState_s *ps)
     }
     else
     {
-        Com_BitClearAssert(ps->weaponrechamber, ps->weapon, 16);
+        Com_BitClearAssert(ps->weaponrechamber, ps->weapon, MAX_WEAPONMASK_BYTES);
         PM_ContinueWeaponAnim(ps, WEAP_IDLE);
         if (weapDef->weapType != WEAPTYPE_GRENADE)
             ps->weaponTime += 500;
@@ -3159,7 +3180,7 @@ void __cdecl PM_Weapon_CheckForOffHand(pmove_t *pm)
 
         iassert(ps);
 
-        if (Com_BitCheckAssert(ps->weapons, bitNum, 16))
+        if (Com_BitCheckAssert(ps->weapons, bitNum, MAX_WEAPONMASK_BYTES))
         {
             ps->offHandIndex = pm->cmd.offHandIndex;
 
@@ -4511,7 +4532,7 @@ int __cdecl BG_PlayerWeaponCountPrimaryTypes(const playerState_s *ps)
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, weapIndex, 16))
+            if (Com_BitCheckAssert(ps->weapons, weapIndex, MAX_WEAPONMASK_BYTES))
                 ++resultCount;
         }
     }
@@ -4541,7 +4562,7 @@ char __cdecl BG_PlayerHasCompatibleWeapon(const playerState_s *ps, uint32_t weap
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, idx, 16))
+            if (Com_BitCheckAssert(ps->weapons, idx, MAX_WEAPONMASK_BYTES))
                 return 1;
         }
     }

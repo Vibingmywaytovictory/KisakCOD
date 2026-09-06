@@ -1057,7 +1057,7 @@ extern const dvar_t *jump_spreadAdd;
 
 // bg_weapons
 extern uint32_t bg_lastParsedWeaponIndex;
-extern struct WeaponDef *bg_weaponDefs[128];
+extern struct WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
 // https://github.com/id-Software/RTCW-SP/blob/master/src/game/bg_public.h#L1573
 typedef enum // Kisak: This is a new struct based on idtech

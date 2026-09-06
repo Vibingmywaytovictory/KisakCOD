@@ -449,9 +449,12 @@ void __cdecl GScr_BotWeapon(scr_entref_t entref)
 
     int32_t weaponIndex = G_GetWeaponIndexForName(weapon);
 
-    // The usercmd carries the weapon in MAX_WEAPONS_BITS (7) bits and the pool is
-    // 128 entries, so anything wider than a byte is already a bug upstream.
-    if (weaponIndex < 0 || weaponIndex >= 256)
+    // ai->weapon and usercmd_s::weapon are both uint8_t, which is exactly what
+    // MAX_WEAPONS (256) needs; if MAX_WEAPONS ever grows past that, those two
+    // fields have to widen with it and this check will catch the mismatch.
+    static_assert(MAX_WEAPONS <= 256, "usercmd_s::weapon is a uint8_t");
+
+    if (weaponIndex < 0 || weaponIndex >= MAX_WEAPONS)
     {
         Scr_ParamError(0, va("weapon index %i out of range", weaponIndex));
         return;

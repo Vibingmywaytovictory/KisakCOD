@@ -6177,7 +6177,7 @@ void __cdecl ScrCmd_ItemWeaponSetAmmo(scr_entref_t entref)
             Scr_ParamError(2u, v1);
         }
     }
-    v2 = itemEnt->item[altIndex].index % 128;
+    v2 = itemEnt->item[altIndex].index % MAX_WEAPONS;
     if (v2 > 0)
     {
         weapDef = BG_GetWeaponDef(v2);

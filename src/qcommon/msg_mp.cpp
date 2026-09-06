@@ -802,8 +802,8 @@ void __cdecl MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, const usercmd_s *from
         keya = to->serverTime ^ key;
         MSG_WriteDeltaKeyShort(msg, keya, from->angles[2], to->angles[2]);
         MSG_WriteDeltaKey(msg, keya, from->buttons >> 1, to->buttons >> 1, 0x14u);
-        MSG_WriteDeltaKey(msg, keya, from->weapon, to->weapon, 7u);
-        MSG_WriteDeltaKey(msg, keya, from->offHandIndex, to->offHandIndex, 7u);
+        MSG_WriteDeltaKey(msg, keya, from->weapon, to->weapon, MAX_WEAPONS_BITS);
+        MSG_WriteDeltaKey(msg, keya, from->offHandIndex, to->offHandIndex, MAX_WEAPONS_BITS);
         if ((to->buttons & BUTTON_LOC_CONFIRM) != 0)
         {
             MSG_WriteDeltaKeyByte(msg, keya, from->selectedLocation[0], to->selectedLocation[0]);
@@ -853,8 +853,8 @@ void __cdecl MSG_ReadDeltaUsercmdKey(msg_t *msg, int key, const usercmd_s *from,
             to->angles[2] = (uint16_t)MSG_ReadDeltaKeyShort(msg, keya, from->angles[2]);
             to->buttons &= BUTTON_ATTACK;
             to->buttons |= BUTTON_SPRINT * MSG_ReadDeltaKey(msg, keya, from->buttons >> 1, 0x14u);
-            to->weapon = MSG_ReadDeltaKey(msg, keya, from->weapon, 7u);
-            to->offHandIndex = MSG_ReadDeltaKey(msg, keya, from->offHandIndex, 7u);
+            to->weapon = MSG_ReadDeltaKey(msg, keya, from->weapon, MAX_WEAPONS_BITS);
+            to->offHandIndex = MSG_ReadDeltaKey(msg, keya, from->offHandIndex, MAX_WEAPONS_BITS);
             if ((to->buttons & BUTTON_LOC_CONFIRM) != 0)
             {
                 to->selectedLocation[0] = MSG_ReadDeltaKeyByte(msg, keya, from->selectedLocation[0]);
@@ -1406,7 +1406,9 @@ const int numLoopFxEntityStateFields = 59;
 const int numMissileEntityStateFields = 59;
 const int numArchivedEntityFields = 69;
 const int numClientStateFields = 24;
-const int numPlayerStateFields = 141;
+// Was a literal 141, which had to be kept in step with playerStateFields by
+// hand. Derived, so adding a field cannot desync the reader from the writer.
+const int numPlayerStateFields = ARRAY_COUNT(playerStateFields);
 const int numObjectiveFields = 6;
 const int numHudElemFields = 40;
 
@@ -1793,7 +1795,7 @@ void __cdecl MSG_ReadDeltaPlayerstate(
 
     if (MSG_ReadBit(msg))
     {
-        for (int j = 0; j < 128; ++j)
+        for (int j = 0; j < MAX_WEAPONS; ++j)
         {
             Byte = MSG_ReadByte(msg);
             to->weaponmodels[j] = Byte;

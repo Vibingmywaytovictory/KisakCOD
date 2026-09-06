@@ -452,7 +452,7 @@ bool __cdecl IsLiveGrenade(gentity_s *ent)
 
     if (ent->s.eType != ET_MISSILE)
         return 0;
-    weapDef = BG_GetWeaponDef(ent->s.index.brushmodel % 128);
+    weapDef = BG_GetWeaponDef(ent->s.index.brushmodel % MAX_WEAPONS);
     if (!weapDef)
         MyAssertHandler(".\\game_mp\\g_active_mp.cpp", 396, 0, "%s", "weapDef");
     return weapDef->offhandClass == OFFHAND_CLASS_FRAG_GRENADE;

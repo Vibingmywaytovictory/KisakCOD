@@ -57,13 +57,11 @@ struct DBReorderAssetEntry // sizeof=0x10
 // compatible with stock clients and with unmodified fastfiles. The two limits
 // that are NOT local are called out below.
 //
-// POOLSIZE_WEAPON is deliberately left at 128 even though it is the fullest
-// pool in the game. It is the one asset whose index goes on the wire:
-// playerState weapon and offHandIndex are sent in MAX_WEAPONS_BITS (7) bits
-// each (msg_mp.cpp), the weapons-owned bitmask is 16 bytes, and item entity
-// indices are packed model * MAX_WEAPONS + weapon into a 2048 entry
-// bg_itemlist. Raising it changes the protocol and locks out stock clients, so
-// it is a separate decision, not a constant to bump.
+// POOLSIZE_WEAPON follows MAX_WEAPONS rather than standing on its own, because
+// it is the one asset whose index goes on the wire and every part of that has
+// to agree: see qcommon/msg_mp.h, which owns MAX_WEAPONS and static_asserts the
+// bit widths, mask size and item list against it. Raising it was a deliberate
+// protocol break for this fork -- a stock 1.7 client can no longer connect.
 
 #define POOLSIZE_XMODELPIECES   64
 #define POOLSIZE_PHYSPRESET     128        // raised from 64
@@ -88,7 +86,7 @@ struct DBReorderAssetEntry // sizeof=0x10
 #define POOLSIZE_MENULIST       256        // raised from 128
 #define POOLSIZE_MENU           1280       // raised from 640 (512 on SP)
 #define POOLSIZE_LOCALIZE_ENTRY 12288      // raised from 6144
-#define POOLSIZE_WEAPON         128        // protocol locked, see above
+#define POOLSIZE_WEAPON         MAX_WEAPONS // 512; raised from 128 with the protocol
 #define POOLSIZE_SNDDRIVER_GLOBALS 1
 #define POOLSIZE_FX             1200       // raised from 400
 #define POOLSIZE_IMPACT_FX      16         // raised from 4

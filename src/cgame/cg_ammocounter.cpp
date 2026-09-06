@@ -338,7 +338,7 @@ bool __cdecl CG_ActionSlotIsUsable(int32_t localClientNum, uint32_t slotIdx)
         if (weapIdx)
         {
             iassert(ps);
-            if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weapIdx, 16))
+            if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weapIdx, MAX_WEAPONMASK_BYTES))
                 return 1;
         }
         break;
@@ -582,7 +582,7 @@ void __cdecl CG_DrawPlayerActionSlot(
         {
             iassert(ps);
 
-            if (Com_BitCheckAssert(ps->weapons, weapIdx, 16))
+            if (Com_BitCheckAssert(ps->weapons, weapIdx, MAX_WEAPONMASK_BYTES))
             {
                 weapDef = BG_GetWeaponDef(weapIdx);
                 DpadIconDims(rect, slotIdx, weapDef, &x, &y, &w, &h);
@@ -1215,7 +1215,7 @@ uint32_t __cdecl GetWeaponIndex(const cg_s *cgameGlob)
     if (cgameGlob == (const cg_s *)-287036)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
 
-    if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, 16))
+    if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, MAX_WEAPONMASK_BYTES))
         return cgameGlob->weaponSelect;
     else
         return cgameGlob->predictedPlayerState.weapon;
@@ -1225,5 +1225,5 @@ int BG_PlayerHasWeapon(const playerState_s *ps, int weaponIndex)
 {
     iassert(ps);
 
-    return Com_BitCheckAssert(ps->weapons, weaponIndex, 16);
+    return Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES);
 }

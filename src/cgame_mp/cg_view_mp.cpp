@@ -1482,7 +1482,7 @@ int32_t __cdecl CG_DrawActiveFrame(
                     cgameGlob->weaponSelect = 0;
                     for (weapIdx = 1; weapIdx < BG_GetNumWeapons(); ++weapIdx)
                     {
-                        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weapIdx, 16))
+                        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weapIdx, MAX_WEAPONMASK_BYTES))
                         {
                             cgameGlob->weaponSelect = weapIdx;
                             break;

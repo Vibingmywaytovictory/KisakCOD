@@ -382,8 +382,8 @@ void __cdecl CG_TouchItem(cg_s *cgameGlob, centity_s *cent)
         && BG_PlayerTouchesItem(&cgameGlob->predictedPlayerState, &cent->nextState, cgameGlob->time)
         && cent->miscTime != cgameGlob->time)
     {
-        bitNum = cent->nextState.index.brushmodel % 128;
-        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, 16)
+        bitNum = cent->nextState.index.brushmodel % MAX_WEAPONS;
+        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, MAX_WEAPONMASK_BYTES)
             && BG_CanItemBeGrabbed(&cent->nextState, &cgameGlob->predictedPlayerState, 1))
         {
             if (BG_PlayerHasRoomForEntAllAmmoTypes(&cent->nextState, &cgameGlob->predictedPlayerState))
@@ -392,7 +392,7 @@ void __cdecl CG_TouchItem(cg_s *cgameGlob, centity_s *cent)
                 cent->miscTime = cgameGlob->time;
                 BG_AddPredictableEventToPlayerstate(
                     EV_ITEM_PICKUP,
-                    cent->nextState.index.brushmodel % 128,
+                    cent->nextState.index.brushmodel % MAX_WEAPONS,
                     &cgameGlob->predictedPlayerState);
             }
         }

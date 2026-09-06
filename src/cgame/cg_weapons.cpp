@@ -399,7 +399,7 @@ void __cdecl CG_RegisterItemVisuals(int32_t localClientNum, uint32_t weapIdx)
 
     for (modelIdx = 0; modelIdx < 16; ++modelIdx)
     {
-        gitem_s *item = &bg_itemlist[128 * modelIdx + weapIdx];
+        gitem_s *item = &bg_itemlist[MAX_WEAPONS * modelIdx + weapIdx];
         iassert(item->giType == IT_WEAPON);
     }
 
@@ -2054,7 +2054,7 @@ void __cdecl CG_OutOfAmmoChange(int32_t localClientNum)
         {
             bitNum = cgameGlob->weaponLatestPrimaryIdx;
 
-            if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, 16))
+            if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, MAX_WEAPONMASK_BYTES))
             {
                 CG_SelectWeaponIndex(localClientNum, cgameGlob->weaponLatestPrimaryIdx);
                 return;
@@ -2082,7 +2082,7 @@ char __cdecl VerifyPlayerAltModeWeapon(int32_t localClientNum, const WeaponDef *
     iassert(weapDef);
     iassert(weapDef->inventoryType == WEAPINVENTORY_ALTMODE);
 
-    if (Com_BitCheckAssert(CG_GetLocalClientGlobals(localClientNum)->predictedPlayerState.weapons, weapDef->altWeaponIndex, 16))
+    if (Com_BitCheckAssert(CG_GetLocalClientGlobals(localClientNum)->predictedPlayerState.weapons, weapDef->altWeaponIndex, MAX_WEAPONMASK_BYTES))
         return 1;
 
     Com_PrintError(
@@ -2140,7 +2140,7 @@ char __cdecl CycleWeapPrimary(int32_t localClientNum, int32_t cycleForward, int3
             goto LABEL_21;
         bitNum = cgameGlob->weaponLatestPrimaryIdx;
 
-        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, 16))
+        if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, bitNum, MAX_WEAPONMASK_BYTES))
         {
             CG_SelectWeaponIndex(localClientNum, cgameGlob->weaponLatestPrimaryIdx);
             return 1;
@@ -2157,7 +2157,7 @@ char __cdecl CycleWeapPrimary(int32_t localClientNum, int32_t cycleForward, int3
                 weaponIndex = (highestWeapIndex + weaponIndex + 2 * (cycleForward != 0) - 1 - 1) % highestWeapIndex + 1;
                 if (weaponIndex == startIndex)
                     break;
-                if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weaponIndex, 16)
+                if (Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weaponIndex, MAX_WEAPONMASK_BYTES)
                     && (!bIgnoreEmpty || BG_WeaponAmmo(&cgameGlob->predictedPlayerState, weaponIndex)))
                 {
                     weapDefa = BG_GetWeaponDef(weaponIndex);
@@ -2171,7 +2171,7 @@ char __cdecl CycleWeapPrimary(int32_t localClientNum, int32_t cycleForward, int3
                 }
             }
             weaponSelect = cgameGlob->weaponSelect;
-            if (!Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weaponSelect, 16))
+            if (!Com_BitCheckAssert(cgameGlob->predictedPlayerState.weapons, weaponSelect, MAX_WEAPONMASK_BYTES))
                 CG_SelectWeaponIndex(localClientNum, 0);
             return 0;
         }
@@ -2228,7 +2228,7 @@ int32_t __cdecl NextWeapInCycle(
         if (weapDef->inventoryType == type)
         {
             iassert(ps);
-            if (Com_BitCheckAssert(ps->weapons, weaponIndex, 16)
+            if (Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES)
                 && (!skipEmpties || BG_WeaponAmmo(ps, weaponIndex))
                 && (!skipHaveNoAlts || weapDef->altWeaponIndex))
             {
@@ -2269,7 +2269,7 @@ void __cdecl CG_ActionSlotDown_f()
                     goto LABEL_15;
                 bitNum = cgameGlob->weaponLatestPrimaryIdx;
                 iassert(ps);
-                if (!Com_BitCheckAssert(ps->weapons, bitNum, 16))
+                if (!Com_BitCheckAssert(ps->weapons, bitNum, MAX_WEAPONMASK_BYTES))
                 {
                 LABEL_15:
                     didSomething = CycleWeapPrimary(localClientNum, 1, 0);
@@ -2283,7 +2283,7 @@ void __cdecl CG_ActionSlotDown_f()
             else
             {
                 iassert(ps);
-                if (Com_BitCheckAssert(ps->weapons, weapon, 16) && ps->weapon != weapon)
+                if (Com_BitCheckAssert(ps->weapons, weapon, MAX_WEAPONMASK_BYTES) && ps->weapon != weapon)
                 {
                     didSomething = 1;
                     CG_SelectWeaponIndex(localClientNum, weapon);
@@ -3928,27 +3928,23 @@ void __cdecl CG_MeleeBloodEvent(int32_t localClientNum, const centity_s *cent)
 void __cdecl CG_SetupWeaponDef(int32_t localClientNum)
 {
 #ifdef KISAK_MP
-    char v1; // [esp+3h] [ebp-2225h]
-    _BYTE *v2; // [esp+8h] [ebp-2220h]
-    const char *v3; // [esp+Ch] [ebp-221Ch]
-    _DWORD dst[129]; // [esp+10h] [ebp-2218h] BYREF
+    // One slot per weapon the server can have: this list is every loaded weapon
+    // name, and ParseWeaponDefFiles checks each one against our own index. It was
+    // 129 slots capped at 127, so past that the check simply stopped happening.
+    const char *dst[MAX_WEAPONS];
     const char *ConfigString; // [esp+214h] [ebp-2014h]
     int32_t iNumFiles; // [esp+218h] [ebp-2010h]
     _BYTE *v7; // [esp+21Ch] [ebp-200Ch]
     _BYTE v8[8196]; // [esp+220h] [ebp-2008h] BYREF
 
-    memset((uint8_t *)dst, 0, 0x1FCu);
+    memset(dst, 0, sizeof(dst));
     iNumFiles = 0;
     ConfigString = CL_GetConfigString(localClientNum, CS_WEAPONFILES);
-    v3 = ConfigString;
-    v2 = v8;
-    do
-    {
-        v1 = *v3;
-        *v2++ = *v3++;
-    } while (v1);
+    // The source is a configstring, so its length is the server's choice, not
+    // ours; the original copied it into this fixed buffer with an open loop.
+    I_strncpyz((char *)v8, ConfigString, sizeof(v8));
     v7 = v8;
-    dst[iNumFiles++] = (_DWORD)v8;
+    dst[iNumFiles++] = (const char *)v8;
     while (*v7)
     {
         if (*v7 == 32)
@@ -3956,9 +3952,9 @@ void __cdecl CG_SetupWeaponDef(int32_t localClientNum)
             *v7++ = 0;
             if (*v7 && *v7 != 32)
             {
-                if (iNumFiles >= 127)
+                if (iNumFiles >= (int32_t)ARRAY_COUNT(dst))
                     break;
-                dst[iNumFiles++] = (_DWORD)v7;
+                dst[iNumFiles++] = (const char *)v7;
             }
         }
         else
@@ -3966,7 +3962,7 @@ void __cdecl CG_SetupWeaponDef(int32_t localClientNum)
             ++v7;
         }
     }
-    ParseWeaponDefFiles((const char **)dst, iNumFiles);
+    ParseWeaponDefFiles(dst, iNumFiles);
 #elif KISAK_SP
     iassert(bg_lastParsedWeaponIndex > 0);
 #endif

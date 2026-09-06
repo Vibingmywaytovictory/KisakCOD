@@ -61,7 +61,7 @@ int32_t __cdecl Add_Ammo(gentity_s *ent, uint32_t weaponIndex, uint8_t weaponMod
     ps = ent->client;
     if (!ps)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (!Com_BitCheckAssert(ps->ps.weapons, weaponIndex, 16) && !BG_PlayerHasCompatibleWeapon(&ps->ps, weaponIndex))
+    if (!Com_BitCheckAssert(ps->ps.weapons, weaponIndex, MAX_WEAPONMASK_BYTES) && !BG_PlayerHasCompatibleWeapon(&ps->ps, weaponIndex))
         return 0;
     clipOnly = 0;
     weapDef = BG_GetWeaponDef(weaponIndex);
@@ -138,7 +138,7 @@ void __cdecl Touch_Item(gentity_s *ent, gentity_s *other, int32_t touched)
         {
             if (other->health >= 1 && !level.clientIsSpawning)
             {
-                weapIndex = ent->s.index.brushmodel % 128;
+                weapIndex = ent->s.index.brushmodel % MAX_WEAPONS;
                 item = &bg_itemlist[ent->s.index.brushmodel];
                 if (BG_CanItemBeGrabbed(&ent->s, &other->client->ps, touched))
                 {
@@ -199,7 +199,7 @@ int32_t __cdecl WeaponPickup(gentity_s *weaponEnt, gentity_s *player, int32_t *p
         MyAssertHandler(".\\game\\g_items.cpp", 504, 0, "%s", "player");
     if (!player->client)
         MyAssertHandler(".\\game\\g_items.cpp", 505, 0, "%s", "player->client");
-    weapIdx = weaponEnt->s.index.brushmodel % 128;
+    weapIdx = weaponEnt->s.index.brushmodel % MAX_WEAPONS;
     weapDef = BG_GetWeaponDef(weapIdx);
     if (!BG_PlayerCanPickUpWeaponType(weapDef, &player->client->ps))
         return 0;
@@ -219,7 +219,7 @@ int32_t __cdecl WeaponPickup_Grab(gentity_s *weaponEnt, gentity_s *player, int32
     iassert(player);
     iassert(player->client);
     droppedEnt = 0;
-    weaponModel = weaponEnt->s.index.brushmodel / 128;
+    weaponModel = ITEM_WEAPMODEL(weaponEnt->s.index.brushmodel);
     weapDef = BG_GetWeaponDef(weapIdx);
     if (weaponEnt->s.eType == ET_MISSILE)
     {
@@ -283,7 +283,7 @@ int32_t __cdecl WeaponPickup_AddWeapon(
     bitNum = ps->weapon;
     if (!ps)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (!Com_BitCheckAssert(ps->weapons, bitNum, 16))
+    if (!Com_BitCheckAssert(ps->weapons, bitNum, MAX_WEAPONMASK_BYTES))
         return 0;
 LABEL_12:
     if (!BG_PlayerWeaponsFull_Primaries(ps))
@@ -297,7 +297,7 @@ LABEL_12:
     {
         if (!ps)
             MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-        if (!Com_BitCheckAssert(ps->weapons, playerWeapIdx, 16))
+        if (!Com_BitCheckAssert(ps->weapons, playerWeapIdx, MAX_WEAPONMASK_BYTES))
             MyAssertHandler(".\\game\\g_items.cpp", 227, 0, "%s", "BG_PlayerHasWeapon( ps, playerWeapIdx )");
         droppedEnt = Drop_Weapon(other, playerWeapIdx, ps->weaponmodels[playerWeapIdx], 0);
         if (droppedEnt)
@@ -382,7 +382,7 @@ int32_t __cdecl CurrentPrimaryWeapon(playerState_s *ps)
     }
     if (!ps)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (!Com_BitCheckAssert(ps->weapons, weapIdx, 16))
+    if (!Com_BitCheckAssert(ps->weapons, weapIdx, MAX_WEAPONMASK_BYTES))
         return 0;
     if (weapDef->inventoryType)
         return 0;
@@ -423,11 +423,11 @@ bool __cdecl WeaponPickup_LeechFromWeaponEnt(
     removedAnyAmmo = 0;
     for (i = 0; i < 2; ++i)
     {
-        v5 = weaponEnt->item[i].index % 128;
+        v5 = weaponEnt->item[i].index % MAX_WEAPONS;
         weapIdx = v5;
         if (v5 > 0)
         {
-            weaponModel = weaponEnt->item[i].index / 128;
+            weaponModel = ITEM_WEAPMODEL(weaponEnt->item[i].index);
             weapDef = BG_GetWeaponDef(v5);
             itemEnt = &weaponEnt->item[i];
             ammoAvailable = itemEnt->ammoCount;
@@ -496,8 +496,8 @@ void __cdecl WeaponPickup_AddAmmoForNewWeapon(gentity_s *weaponEnt, gentity_s *p
 
     for (i = 0; i < 2; ++i)
     {
-        weapon = weaponEnt->item[i].index % 128;
-        weaponModel = weaponEnt->item[i].index / 128;
+        weapon = weaponEnt->item[i].index % MAX_WEAPONS;
+        weaponModel = ITEM_WEAPMODEL(weaponEnt->item[i].index);
         if (weapon > 0)
         {
             weapDef = BG_GetWeaponDef(weapon);
@@ -553,7 +553,7 @@ bool __cdecl WeaponPickup_Touch(gentity_s *weaponEnt, gentity_s *player, int32_t
     client = player->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    haveExactWeapon = Com_BitCheckAssert(client->ps.weapons, weapIdx, 16);
+    haveExactWeapon = Com_BitCheckAssert(client->ps.weapons, weapIdx, MAX_WEAPONMASK_BYTES);
     if (!haveExactWeapon && !BG_PlayerHasCompatibleWeapon(&player->client->ps, weapIdx))
         return 0;
     removeWeaponFromWorld = WeaponPickup_LeechFromWeaponEnt(weaponEnt, player, haveExactWeapon, pickupEvent, 0);
@@ -584,7 +584,7 @@ void __cdecl PrintMessage_CannotGrabItem(gentity_s *ent, gentity_s *player, int3
 #ifdef KISAK_MP
             ps = player->client;
             iassert(ps);
-            if (Com_BitCheckAssert(ps->ps.weapons, weapIndex, 16))
+            if (Com_BitCheckAssert(ps->ps.weapons, weapIndex, MAX_WEAPONMASK_BYTES))
             {
 				const char *displayName;
                 WeaponDef = BG_GetWeaponDef(weapIndex);
@@ -631,7 +631,7 @@ void __cdecl G_GetItemClassname(const gitem_s *item, uint16_t *out)
     char classname[256]; // [esp+4h] [ebp-108h] BYREF
     WeaponDef *weapDef; // [esp+108h] [ebp-4h]
 
-    weapDef = BG_GetWeaponDef((((char *)item - (char *)bg_itemlist) >> 2) % 128);
+    weapDef = BG_GetWeaponDef((((char *)item - (char *)bg_itemlist) >> 2) % MAX_WEAPONS);
     Com_sprintf(classname, 0x100u, "weapon_%s", weapDef->szInternalName);
     G_SetConstString(out, classname);
 }
@@ -722,8 +722,8 @@ gentity_s *__cdecl LaunchItem(const gitem_s *item, float *origin, float *angles,
 #elif KISAK_SP
     dropped->r.contents = CONTENTS_ITEM | CONTENTS_USE | CONTENTS_ANY_TRIGGER;
 #endif
-    weapModel = itemIndex / 128;
-    weapDef = BG_GetWeaponDef(itemIndex % 128);
+    weapModel = ITEM_WEAPMODEL(itemIndex);
+    weapDef = BG_GetWeaponDef(itemIndex % MAX_WEAPONS);
 
     iassert(weapDef);
 
@@ -789,7 +789,7 @@ int32_t __cdecl GetFreeDropCueIdx()
         {
             if (bg_itemlist[ent->s.index.brushmodel].giType != IT_WEAPON)
                 MyAssertHandler(".\\game\\g_items.cpp", 670, 0, "%s", "bg_itemlist[ ent->s.index.item ].giType == IT_WEAPON");
-            weapIndex = ent->item[0].index % 128;
+            weapIndex = ent->item[0].index % MAX_WEAPONS;
             weapDef = BG_GetWeaponDef(weapIndex);
             if (!weapDef->avoidDropCleanup)
             {
@@ -880,14 +880,14 @@ gentity_s *__cdecl Drop_Weapon(gentity_s *ent, int32_t weapIdx, uint8_t weaponMo
         }
         weapIdx = altWeaponIndex;
     }
-    weapItem = &bg_itemlist[128 * weaponModel + weapIdx];
+    weapItem = &bg_itemlist[MAX_WEAPONS * weaponModel + weapIdx];
     iassert(weapItem->giType == IT_WEAPON);
     if (ent->client)
     {
         client = ent->client;
         if (!client)
             MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-        if (!Com_BitCheckAssert(client->ps.weapons, weapIdx, 16) || !PlayerHasAnyAmmoToTransferToWeapon(ent, weapIdx))
+        if (!Com_BitCheckAssert(client->ps.weapons, weapIdx, MAX_WEAPONMASK_BYTES) || !PlayerHasAnyAmmoToTransferToWeapon(ent, weapIdx))
             goto LABEL_15;
     }
     if (!BG_GetWeaponDef(weapIdx)->bClipOnly || (v7 = ent->client, v7->ps.ammoclip[BG_ClipForWeapon(weapIdx)]))
@@ -1137,7 +1137,8 @@ void __cdecl SaveRegisteredWeapons()
 
 void __cdecl SaveRegisteredItems()
 {
-    char string[128]; // [esp+0h] [ebp-98h] BYREF
+    // Four weapons per hex digit, plus the terminator.
+    char string[MAX_WEAPONS / 4 + 1];
     int32_t modelIdx; // [esp+84h] [ebp-14h]
     int32_t bits; // [esp+88h] [ebp-10h]
     int32_t weapIdx; // [esp+8Ch] [ebp-Ch]
@@ -1148,11 +1149,11 @@ void __cdecl SaveRegisteredItems()
     n = 0;
     digit = 0;
     bits = 0;
-    for (weapIdx = 0; weapIdx < 128; ++weapIdx)
+    for (weapIdx = 0; weapIdx < MAX_WEAPONS; ++weapIdx)
     {
-        for (modelIdx = 0; modelIdx < 16; ++modelIdx)
+        for (modelIdx = 0; modelIdx < NUM_WEAP_ALTMODELS; ++modelIdx)
         {
-            if (itemRegistered[128 * modelIdx + weapIdx])
+            if (itemRegistered[MAX_WEAPONS * modelIdx + weapIdx])
             {
                 digit += 1 << bits;
                 break;
@@ -1236,8 +1237,8 @@ void __cdecl G_SpawnItem(gentity_s *ent, const gitem_s *item)
     WeaponDef *weapDef; // [esp+10h] [ebp-4h]
 
     ent->item[0].index = ((char *)item - (char *)bg_itemlist) >> 2;
-    weapIndex = ent->item[0].index % 128;
-    weapModel = ent->item[0].index / 128;
+    weapIndex = ent->item[0].index % MAX_WEAPONS;
+    weapModel = ITEM_WEAPMODEL(ent->item[0].index);
     weapDef = BG_GetWeaponDef(weapIndex);
     
     iassert(weapDef);

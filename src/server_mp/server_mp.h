@@ -97,12 +97,12 @@ const NetField vehicleEntityStateFields[59] =
   { NETF(events[0]), -94, 0u },
   { NETF(events[1]), -94, 0u },
   { NETF(events[2]), -94, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(eventParms[1]), -93, 0u },
   { NETF(eventParms[0]), -93, 0u },
   { NETF(eventParms[2]), -93, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.u.vehicle.materialTime), -97, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
@@ -142,7 +142,7 @@ const NetField planeStateFields[60] =
   { NETF(lerp.pos.trBase[0]), 0, 2u },
   { NETF(lerp.pos.trBase[1]), 0, 2u },
   { NETF(lerp.pos.trBase[2]), 0, 2u },
-  { NETF(index), 10, 2u },
+  { NETF(index), MAX_ITEMLIST_BITS, 2u },
   { NETF(lerp.pos.trDelta[0]), 0, 2u },
   { NETF(lerp.pos.trDelta[1]), 0, 2u },
   { NETF(lerp.pos.trTime), -97, 2u },
@@ -159,7 +159,7 @@ const NetField planeStateFields[60] =
   { NETF(loopSound), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(eventParm), -93, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(surfType), 8, 0u },
   { NETF(lerp.u.anonymous.data[0]), 32, 0u },
@@ -227,7 +227,7 @@ const NetField helicopterEntityStateFields[58] =
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(un2), 32, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(lerp.u.vehicle.teamAndOwnerIndex), 8, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(groundEntityNum), -96, 0u },
@@ -240,7 +240,7 @@ const NetField helicopterEntityStateFields[58] =
   { NETF(surfType), 8, 0u },
   { NETF(otherEntityNum), 10, 0u },
   { NETF(lerp.eFlags), -98, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(lerp.u.vehicle.materialTime), -97, 0u },
   { NETF(lerp.apos.trTime), 32, 0u },
   { NETF(lerp.apos.trDelta[0]), 0, 0u },
@@ -272,13 +272,13 @@ const NetField entityStateFields[59] =
   { NETF(lerp.pos.trBase[2]), -90, 0u },
   { NETF(events[0]), -94, 0u },
   { NETF(eventSequence), 8, 0u },
-  { NETF(weapon), 7, 0u },
+  { NETF(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF(weaponModel), 4, 0u },
   { NETF(eventParms[0]), -93, 0u },
   { NETF(surfType), 8, 0u },
   { NETF(lerp.u.anonymous.data[0]), 32, 0u },
   { NETF(time2), -97, 0u },
-  { NETF(index), 10, 0u },
+  { NETF(index), MAX_ITEMLIST_BITS, 0u },
   { NETF(solid), 24, 0u },
   { NETF(un2), 32, 0u },
   { NETF(groundEntityNum), -96, 0u },
@@ -356,7 +356,10 @@ const NetField clientStateFields[24] = // LWSS: edit SV_GetAnalyzeEntityFields()
 }; // idb
 
 #define NETF_PL(x) NETF_BASE(playerState_s, x)
-const NetField playerStateFields[141] = // LWSS: edit SV_GetAnalyzeEntityFields() if you change this
+// Sized by the initialiser: numPlayerStateFields and SV_WriteSnapshot both
+// derive their count with ARRAY_COUNT, so entries can be added without three
+// separate literals having to agree.
+const NetField playerStateFields[] = // LWSS: edit SV_GetAnalyzeEntityFields() if you change this
 {
   { NETF_PL(commandTime), -97, 0u },
   { NETF_PL(viewangles[1]), -87, 0u },
@@ -395,7 +398,7 @@ const NetField playerStateFields[141] = // LWSS: edit SV_GetAnalyzeEntityFields(
   { NETF_PL(viewHeightTarget), -8, 0u },
   { NETF_PL(sprintState.lastSprintStart), -97, 0u },
   { NETF_PL(sprintState.lastSprintEnd), -97, 0u },
-  { NETF_PL(weapon), 7, 0u },
+  { NETF_PL(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF_PL(weaponDelay), -16, 0u },
   { NETF_PL(sprintState.sprintStartMaxLength), 14, 0u },
   { NETF_PL(weapFlags), 9, 0u },
@@ -405,7 +408,7 @@ const NetField playerStateFields[141] = // LWSS: edit SV_GetAnalyzeEntityFields(
   { NETF_PL(weapons[1]), 32, 0u },
   { NETF_PL(weaponold[0]), 32, 0u },
   { NETF_PL(delta_angles[1]), -100, 0u },
-  { NETF_PL(offHandIndex), 7, 0u },
+  { NETF_PL(offHandIndex), MAX_WEAPONS_BITS, 0u },
   { NETF_PL(pm_time), -16, 0u },
   { NETF_PL(otherFlags), 5, 0u },
   { NETF_PL(moveSpeedScaleMultiplier), 0, 0u },
@@ -498,7 +501,25 @@ const NetField playerStateFields[141] = // LWSS: edit SV_GetAnalyzeEntityFields(
   { NETF_PL(weaponrechamber[2]), 32, 0u },
   { NETF_PL(weaponrechamber[3]), 32, 0u },
   { NETF_PL(leanf), 0, 0u },
-  { NETF_PL(adsDelayTime), 32, 1u }
+  { NETF_PL(adsDelayTime), 32, 1u },
+
+  // The rest of the owned-weapon masks. MAX_WEAPONS was 128, so retail needed
+  // four dwords each and they sit further up this table. These are appended
+  // rather than grouped with them on purpose: the delta encoder sends one bit
+  // for every field below the highest changed one, and a mask dword for weapons
+  // 128 and up changes far less often than anything already here.
+  { NETF_PL(weapons[4]), 32, 0u },
+  { NETF_PL(weapons[5]), 32, 0u },
+  { NETF_PL(weapons[6]), 32, 0u },
+  { NETF_PL(weapons[7]), 32, 0u },
+  { NETF_PL(weaponold[4]), 32, 0u },
+  { NETF_PL(weaponold[5]), 32, 0u },
+  { NETF_PL(weaponold[6]), 32, 0u },
+  { NETF_PL(weaponold[7]), 32, 0u },
+  { NETF_PL(weaponrechamber[4]), 32, 0u },
+  { NETF_PL(weaponrechamber[5]), 32, 0u },
+  { NETF_PL(weaponrechamber[6]), 32, 0u },
+  { NETF_PL(weaponrechamber[7]), 32, 0u },
 };
 
 #define NETF_ARC(x) NETF_BASE(archivedEntity_s, s.x)
@@ -524,12 +545,12 @@ const NetField archivedEntityFields[69] = // LWSS: change SV_GetAnalyzeEntityFie
   { NETF_ARC_A(svFlags), 32, 0u },
   { NETF_ARC(events[0]), 8, 0u },
   { NETF_ARC(eventSequence), 8, 0u },
-  { NETF_ARC(index), 10, 0u },
+  { NETF_ARC(index), MAX_ITEMLIST_BITS, 0u },
   { NETF_ARC(legsAnim), 10, 0u },
   { NETF_ARC(events[1]), -94, 0u },
   { NETF_ARC(events[2]), -94, 0u },
   { NETF_ARC(events[3]), -94, 0u },
-  { NETF_ARC(weapon), 7, 0u },
+  { NETF_ARC(weapon), MAX_WEAPONS_BITS, 0u },
   { NETF_ARC(weaponModel), 4, 0u },
   { NETF_ARC(lerp.pos.trType), 8, 0u },
   { NETF_ARC(lerp.apos.trType), 8, 0u },
@@ -1271,7 +1292,8 @@ extern uint8_t g_currentSnapshotPlayerStateFields[64];
 extern bool newDataReady;
 extern uint32_t bitsUsedPerEType[256];
 extern uint32_t bitsUsedForPlayerstates[7];
-extern int playerStateFieldsChanged[161];
+// One slot per possible last-changed-field value, which is 0..numFields.
+extern int playerStateFieldsChanged[ARRAY_COUNT(playerStateFields) + 1];
 extern bool s_packetDataEnabled;
 extern bool g_archivingSnapshot;
 extern int s_floatBitsCompressed[60];
@@ -1279,7 +1301,7 @@ extern int s_originDeltaBits[8];
 extern int s_originZDeltaBits[8];
 extern int s_originZFullBits[17];
 extern int s_originFullBits[17];
-extern uint32_t networkEntityFieldsChanged[23][160];
+extern uint32_t networkEntityFieldsChanged[23][ARRAY_COUNT(playerStateFields)];
 extern uint32_t currentSnapshotNetworkEntityFieldsChanged[23][160];
 extern uint32_t bitsUsedForServerCommands;
 extern int s_currentEntType;

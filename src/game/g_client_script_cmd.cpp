@@ -49,7 +49,7 @@ int __cdecl G_GetNeededStartAmmo(gentity_s *pSelf, WeaponDef *weapDef)
         {
             if (!client)
                 MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-            if (Com_BitCheckAssert(client->ps.weapons, v5, 16) && weapDef != otherWeapDef)
+            if (Com_BitCheckAssert(client->ps.weapons, v5, MAX_WEAPONMASK_BYTES) && weapDef != otherWeapDef)
                 v6 += client->ps.ammoclip[otherWeapDef->iClipIndex] - otherWeapDef->iStartAmmo;
         }
         ++v5;
@@ -148,7 +148,7 @@ void __cdecl PlayerCmd_giveWeapon(scr_entref_t entref)
     Scr_VerifyWeaponIndex(weaponIndex, weaponName);
     ps = &pSelf->client->ps;
     iassert(ps);
-    hadWeapon = Com_BitCheckAssert(ps->weapons, weaponIndex, 16);
+    hadWeapon = Com_BitCheckAssert(ps->weapons, weaponIndex, MAX_WEAPONMASK_BYTES);
 
     if (Scr_GetNumParam() != 2
         || (WeaponDef = BG_GetWeaponDef(weaponIndex), weaponModel = Scr_GetInt(1), weaponModel > 0xFF)
@@ -525,7 +525,7 @@ void __cdecl PlayerCmd_switchToWeapon(scr_entref_t entref)
     client = v2->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES))
     {
         Com_Printf(15, "PlayerCmd_switchToWeapon: switching to '%s' index=%d (player has it)\n", String, WeaponIndexForName);
         G_SelectWeaponIndex(v1, WeaponIndexForName);
@@ -583,7 +583,7 @@ void __cdecl PlayerCmd_switchToOffhand(scr_entref_t entref)
     client = v2->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES))
     {
         G_SetEquippedOffHand(v1, WeaponIndexForName);
         Scr_AddBool(1);
@@ -631,7 +631,7 @@ void __cdecl PlayerCmd_giveStartAmmo(scr_entref_t entref)
     client = v1->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES))
         InitializeAmmo(v1, WeaponIndexForName, v1->client->ps.weaponmodels[WeaponIndexForName], 0);
 }
 
@@ -676,7 +676,7 @@ void __cdecl PlayerCmd_giveMaxAmmo(scr_entref_t entref)
     client = v1->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES))
     {
         AmmoPlayerMax = BG_GetAmmoPlayerMax(&v1->client->ps, WeaponIndexForName, 0);
         WeaponDef = BG_GetWeaponDef(WeaponIndexForName);
@@ -728,7 +728,7 @@ void __cdecl PlayerCmd_getFractionStartAmmo(scr_entref_t entref)
     client = v1->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16)
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES)
         && (WeaponDef = BG_GetWeaponDef(WeaponIndexForName))->iStartAmmo >= 1)
     {
         int currentAmmo = v1->client->ps.ammo[WeaponDef->iAmmoIndex];
@@ -784,7 +784,7 @@ void __cdecl PlayerCmd_getFractionMaxAmmo(scr_entref_t entref)
     client = v1->client;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, WeaponIndexForName, MAX_WEAPONMASK_BYTES))
     {
         WeaponDef = BG_GetWeaponDef(WeaponIndexForName);
         if (WeaponDef->bClipOnly)
@@ -3758,7 +3758,7 @@ void __cdecl PlayerCmd_GetWeaponsList(scr_entref_t entref)
         client = v1->client;
         if (!client)
             MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-        if (Com_BitCheckAssert(client->ps.weapons, i, 16))
+        if (Com_BitCheckAssert(client->ps.weapons, i, MAX_WEAPONMASK_BYTES))
         {
             WeaponDef = BG_GetWeaponDef(i);
             Scr_AddString(WeaponDef->szInternalName);
@@ -3806,7 +3806,7 @@ void __cdecl PlayerCmd_GetWeaponsListPrimaries(scr_entref_t entref)
         client = v1->client;
         if (!client)
             MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-        if (Com_BitCheckAssert(client->ps.weapons, i, 16))
+        if (Com_BitCheckAssert(client->ps.weapons, i, MAX_WEAPONMASK_BYTES))
         {
             WeaponDef = BG_GetWeaponDef(i);
             if (WeaponDef->inventoryType == WEAPINVENTORY_PRIMARY)

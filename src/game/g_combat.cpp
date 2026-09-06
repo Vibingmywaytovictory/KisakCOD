@@ -128,7 +128,7 @@ void __cdecl TossClientItems(gentity_s *self)
         weapon = client->pers.cmd.weapon;
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, weapon, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, weapon, MAX_WEAPONMASK_BYTES))
     {
         if (weapon)
         {

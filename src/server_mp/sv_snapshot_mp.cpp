@@ -70,7 +70,11 @@ void __cdecl SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
         {
             v2 = client->header.deltaMessage & 0x1F;
             oldframe = &client->frames[v2];
-            if ((client_t *)((char *)client + v2 * 12164) == (client_t *)-136296)
+            // Decompiled as a comparison between a hand-computed frame address
+            // and a negative constant, which is a null check on oldframe with the
+            // frame stride baked in as 12164. oldframe is indexed properly right
+            // above, so say what the check means instead.
+            if (!oldframe)
                 MyAssertHandler(".\\server_mp\\sv_snapshot_mp.cpp", 551, 0, "%s", "oldframe");
             lastframe = client->header.netchan.outgoingSequence - client->header.deltaMessage;
             lastServerTime = oldframe->serverTime;
@@ -1033,7 +1037,11 @@ void __cdecl SV_BuildClientSnapshot(client_t *client)
                 v19 = v3;
                 dst = (uint8_t *)v5;
                 v1 = (uint8_t *)SV_GameClientNum(clientNum);
-                memcpy(dst, v1, 0x2F64u);
+                // dst is &clientSnapshot_t::ps, and the length was a literal
+                // 0x2F64 baked from the 1.0 playerState. It truncated the copy
+                // the moment playerState grew, which showed up as clientState
+                // fields further along being sent from stale bytes.
+                memcpy(dst, v1, sizeof(playerState_s));
                 clientNum = *((uint32_t *)dst + 55);
                 if ((uint32_t)clientNum >= 0x400)
                     Com_Error(ERR_DROP, "SV_BuildClientSnapshot: bad gEnt");

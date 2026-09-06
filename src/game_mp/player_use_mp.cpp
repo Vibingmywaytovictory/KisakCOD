@@ -240,7 +240,7 @@ void __cdecl Player_UpdateCursorHints(gentity_s *ent)
                                 hintString = ItemCursorHint;
                                 goto LABEL_49;
                             case ET_MISSILE:
-                                hintString = self->s.index.brushmodel % 128 + 4;
+                                hintString = self->s.index.brushmodel % MAX_WEAPONS + 4;
                                 ps->throwBackGrenadeTimeLeft = self->nextthink - level.time;
                                 goto LABEL_49;
                             case ET_MG42:
@@ -457,7 +457,7 @@ int32_t __cdecl Player_GetItemCursorHint(const gclient_s *client, const gentity_
     if (!client)
         MyAssertHandler(".\\game_mp\\player_use_mp.cpp", 437, 0, "%s", "client");
     index = traceEnt->s.index.brushmodel;
-    if ((uint32_t)index >= 0x800)
+    if ((uint32_t)index >= MAX_ITEMLIST)
         MyAssertHandler(
             ".\\game_mp\\player_use_mp.cpp",
             441,
@@ -467,12 +467,12 @@ int32_t __cdecl Player_GetItemCursorHint(const gclient_s *client, const gentity_
             index);
     if (bg_itemlist[index].giType != 1)
         MyAssertHandler(".\\game_mp\\player_use_mp.cpp", 444, 0, "%s", "item->giType == IT_WEAPON");
-    weapIndex = index % 128;
-    weapDefItem = BG_GetWeaponDef(index % 128);
+    weapIndex = index % MAX_WEAPONS;
+    weapDefItem = BG_GetWeaponDef(index % MAX_WEAPONS);
     weapDefPlayer = BG_GetWeaponDef(client->ps.weapon);
     if (!client)
         MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-    if (Com_BitCheckAssert(client->ps.weapons, weapIndex, 16))
+    if (Com_BitCheckAssert(client->ps.weapons, weapIndex, MAX_WEAPONMASK_BYTES))
         return 0;
     if (weapDefPlayer->inventoryType == WEAPINVENTORY_PRIMARY
         || weapDefPlayer->inventoryType == WEAPINVENTORY_ALTMODE

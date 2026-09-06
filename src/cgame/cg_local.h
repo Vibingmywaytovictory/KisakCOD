@@ -26,17 +26,8 @@ struct ScreenPlacement;
 
 #define MYMODELCOUNT 4
 
-#define MAX_WEAPONS 128
-
-// Item indices are packed as model * MAX_WEAPONS + weapon, so this is the
-// model an item index belongs to. It used to fold the * MAX_WEAPONS in as
-// well, which every call site then applied a second time -- see the
-// asserts in BG_CanItemBeGrabbed and BG_PlayerHasRoomForEntAllAmmoTypes,
-// whose text is recovered verbatim from the 1.0 binary and reads
-// ITEM_WEAPMODEL(item) * MAX_WEAPONS + weapIdx. The code the compiler
-// actually emitted for it was 128 * (item / 128) + weapIdx, which fixes
-// the original definition beyond doubt.
-#define ITEM_WEAPMODEL(x) ((x) / MAX_WEAPONS)
+// MAX_WEAPONS, NUM_WEAP_ALTMODELS and ITEM_WEAPMODEL now live in
+// qcommon/msg_mp.h, next to the bit widths that have to agree with them.
 
 #define PRIMARY_LIGHT_NONE 0
 

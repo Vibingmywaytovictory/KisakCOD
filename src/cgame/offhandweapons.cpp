@@ -246,7 +246,7 @@ int32_t __cdecl CalcOffHandAmmo(const playerState_s *predictedPlayerState, int32
     {
         if (!predictedPlayerState)
             MyAssertHandler("c:\\trees\\cod3\\src\\bgame\\../bgame/bg_weapons.h", 229, 0, "%s", "ps");
-        if (Com_BitCheckAssert(predictedPlayerState->weapons, weapIndex, 16))
+        if (Com_BitCheckAssert(predictedPlayerState->weapons, weapIndex, MAX_WEAPONMASK_BYTES))
         {
             weapDef = BG_GetWeaponDef(weapIndex);
             if (!weapDef)

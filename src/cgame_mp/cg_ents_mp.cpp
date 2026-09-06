@@ -1513,12 +1513,12 @@ void __cdecl CG_Item(int32_t localClientNum, centity_s *cent)
     float lightingOrigin[3]; // [esp+1Ch] [ebp-10h] BYREF
     WeaponDef *weapDef; // [esp+28h] [ebp-4h]
 
-    if (cent->nextState.index.brushmodel >= 2048)
+    if (cent->nextState.index.brushmodel >= MAX_ITEMLIST)
         Com_Error(ERR_DROP, "Bad item index %i on entity", cent->nextState.index.brushmodel);
     if ((cent->nextState.lerp.eFlags & 0x20) == 0)
     {
-        weapIdx = cent->nextState.index.brushmodel % 128;
-        weapModel = cent->nextState.index.brushmodel / 128;
+        weapIdx = cent->nextState.index.brushmodel % MAX_WEAPONS;
+        weapModel = ITEM_WEAPMODEL(cent->nextState.index.brushmodel);
         weapDef = BG_GetWeaponDef(weapIdx);
         if (!weapDef)
             MyAssertHandler(".\\cgame_mp\\cg_ents_mp.cpp", 127, 0, "%s", "weapDef");
