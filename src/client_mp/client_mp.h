@@ -54,9 +54,9 @@ static_assert(((MAX_PARSE_CLIENTS) & (MAX_PARSE_CLIENTS - 1)) == 0, "MAX_PARSE_C
 #define CS_COUNT_EFFECT_NAMES      100
 #define CS_COUNT_EFFECT_TAGS       256
 #define CS_COUNT_SHELLSHOCKS       16
-#define CS_COUNT_SCRIPT_MENUS      128  // raised from 32; text in a server command, no netfield
+#define CS_COUNT_SCRIPT_MENUS      32
 #define CS_COUNT_SERVER_MATERIALS  256
-#define CS_COUNT_STATUS_ICONS      32   // raised from 8; text in the scoreboard command, no netfield
+#define CS_COUNT_STATUS_ICONS      8
 #define CS_COUNT_HEAD_ICONS        15
 #define CS_COUNT_TAGS              32
 
@@ -187,6 +187,41 @@ enum ConstStringOffsets // not a real name
     CS_MAX                    = CS_ITEMS + 1,
 };
 
+// THE LAYOUT IS FROZEN AT RETAIL, and the counts above are named so it can be
+// read, not so it can be changed. constantConfigStrings[] in
+// com_constantconfigstrings.cpp is 833 entries of ABSOLUTE slot number baked
+// from this exact layout -- CCS_GetConfigStringNumForConstIndex hands those
+// numbers straight back, SV_SendClientGameState walks the table in lockstep with
+// its slot loop, and G_FindConfigstringIndex places const strings by them. Move
+// any block and every entry above it in that table names a slot belonging to a
+// different block.
+//
+// That is not theoretical. Raising CS_COUNT_SCRIPT_MENUS 32 -> 128 shifted server
+// materials, weaponfiles, icons, tags and items up by 96 and the server wedged on
+// map load, spinning forever in CM_UnlinkEntity on a world-sector list that no
+// longer terminated, while the client sat at "Awaiting challenge". It cost a
+// round of testing to find because nothing about the symptom points here.
+//
+// So raising a block needs THREE things, not one: the count, the netfield that
+// carries its index (see server_mp.h), and a regenerated constantConfigStrings[].
+// These asserts hold the first of those to retail so the other two cannot be
+// forgotten.
+static_assert(CS_LOCALIZED_STRINGS == 309,  "constantConfigStrings[] is baked against this layout");
+static_assert(CS_CASE_INSENSITIVE_BEGIN == 821, "constantConfigStrings[] is baked against this layout");
+static_assert(CS_MODELS == 830,             "constantConfigStrings[] is baked against this layout");
+static_assert(CS_SOUNDALIASES == 1342,      "constantConfigStrings[] is baked against this layout");
+static_assert(CS_EFFECT_NAMES == 1598,      "constantConfigStrings[] is baked against this layout");
+static_assert(CS_EFFECT_TAGS == 1698,       "constantConfigStrings[] is baked against this layout");
+static_assert(CS_SHELLSHOCKS == 1954,       "constantConfigStrings[] is baked against this layout");
+static_assert(CS_SCRIPT_MENUS == 1970,      "constantConfigStrings[] is baked against this layout");
+static_assert(CS_SERVER_MATERIALS == 2002,  "constantConfigStrings[] is baked against this layout");
+static_assert(CS_WEAPONFILES == 2258,       "constantConfigStrings[] is baked against this layout");
+static_assert(CS_STATUS_ICONS == 2259,      "constantConfigStrings[] is baked against this layout");
+static_assert(CS_HEAD_ICONS == 2267,        "constantConfigStrings[] is baked against this layout");
+static_assert(CS_TAGS == 2282,              "constantConfigStrings[] is baked against this layout");
+static_assert(CS_ITEMS == 2314,             "constantConfigStrings[] is baked against this layout");
+static_assert(CS_MAX == 2315,               "constantConfigStrings[] is baked against this layout");
+
 // The wire cap. Nothing may index at or past this; see MSG_WriteBits(start, 12)
 // in SV_SendClientGameState and the matching MSG_ReadBits(msg, 12) in
 // CL_ParseGamestate. Raising a count past here means widening those two, which
@@ -245,21 +280,17 @@ struct clSnapshot_t // sizeof=0x2F94
 
 #define MAX_GAMESTATE_CHARS 0x20000
 
-// The allocated size of the configstring array. Retail froze this at 2442
-// against a CS_MAX of 2315, leaving 127 slots that nothing could ever index,
-// and every loop over the array spelled 2442 by hand. Deriving it from the
-// layout removes both the dead space and the second number to keep in step.
-//
-// It must NOT be an independent knob: if it were, it would be the first
-// static_assert to fail when a block is raised too far, and it would report
-// "array too small" when the real problem is that the index no longer fits on
-// the wire. Tied to CS_MAX, the wire asserts in server_mp.h are the ones that
-// fire, and they name the field that actually caps the block.
+// The allocated size of the configstring array. Retail sized it 2442 against a
+// CS_MAX of 2315, leaving 127 slots nothing can index. That slack is kept, and
+// kept as a literal: it is part of the layout constantConfigStrings[] was baked
+// against, and shrinking it moved sv.svEntities inside server_t.
 #ifndef MAX_CONFIGSTRINGS // COMPILE HACK MP
-#define MAX_CONFIGSTRINGS CS_MAX
+#define MAX_CONFIGSTRINGS 2442
 #endif
+static_assert(MAX_CONFIGSTRINGS >= CS_MAX,
+    "the configstring array must cover the layout that indexes it");
 
-struct gameState_t // sizeof was 0x2262C at MAX_CONFIGSTRINGS 2442
+struct gameState_t // sizeof=0x2262C
 {                                       // XREF: clientActive_t/r
     int32_t stringOffsets[MAX_CONFIGSTRINGS];
     char stringData[MAX_GAMESTATE_CHARS];
