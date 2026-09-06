@@ -300,8 +300,14 @@ int32_t __cdecl Auth_Login(client_t *cl, const char *username, const char *passw
         if (++g_authAttempts[clientNum] >= AUTH_MAX_ATTEMPTS)
         {
             g_authLockoutUntil[clientNum] = now + AUTH_LOCKOUT_MSEC;
+
+            // Server-side record: a burst of failures is what an attack looks
+            // like, so it must not be redirected to the person causing it.
+            ComRedirectState savedLockout;
+            Com_SuspendRedirect(&savedLockout);
             Com_PrintWarning(15, "Client %i locked out after %i failed admin logins.\n",
                 clientNum, g_authAttempts[clientNum]);
+            Com_ResumeRedirect(&savedLockout);
         }
         return 0;
     }
@@ -312,8 +318,13 @@ int32_t __cdecl Auth_Login(client_t *cl, const char *username, const char *passw
     cl->authPower = admin->power;
     I_strncpyz(cl->authName, admin->username, sizeof(cl->authName));
 
-    Com_Printf(15, "Client %i authenticated as '%s' with power %i.\n",
-        clientNum, admin->username, admin->power);
+    // Server-side, past any redirect: who gained power and from what identity is
+    // the single most important line this system writes.
+    ComRedirectState saved;
+    Com_SuspendRedirect(&saved);
+    Com_Printf(15, "Client %i authenticated as '%s' with power %i (guid %s).\n",
+        clientNum, admin->username, admin->power, cl->cdkeyHash[0] ? cl->cdkeyHash : "-");
+    Com_ResumeRedirect(&saved);
 
     return admin->power;
 }

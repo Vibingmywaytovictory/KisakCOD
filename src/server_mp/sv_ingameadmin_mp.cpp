@@ -286,9 +286,19 @@ void __cdecl SV_PrintAdministrativeLog(const char *fmt, ...)
         I_strncpyz(stamp, "unknown time", sizeof(stamp));
     }
 
+    // Step around SV_ExecuteRemoteCmd's redirect. Without this the audit line is
+    // delivered to the player who triggered it and to nobody else, which is
+    // exactly backwards -- they already saw the result; the SERVER needs the
+    // record. Caught by the first live login leaving no trace in the console log
+    // despite succeeding.
+    ComRedirectState saved;
+    Com_SuspendRedirect(&saved);
+
     Com_Printf(15, "%s - admin %s (guid %s, power %i): %s\n",
         stamp, Cmd_GetInvokerName(), Cmd_GetInvokerGuid()[0] ? Cmd_GetInvokerGuid() : "-",
         Cmd_GetInvokerPower(), message);
+
+    Com_ResumeRedirect(&saved);
 }
 
 // ---------------------------------------------------------------------------

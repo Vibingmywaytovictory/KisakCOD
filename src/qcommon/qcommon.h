@@ -306,6 +306,18 @@ void Com_XAnimFreeSmallTree(struct XAnimTree_s *animtree);
 void		Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *));
 void		Com_EndRedirect(void);
 
+// Saved redirect state, so a caller can step around an active redirect to reach
+// the console and the log. See Com_SuspendRedirect.
+struct ComRedirectState
+{
+    char *buffer;
+    void (QDECL *flush)(char *);
+    uint32_t buffersize;
+};
+
+void        Com_SuspendRedirect(ComRedirectState *saved);
+void        Com_ResumeRedirect(const ComRedirectState *saved);
+
 struct SndCurve;
 struct SpeakerMapInfo;
 struct XModelPiece;

@@ -1462,6 +1462,37 @@ void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *))
     *rd_buffer = 0;
 }
 
+// Temporarily step around an active redirect so a print reaches the console and
+// the log instead of whoever triggered it. The admin audit trail needs this: it
+// runs inside SV_ExecuteRemoteCmd's redirect, and without suspending, the record
+// of who did what is delivered to the player who did it and to nobody else.
+//
+// Nests safely -- suspending when nothing is redirected is a no-op, and resuming
+// restores exactly what was saved.
+void Com_SuspendRedirect(ComRedirectState *saved)
+{
+    if (!saved)
+        return;
+
+    saved->buffer = rd_buffer;
+    saved->flush = rd_flush;
+    saved->buffersize = rd_buffersize;
+
+    rd_buffer = NULL;
+    rd_flush = NULL;
+    rd_buffersize = 0;
+}
+
+void Com_ResumeRedirect(const ComRedirectState *saved)
+{
+    if (!saved)
+        return;
+
+    rd_buffer = saved->buffer;
+    rd_flush = saved->flush;
+    rd_buffersize = saved->buffersize;
+}
+
 void Com_EndRedirect(void)
 {
     if (rd_flush) {
