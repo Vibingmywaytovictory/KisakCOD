@@ -2536,6 +2536,10 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
     playerState_s* ps = pm->ps; // [esp+68h] [ebp-28h]
     iassert(ps);
 
+    // Captured before friction so the clamp at the end of this function does not
+    // punish a player for the speed friction just took off them.
+    const float entrySpeed = Vec2Length(ps->velocity);
+
     // normal slowdown
     PM_Friction(ps, pml);
 
@@ -2561,18 +2565,32 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
 
     wishspeed = wishspeed * scale;
 
-    // Air acceleration is where strafe jumping lives, so the clamp goes here and
-    // ground movement is left exactly as it was.
-    const float speedBefore = Vec2Length(ps->velocity);
-
     PM_Accelerate(ps, pml, wishdir, wishspeed, 1.0);
 
+    if (pml->groundPlane)
+        PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
+
+    PM_StepSlideMove(pm, pml, 1);
+
+    // Strafe jumping. PM_Accelerate caps speed along wishdir only -- addspeed is
+    // wishspeed minus the velocity component in the direction you are pushing,
+    // never the length of the velocity itself -- so holding a strafe key and
+    // turning keeps wishdir near perpendicular to velocity, the cap never bites,
+    // and speed compounds every frame.
+    //
+    // The clamp is at the end of the whole airborne step rather than immediately
+    // after PM_Accelerate, because acceleration is not the only thing in here that
+    // can raise horizontal speed: PM_StepSlideMove settles the player onto
+    // surfaces, and with bounces enabled that redirect turns vertical speed into
+    // horizontal while holding the total constant. Capping once at the end covers
+    // every route.
+    //
+    // entrySpeed is taken before PM_Friction, so a player is never slowed just for
+    // being airborne and a standing jump can still accelerate to wishspeed. What
+    // is gone is leaving the step faster than both.
     if (bg_strafeJumping && !bg_strafeJumping->current.enabled)
     {
-        // Whatever you came in with is yours to keep; a standing jump can still
-        // accelerate up to wishspeed. What is gone is ending the frame faster
-        // than both, which is the only thing strafe jumping ever did.
-        const float speedCap = speedBefore > wishspeed ? speedBefore : wishspeed;
+        const float speedCap = entrySpeed > wishspeed ? entrySpeed : wishspeed;
         const float speedAfter = Vec2Length(ps->velocity);
 
         if (speedAfter > speedCap && speedAfter > 0.0f)
@@ -2583,10 +2601,6 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
         }
     }
 
-    if (pml->groundPlane)
-        PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
-
-    PM_StepSlideMove(pm, pml, 1);
     PM_SetMovementDir(pm, pml);
 }
 
@@ -3339,6 +3353,41 @@ entity_event_t __cdecl PM_DamageLandingForSurface(pml_t *pml)
         return EV_NONE;
 }
 
+// Which offset PM_CorrectAllSolid tries for candidate i.
+//
+// The elevator glitch needs the FIRST candidate to be straight up. PM_GroundTrace
+// decides you are stuck from a swept trace, whose collision epsilon fires when you
+// are merely flush against a wall rather than inside it, so this runs when nothing
+// is actually wrong. CorrectSolidDeltas[0] is {0,0,1} and a point trace one unit
+// above passes -- you were never embedded -- so you rise a unit, every frame,
+// until you are on top of the wall.
+//
+// Swapping the straight up and straight down entries is the fix proposed by the
+// people who reverse engineered this. It leaves the function alone and only
+// changes which candidate is reached first: straight down is solid for anyone
+// standing on a floor, so it fails harmlessly, and the candidates that do pass
+// after it carry a horizontal component. That breaks the exact alignment the
+// glitch depends on rather than feeding it.
+//
+// Two earlier attempts changed this function's control flow instead -- refusing
+// the correction, then undoing it -- and both made the view jitter on stairs. The
+// one unit lift is load bearing: it is what gives the ground trace at the end of
+// this function a clear starting position, and a trace that starts at the origin
+// is startsolid whenever the player is stood on something, which sends the caller
+// down its startsolid path and drops them to airborne for a frame.
+static const float *PM_CorrectSolidDelta(uint32_t i)
+{
+    if (bg_elevators && !bg_elevators->current.enabled)
+    {
+        if (i == 0)
+            return CorrectSolidDeltas[9];
+        if (i == 9)
+            return CorrectSolidDeltas[0];
+    }
+
+    return CorrectSolidDeltas[i];
+}
+
 int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
 {
     float point[3] = { 0 }; // [esp+1Ch] [ebp-Ch] BYREF
@@ -3348,55 +3397,9 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
     playerState_s* ps = pm->ps; // [esp+18h] [ebp-10h]
     iassert(ps);
 
-    // The elevator glitch lives in the gap between the two kinds of trace.
-    //
-    // PM_GroundTrace decides you are stuck from a SWEPT trace, and a swept trace
-    // carries a collision epsilon, so it reports a hit when you are exactly flush
-    // against a wall rather than actually inside it. That calls us. The very first
-    // entry of CorrectSolidDeltas is straight up, and a POINT trace one unit above
-    // you passes -- because you were never embedded in anything. So you get lifted
-    // a unit, and next frame the same thing happens, and you ride the wall out of
-    // the map. Crouch, prone, running and jump elevators are all this one path.
-    //
-    // A point trace at the position you are already in settles it: if that is
-    // clear, you are not stuck and there is nothing to correct, so nothing should
-    // move. Later Call of Duty titles fixed this by re-testing the chosen
-    // candidate with a small jitter; testing the current position is the same idea
-    // with one fewer trace and no tuning constant to pick. The ground trace is
-    // still refreshed so the caller sees where the floor is.
-    // Elevator glitch. PM_GroundTrace decides you are stuck from a SWEPT trace,
-    // whose collision epsilon fires when you are exactly flush against a wall
-    // rather than inside it, so we get called when nothing is actually wrong. The
-    // first delta below is straight up and a POINT trace there passes, so you rise
-    // a unit; repeat every frame and you ride the wall out of the map.
-    //
-    // The lift itself cannot simply be refused. It is what makes the ground trace
-    // at the end of this function start from a clear position -- a trace beginning
-    // at the origin is startsolid whenever you are stood on something, which sends
-    // the caller down its startsolid path and drops you to airborne for a frame.
-    // Doing that on stairs alternates grounded and airborne every frame and the
-    // view jitters, which is exactly what an earlier attempt at this fix did.
-    //
-    // So keep the correction and reject only the runaway: a lift is allowed to
-    // land you on something, but not to leave you hanging. On stairs the trace
-    // after the lift finds the step and the move commits, identical to stock. On a
-    // wall face there is nothing to find, so the move is undone and you stay put.
-    const bool blockElevator = (bg_elevators && !bg_elevators->current.enabled);
-    bool reallyStuck = true;
-
-    if (blockElevator)
-    {
-        trace_t pointTrace;
-        PM_playerTrace(pm, &pointTrace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask);
-        reallyStuck = pointTrace.startsolid;
-    }
-
-    float originBefore[3];
-    Vec3Copy(ps->origin, originBefore);
-
     for (uint32_t i = 0; i < 0x1A; ++i) // [esp+14h] [ebp-14h]
     {
-        Vec3Add(ps->origin, CorrectSolidDeltas[i], point);
+        Vec3Add(ps->origin, PM_CorrectSolidDelta(i), point);
         PM_playerTrace(pm, trace, point, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
         if (!trace->startsolid)
         {
@@ -3405,15 +3408,6 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
             ps->origin[2] = point[2];
             point[2] = ps->origin[2] - 1.0 - 0.25;
             PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
-
-            // Nothing under us after an upward correction we did not need: this is
-            // the elevator, so put the origin back and keep looking.
-            if (blockElevator && !reallyStuck && CorrectSolidDeltas[i][2] > 0.0f && trace->fraction == 1.0f)
-            {
-                Vec3Copy(originBefore, ps->origin);
-                continue;
-            }
-
             memcpy(&pml->groundTrace, trace, sizeof(pml->groundTrace));
             Vec3Lerp(ps->origin, point, trace->fraction, ps->origin);
             return 1;
@@ -3427,7 +3421,6 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
     Jump_ClearState(ps);
     return 0;
 }
-
 void __cdecl PM_GroundTraceMissed(pmove_t *pm, pml_t *pml)
 {
     trace_t trace; // [esp+10h] [ebp-3Ch] BYREF
