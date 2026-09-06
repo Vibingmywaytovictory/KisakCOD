@@ -1,6 +1,7 @@
 #include <universal/q_shared.h>
 #include "assertive.h"
 #include <win32/win_local.h>
+#include <qcommon/qcommon.h>
 #include <cstdarg>
 
 enum AssertOccurance : __int32
@@ -686,6 +687,84 @@ void MyAssertHandler(const char *filename, int line, int type, const char *fmt, 
     if (shouldBreak)
         DebugBreak();
 #else
+
+#if defined(KISAK_MP) && !defined(KISAK_RADIANT)
+    // Multiplayer and dedicated builds had no handler at all: the body above is
+    // #ifdef KISAK_PURE, which nothing in this tree defines, so every one of the
+    // ~9000 iassert sites compiled in a Debug build evaluated its expression and
+    // then threw the result away. A double free assert in MT_FreeIndex sat over a
+    // real refcount bug for as long as it existed and could never say so.
+    //
+    // Report, never abort. These are decompiled asserts describing an engine that
+    // has been rearranged around them, so some fire in ordinary play; turning them
+    // fatal would make Debug builds unusable. Each site is announced once and then
+    // counted, with a further line each time its count reaches a power of ten, so a
+    // once-per-frame assert costs one line a minute rather than one a frame.
+    {
+        struct AssertSite
+        {
+            const char *file;
+            int line;
+            unsigned int count;
+        };
+
+        static AssertSite sites[1024];
+        static unsigned int siteCount;
+        static int inHandler;
+
+        // Com_PrintError can reach code that asserts. One level only.
+        if (inHandler)
+            return;
+
+        inHandler = 1;
+
+        AssertSite *site = 0;
+
+        for (unsigned int i = 0; i < siteCount; ++i)
+        {
+            if (sites[i].line == line && sites[i].file == filename)
+            {
+                site = &sites[i];
+                break;
+            }
+        }
+
+        if (!site && siteCount < ARRAY_COUNT(sites))
+        {
+            site = &sites[siteCount++];
+            site->file = filename;
+            site->line = line;
+            site->count = 0;
+        }
+
+        const unsigned int count = site ? ++site->count : 1;
+
+        bool report = count == 1;
+
+        for (unsigned int decade = 10; !report && decade <= 1000000; decade *= 10)
+            report = (count == decade);
+
+        if (report)
+        {
+            char text[1024];
+            va_list va;
+
+            va_start(va, fmt);
+            _vsnprintf(text, sizeof(text), fmt ? fmt : "", va);
+            va_end(va);
+            text[sizeof(text) - 1] = 0;
+
+            if (count == 1)
+                Com_PrintError(CON_CHANNEL_ERROR, "ASSERT %s:%d: %s\n", filename, line, text);
+            else
+                Com_PrintError(CON_CHANNEL_ERROR, "ASSERT %s:%d: %s (%u times)\n",
+                               filename, line, text, count);
+        }
+
+        inHandler = 0;
+        return;
+    }
+#endif
 
 #ifdef KISAK_RADIANT
     // Editor builds keep asserts NON-FATAL, matching the shipped CoD4Radiant. Its Assert
