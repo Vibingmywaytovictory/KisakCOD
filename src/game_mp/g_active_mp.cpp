@@ -543,6 +543,10 @@ void __cdecl ClientThink_real(gentity_s *ent, usercmd_s *ucmd)
             ucmd->serverTime = level.time + 200;
         if (ucmd->serverTime < level.time - 1000)
             ucmd->serverTime = level.time - 1000;
+
+        // After the clamps, so the server steps on the same boundaries the client
+        // predicted against; CL_FinishMove rounds the outgoing command the same way.
+        ucmd->serverTime = PM_RoundCommandTime(ucmd->serverTime);
         msec = ucmd->serverTime - client->ps.commandTime;
         if (msec >= 1 || client->ps.clientNum != ent - g_entities)
         {

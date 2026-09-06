@@ -1851,6 +1851,15 @@ extern const dvar_t *player_runbkThreshhold;
 extern const dvar_t *player_sprintForwardMinimum;
 extern const dvar_t *player_turnAnims;
 extern const dvar_t *stopspeed;
+
+// Movement exploit toggles. All default to stock 1.0 behaviour, so a server has
+// to opt in; see bg_misc.cpp for why each one exists.
+extern const dvar_t *pmove_fixed;
+extern const dvar_t *pmove_msec;
+extern const dvar_t *bg_strafeJumping;
+extern const dvar_t *bg_bounces;
+
+int __cdecl PM_RoundCommandTime(int serverTime);
 extern const dvar_t *bg_shock_soundEndAbort;
 extern const dvar_t *bullet_penetrationMinFxDist;
 extern const dvar_t *player_view_pitch_up;

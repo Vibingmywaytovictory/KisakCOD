@@ -804,7 +804,8 @@ void __cdecl CL_FinishMove(int localClientNum, usercmd_s *cmd)
         serverTime = LocalClientGlobals->snap.serverTime + 5000;
     else
         serverTime = LocalClientGlobals->serverTime;
-    cmd->serverTime = serverTime;
+    // Must match the rounding ClientThink_real does, see PM_RoundCommandTime.
+    cmd->serverTime = PM_RoundCommandTime(serverTime);
     for (i = 0; i < 3; ++i)
         cmd->angles[i] = (uint16_t)(int)((LocalClientGlobals->viewangles[i] + LocalClientGlobals->cgameKickAngles[i])
             * 182.0444488525391);

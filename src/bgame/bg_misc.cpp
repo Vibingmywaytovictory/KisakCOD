@@ -599,6 +599,52 @@ void __cdecl BG_RegisterDvars()
     minw.value.max = 1000.0f;
     minw.value.min = 0.0f;
     stopspeed = Dvar_RegisterFloat("stopspeed", 100.0f, minw, DVAR_CHEAT | DVAR_TEMP, "The player deceleration");
+
+    // Jump height and distance depend on framerate because Pmove integrates in
+    // steps of "whatever time is left", so a 125fps client and a 333fps client
+    // discretise the same jump arc differently. 125/250/333 are the well known
+    // sweet spots, which is an advantage handed to whoever can hold those rates.
+    //
+    // pmove_fixed makes every integration step the same length regardless of
+    // framerate. SYSTEMINFO so it reaches clients: prediction has to run the same
+    // step size as the server or every jump mispredicts.
+    pmove_fixed = Dvar_RegisterBool(
+        "pmove_fixed",
+        false,
+        DVAR_SYSTEMINFO,
+        "Run player physics at a fixed timestep so jumps do not vary with framerate");
+
+    DvarLimits pmoveMsecLimits;
+    pmoveMsecLimits.integer.max = 33;
+    pmoveMsecLimits.integer.min = 8;
+    pmove_msec = Dvar_RegisterInt(
+        "pmove_msec",
+        8,
+        pmoveMsecLimits.integer.min,
+        pmoveMsecLimits.integer.max,
+        DVAR_SYSTEMINFO,
+        "Length of one fixed physics step in milliseconds when pmove_fixed is on");
+
+    // PM_Accelerate caps speed only along the direction you are pushing, not the
+    // direction you are actually moving -- so holding a strafe key and turning
+    // keeps wishdir near perpendicular to velocity, the cap never bites, and
+    // speed compounds every frame. Off means air acceleration can still reach
+    // wishspeed but can never leave you faster than you already were.
+    bg_strafeJumping = Dvar_RegisterBool(
+        "bg_strafeJumping",
+        true,
+        DVAR_SYSTEMINFO,
+        "Allow gaining speed by strafing in mid air (stock behaviour)");
+
+    // PM_ProjectVelocity redirects velocity along a surface and then rescales it
+    // back to its original magnitude. Hit a slope hard while falling and the fall
+    // speed comes back as speed along the slope, which is the bounce. Off means
+    // the redirect can preserve or shed speed but never add it.
+    bg_bounces = Dvar_RegisterBool(
+        "bg_bounces",
+        true,
+        DVAR_SYSTEMINFO,
+        "Allow surface redirects to preserve full speed, which is what lets players bounce");
     minx.value.max = 1.0f;
     minx.value.min = 0.0f;
     bg_swingSpeed = Dvar_RegisterFloat(

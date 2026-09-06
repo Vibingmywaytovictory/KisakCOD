@@ -257,6 +257,13 @@ void __cdecl PM_ProjectVelocity(const float *velIn, const float *normal, float *
         originalLengthSq = velIn[2] * velIn[2] + lengthSq2D;
         adjustedLengthSq = newZ * newZ + lengthSq2D;
         lengthScale = sqrt(originalLengthSq / adjustedLengthSq);
+
+        // lengthScale > 1 means the redirected vector is shorter than what came in,
+        // so scaling it back up to the original magnitude hands the player speed
+        // they did not have along the surface. That is the bounce.
+        if (bg_bounces && !bg_bounces->current.enabled && lengthScale > 1.0f)
+            lengthScale = 1.0f;
+
         if (lengthScale < 1.0 || newZ < 0.0 || velIn[2] > 0.0)
         {
             Vec3Scale(adjusted, lengthScale, velOut);
@@ -1606,6 +1613,22 @@ void __cdecl PM_MeleeChargeClear(playerState_s *ps)
     ps->meleeChargeTime = 0;
 }
 
+// Quantise a usercmd time onto the fixed physics step. Both the client that
+// builds the command and the server that runs it must round identically, or the
+// two simulate different step boundaries and every jump mispredicts.
+int __cdecl PM_RoundCommandTime(int serverTime)
+{
+    if (!pmove_fixed || !pmove_fixed->current.enabled)
+        return serverTime;
+
+    const int step = pmove_msec->current.integer;
+
+    if (step <= 0)
+        return serverTime;
+
+    return ((serverTime + step - 1) / step) * step;
+}
+
 void __cdecl Pmove(pmove_t *pm)
 {
     int32_t msec; // [esp+38h] [ebp-Ch]
@@ -1624,8 +1647,21 @@ void __cdecl Pmove(pmove_t *pm)
         while (ps->commandTime != finalTime)
         {
             msec = finalTime - ps->commandTime;
-            if (msec > 66)
+
+            // Stock caps the step at 66ms and otherwise swallows whatever time is
+            // left in one go, so the arc of a jump is integrated in as many pieces
+            // as the client had frames. pmove_fixed makes the step a constant
+            // instead; PM_RoundCommandTime rounds serverTime to a multiple of it on
+            // both ends so there is no ragged remainder step either.
+            if (pmove_fixed && pmove_fixed->current.enabled)
+            {
+                if (msec > pmove_msec->current.integer)
+                    msec = pmove_msec->current.integer;
+            }
+            else if (msec > 66)
+            {
                 msec = 66;
+            }
             pm->cmd.serverTime = msec + ps->commandTime;
             {
                 PROF_SCOPED("PmoveSingle");
@@ -2529,7 +2565,28 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
     float wishspeed = Vec3Normalize(wishdir); // [esp+58h] [ebp-38h]
 
     wishspeed = wishspeed * scale;
+
+    // Air acceleration is where strafe jumping lives, so the clamp goes here and
+    // ground movement is left exactly as it was.
+    const float speedBefore = Vec2Length(ps->velocity);
+
     PM_Accelerate(ps, pml, wishdir, wishspeed, 1.0);
+
+    if (bg_strafeJumping && !bg_strafeJumping->current.enabled)
+    {
+        // Whatever you came in with is yours to keep; a standing jump can still
+        // accelerate up to wishspeed. What is gone is ending the frame faster
+        // than both, which is the only thing strafe jumping ever did.
+        const float speedCap = speedBefore > wishspeed ? speedBefore : wishspeed;
+        const float speedAfter = Vec2Length(ps->velocity);
+
+        if (speedAfter > speedCap && speedAfter > 0.0f)
+        {
+            const float rescale = speedCap / speedAfter;
+            ps->velocity[0] = ps->velocity[0] * rescale;
+            ps->velocity[1] = ps->velocity[1] * rescale;
+        }
+    }
 
     if (pml->groundPlane)
         PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
