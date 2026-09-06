@@ -1927,7 +1927,7 @@ void __cdecl CG_RegisterGraphics(int32_t localClientNum, const char *mapname)
     CG_LoadingString(localClientNum, " - server models");
     for (i = 1; i < 512; ++i)
     {
-        modelName = CL_GetConfigString(localClientNum, i + 830);
+        modelName = CL_GetConfigString(localClientNum, i + CS_MODELS);
         if (*modelName)
         {
             SCR_UpdateLoadScreen();
@@ -1936,7 +1936,7 @@ void __cdecl CG_RegisterGraphics(int32_t localClientNum, const char *mapname)
     }
     for (i = 1; i < 100; ++i)
     {
-        effectname = CL_GetConfigString(localClientNum, i + 1598);
+        effectname = CL_GetConfigString(localClientNum, i + CS_EFFECT_NAMES);
         if (*effectname)
         {
             cgs->fxs[i] = FX_Register(effectname);
@@ -1947,7 +1947,7 @@ void __cdecl CG_RegisterGraphics(int32_t localClientNum, const char *mapname)
     iassert(cgs->smokeGrenadeFx);
     for (ib = 1; ib < 16; ++ib)
     {
-        shellshock = CL_GetConfigString(localClientNum, ib + 1954);
+        shellshock = CL_GetConfigString(localClientNum, ib + CS_SHELLSHOCKS);
         if (*shellshock)
         {
             if (!BG_LoadShellShockDvars(shellshock))

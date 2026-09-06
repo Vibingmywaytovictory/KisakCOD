@@ -634,11 +634,11 @@ void __cdecl SP_worldspawn()
 
     if (*s)
     {
-        SV_SetConfigstring(821, va("n\\%s", s));
+        SV_SetConfigstring(CS_AMBIENT, va("n\\%s", s));
     }
     else
     {
-        SV_SetConfigstring(821, (char *)"");
+        SV_SetConfigstring(CS_AMBIENT, (char *)"");
     }
 
     G_LevelSpawnString("message", "", &s);

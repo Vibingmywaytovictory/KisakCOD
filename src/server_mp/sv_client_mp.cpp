@@ -1038,17 +1038,17 @@ void __cdecl SV_SendClientGameState(client_t *client)
     configStringCount = 0;
     MSG_WriteByte(&msg, 2u);
     nextConstConfigString = 0;
-    for (start = 0; start < 2442; ++start)
+    for (start = 0; start < MAX_CONFIGSTRINGS; ++start)
     {
         if (constantConfigStrings[nextConstConfigString].configStringNum == start)
         {
             configString = SL_ConvertToString(sv.configstrings[start]);
-            if (constantConfigStrings[nextConstConfigString].configStringNum >= 821
+            if (constantConfigStrings[nextConstConfigString].configStringNum >= CS_CASE_INSENSITIVE_BEGIN
                 && I_stricmp(constantConfigStrings[nextConstConfigString].configString, configString))
             {
                 ++configStringCount;
             }
-            else if (constantConfigStrings[nextConstConfigString].configStringNum < 821
+            else if (constantConfigStrings[nextConstConfigString].configStringNum < CS_CASE_INSENSITIVE_BEGIN
                 && strcmp(constantConfigStrings[nextConstConfigString].configString, configString))
             {
                 ++configStringCount;
@@ -1063,14 +1063,14 @@ void __cdecl SV_SendClientGameState(client_t *client)
     MSG_WriteShort(&msg, configStringCount);
     nextConstConfigString = 0;
     lastStringIndex = -1;
-    for (start = 0; start < 2442; ++start)
+    for (start = 0; start < MAX_CONFIGSTRINGS; ++start)
     {
         if (constantConfigStrings[nextConstConfigString].configStringNum == start)
         {
             ++nextConstConfigString;
             configString = SL_ConvertToString(sv.configstrings[start]);
-            if (start >= 821 && !I_stricmp(constantConfigStrings[nextConstConfigString - 1].configString, configString)
-                || start < 821 && !strcmp(constantConfigStrings[nextConstConfigString - 1].configString, configString))
+            if (start >= CS_CASE_INSENSITIVE_BEGIN && !I_stricmp(constantConfigStrings[nextConstConfigString - 1].configString, configString)
+                || start < CS_CASE_INSENSITIVE_BEGIN && !strcmp(constantConfigStrings[nextConstConfigString - 1].configString, configString))
             {
                 continue;
             }

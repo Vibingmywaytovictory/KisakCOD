@@ -19,6 +19,57 @@ struct GfxConfiguration;
 static_assert(((MAX_PARSE_ENTITIES) & (MAX_PARSE_ENTITIES - 1)) == 0, "MAX_PARSE_ENTITIES must be power of 2");
 static_assert(((MAX_PARSE_CLIENTS) & (MAX_PARSE_CLIENTS - 1)) == 0, "MAX_PARSE_CLIENTS must be power of 2");
 
+// ---------------------------------------------------------------------------
+// Configstring layout.
+//
+// The configstring space is ONE array carved into blocks, so a block's base is
+// the block below it plus that block's count: change a count and everything
+// above it moves. Retail froze every base as a literal at call sites across
+// game_mp, server_mp, client_mp and cgame_mp, which is why this enum already
+// existed and nothing referenced it. Those literals are gone now. Edit a count
+// here; never write a base anywhere else.
+//
+// Two hard limits bound the whole space:
+//
+//   1. The wire. SV_SendClientGameState writes each index as
+//      MSG_WriteBits(start, 12) and CL_ParseGamestate reads 12 bits back, so no
+//      index may reach 4096. That is CS_MAX_WIRE below, and it is the reason
+//      raising these is cheaper than raising MAX_WEAPONS was -- the bit width
+//      already covers far more than retail used.
+//
+//   2. Gamestate bytes. Every non-empty configstring is sent in full to every
+//      connecting client inside one 128KB message (MAX_GAMESTATE_CHARS), so the
+//      real budget is string bytes, not slots. SV_SendClientGameState already
+//      prints the total, the largest and the average on every connect; read
+//      those before spending a large block.
+//
+// Retail used 2315 of the 4096 the wire allows and sized the array at 2442, so
+// there was always headroom these tables were not spending.
+// ---------------------------------------------------------------------------
+
+#define CS_COUNT_LOCALIZED_STRINGS 512
+#define CS_COUNT_LOC_SEL_MTLS      3
+#define CS_COUNT_MODELS            512
+#define CS_COUNT_SOUNDALIASES      256
+#define CS_COUNT_EFFECT_NAMES      100
+#define CS_COUNT_EFFECT_TAGS       256
+#define CS_COUNT_SHELLSHOCKS       16
+#define CS_COUNT_SCRIPT_MENUS      32
+#define CS_COUNT_SERVER_MATERIALS  256
+#define CS_COUNT_STATUS_ICONS      8
+#define CS_COUNT_HEAD_ICONS        15
+#define CS_COUNT_TAGS              32
+
+// The model table is indexed by configstring slot, so its size IS the size of
+// the CS_MODELS block; g_utils_mp.h used to freeze it separately at 512 and the
+// two had to be kept in step by hand. cached_models (server) and cgs.gameModels
+// (client) are both sized from this and both are asserted against it.
+#define MAX_MODELS CS_COUNT_MODELS
+
+// The index is written as 12 bits on the wire; 4096 is the ceiling for the
+// whole space, not for any one block.
+#define CS_MAX_WIRE 4096
+
 //enum $C2D64A5C68CD67A3D33FF78F5B5E7685 : __int32
 enum ConstStringOffsets // not a real name
 {
@@ -48,40 +99,73 @@ enum ConstStringOffsets // not a real name
     CS_USE_TRIG_STRINGS       = 277,
     CS_USE_TRIG_STRINGS_LAST  = 308,
     CS_LOCALIZED_STRINGS      = 309,
-    CS_LOCALIZED_STRINGS_LAST = 820,
-    CS_CASE_INSENSITIVE_BEGIN = 821,
-    CS_AMBIENT                = 821,
-    CS_NORTHYAW               = 822,
-    CS_MINIMAP                = 823,
-    CS_VISIONSET_NAKED        = 824,
-    CS_VISIONSET_NIGHT        = 825,
-    CS_NIGHTVISION            = 826,
-    CS_LOC_SEL_MTLS           = 827,
-    CS_LOC_SEL_MTLS_LAST      = 829,
-    CS_MODELS                 = 830,
-    CS_MODELS_LAST            = 1341,
-    CS_SOUNDALIASES           = 1342,
-    CS_SOUNDALIASES_LAST      = 1597,
-    CS_EFFECT_NAMES           = 1598,
-    CS_EFFECT_NAMES_LAST      = 1697,
-    CS_EFFECT_TAGS            = 1698,
-    CS_EFFECT_TAGS_LAST       = 1953,
-    CS_SHELLSHOCKS            = 1954,
-    CS_SHELLSHOCKS_LAST       = 1969,
-    CS_SCRIPT_MENUS           = 1970,
-    CS_SCRIPT_MENUS_LAST      = 2001,
-    CS_SERVER_MATERIALS       = 2002,
-    CS_SERVER_MATERIALS_LAST  = 2257,
-    CS_WEAPONFILES            = 2258,
-    CS_STATUS_ICONS           = 2259,
-    CS_STATUS_ICONS_LAST      = 2266,
-    CS_HEAD_ICONS             = 2267,
-    CS_HEAD_ICONS_LAST        = 2281,
-    CS_TAGS                   = 2282,
-    CS_TAGS_LAST              = 2313,
-    CS_ITEMS                  = 2314,
-    CS_MAX                    = 2315,
+    CS_LOCALIZED_STRINGS_LAST = CS_LOCALIZED_STRINGS + CS_COUNT_LOCALIZED_STRINGS - 1,
+
+    // Everything at or above this line is interned case-INSENSITIVELY, and a
+    // block must not straddle it: G_FindConfigstringIndex picks SL_FindString
+    // below it and SL_FindLowercaseString at or above it, and SV_SetConfigstring
+    // makes the same split. Retail spelled it 821 in five places.
+    CS_CASE_INSENSITIVE_BEGIN = CS_LOCALIZED_STRINGS_LAST + 1,
+
+    CS_AMBIENT                = CS_CASE_INSENSITIVE_BEGIN,
+    CS_NORTHYAW,
+    CS_MINIMAP,
+    CS_VISIONSET_NAKED,
+    CS_VISIONSET_NIGHT,
+    CS_NIGHTVISION,
+    CS_LOC_SEL_MTLS,
+    CS_LOC_SEL_MTLS_LAST      = CS_LOC_SEL_MTLS + CS_COUNT_LOC_SEL_MTLS - 1,
+
+    CS_MODELS                 = CS_LOC_SEL_MTLS_LAST + 1,
+    CS_MODELS_LAST            = CS_MODELS + CS_COUNT_MODELS - 1,
+
+    CS_SOUNDALIASES           = CS_MODELS_LAST + 1,
+    CS_SOUNDALIASES_LAST      = CS_SOUNDALIASES + CS_COUNT_SOUNDALIASES - 1,
+
+    CS_EFFECT_NAMES           = CS_SOUNDALIASES_LAST + 1,
+    CS_EFFECT_NAMES_LAST      = CS_EFFECT_NAMES + CS_COUNT_EFFECT_NAMES - 1,
+
+    CS_EFFECT_TAGS            = CS_EFFECT_NAMES_LAST + 1,
+    CS_EFFECT_TAGS_LAST       = CS_EFFECT_TAGS + CS_COUNT_EFFECT_TAGS - 1,
+
+    CS_SHELLSHOCKS            = CS_EFFECT_TAGS_LAST + 1,
+    CS_SHELLSHOCKS_LAST       = CS_SHELLSHOCKS + CS_COUNT_SHELLSHOCKS - 1,
+
+    CS_SCRIPT_MENUS           = CS_SHELLSHOCKS_LAST + 1,
+    CS_SCRIPT_MENUS_LAST      = CS_SCRIPT_MENUS + CS_COUNT_SCRIPT_MENUS - 1,
+
+    CS_SERVER_MATERIALS       = CS_SCRIPT_MENUS_LAST + 1,
+    CS_SERVER_MATERIALS_LAST  = CS_SERVER_MATERIALS + CS_COUNT_SERVER_MATERIALS - 1,
+
+    CS_WEAPONFILES            = CS_SERVER_MATERIALS_LAST + 1,
+
+    CS_STATUS_ICONS           = CS_WEAPONFILES + 1,
+    CS_STATUS_ICONS_LAST      = CS_STATUS_ICONS + CS_COUNT_STATUS_ICONS - 1,
+
+    CS_HEAD_ICONS             = CS_STATUS_ICONS_LAST + 1,
+    CS_HEAD_ICONS_LAST        = CS_HEAD_ICONS + CS_COUNT_HEAD_ICONS - 1,
+
+    CS_TAGS                   = CS_HEAD_ICONS_LAST + 1,
+    CS_TAGS_LAST              = CS_TAGS + CS_COUNT_TAGS - 1,
+
+    CS_ITEMS                  = CS_TAGS_LAST + 1,
+    CS_MAX                    = CS_ITEMS + 1,
 };
+
+// The wire cap. Nothing may index at or past this; see MSG_WriteBits(start, 12)
+// in SV_SendClientGameState and the matching MSG_ReadBits(msg, 12) in
+// CL_ParseGamestate. Raising a count past here means widening those two, which
+// is a separate and much larger decision.
+static_assert(CS_MAX <= CS_MAX_WIRE,
+    "the configstring index is 12 bits on the wire; CS_MAX must fit in it");
+
+// No block may straddle the case-sensitivity split, because the two sides
+// intern their strings differently (SL_FindString vs SL_FindLowercaseString).
+static_assert(CS_LOCALIZED_STRINGS_LAST < CS_CASE_INSENSITIVE_BEGIN,
+    "localized strings are the last case-SENSITIVE block");
+static_assert(CS_AMBIENT == CS_CASE_INSENSITIVE_BEGIN,
+    "the case-INSENSITIVE half starts at CS_AMBIENT");
+
 
 enum svc_ops_e : __int32
 {
@@ -126,9 +210,16 @@ struct clSnapshot_t // sizeof=0x2F94
 
 #define MAX_GAMESTATE_CHARS 0x20000
 
+// The allocated size of the configstring array, as distinct from CS_MAX, which
+// is how much of it the layout above actually names. Retail sized this 2442
+// against a CS_MAX of 2315, leaving 127 slots that nothing can ever index --
+// dead space, kept here only because it is the number a retail client agrees
+// on. The static_assert is what matters: the array must cover the layout.
 #ifndef MAX_CONFIGSTRINGS // COMPILE HACK MP
 #define MAX_CONFIGSTRINGS 2442
 #endif
+static_assert(MAX_CONFIGSTRINGS >= CS_MAX,
+    "the configstring array must be at least as large as the layout that indexes it");
 
 struct gameState_t // sizeof=0x2262C
 {                                       // XREF: clientActive_t/r

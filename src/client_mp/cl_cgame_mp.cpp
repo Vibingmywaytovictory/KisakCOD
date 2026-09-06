@@ -362,7 +362,7 @@ void __cdecl CL_ConfigstringModified(int32_t localClientNum)
     oldGs = oldGs_large_local.GetBuf();
     v1 = Cmd_Argv(1);
     index = atoi(v1);
-    if ((uint32_t)index >= 2442)
+    if ((uint32_t)index >= MAX_CONFIGSTRINGS)
         Com_Error(ERR_DROP, "configstring > MAX_CONFIGSTRINGS");
     s = Cmd_Argv(2);
     LocalClientGlobals = CL_GetLocalClientGlobals(localClientNum);
@@ -372,7 +372,7 @@ void __cdecl CL_ConfigstringModified(int32_t localClientNum)
         memcpy(oldGs, (uint8_t *)&LocalClientGlobals->gameState, 0x2262Cu);
         memset((uint8_t *)&LocalClientGlobals->gameState, 0, sizeof(LocalClientGlobals->gameState));
         LocalClientGlobals->gameState.dataCount = 1;
-        for (i = 0; i < 2442; ++i)
+        for (i = 0; i < MAX_CONFIGSTRINGS; ++i)
         {
             if (i == index)
                 dup = (char *)s;
@@ -499,7 +499,7 @@ const char *__cdecl CL_GetConfigString(int32_t localClientNum, uint32_t configSt
             0,
             "configStringIndex doesn't index MAX_CONFIGSTRINGS\n\t%i not in [0, %i)",
             configStringIndex,
-            2442);
+            MAX_CONFIGSTRINGS);
     LocalClientGlobals = CL_GetLocalClientGlobals(localClientNum);
     if (LocalClientGlobals->gameState.stringData[0])
         MyAssertHandler(".\\client_mp\\cl_cgame_mp.cpp", 729, 0, "%s", "!cl->gameState.stringData[0]");

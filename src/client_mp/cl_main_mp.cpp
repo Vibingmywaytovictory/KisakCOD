@@ -862,7 +862,7 @@ void __cdecl CL_Configstrings_f()
     if (clientUIActives[0].connectionState == 9)
     {
         LocalClientGlobals = CL_GetLocalClientGlobals(0);
-        for (i = 0; i < 2442; ++i)
+        for (i = 0; i < MAX_CONFIGSTRINGS; ++i)
         {
             ofs = LocalClientGlobals->gameState.stringOffsets[i];
             if (ofs)
@@ -2804,13 +2804,13 @@ void __cdecl CL_Record_f()
                 LocalClientGlobals = CL_GetLocalClientGlobals(localClientNum);
                 MSG_WriteByte(&buf, 2u);
                 configStringCount = 0;
-                for (i = 0; i < 2442; ++i)
+                for (i = 0; i < MAX_CONFIGSTRINGS; ++i)
                 {
                     if (LocalClientGlobals->gameState.stringOffsets[i])
                         ++configStringCount;
                 }
                 MSG_WriteShort(&buf, configStringCount);
-                for (i = 0; i < 2442; ++i)
+                for (i = 0; i < MAX_CONFIGSTRINGS; ++i)
                 {
                     if (LocalClientGlobals->gameState.stringOffsets[i])
                     {
@@ -3320,7 +3320,7 @@ void __cdecl CL_OpenScriptMenu_f()
                     {
                         for (menuIndex = 0; menuIndex < 32; ++menuIndex)
                         {
-                            menuName = CL_GetConfigString(0, menuIndex + 1970);
+                            menuName = CL_GetConfigString(0, menuIndex + CS_SCRIPT_MENUS);
                             if (*menuName)
                             {
                                 if (!I_stricmp(parentMenuName, menuName))

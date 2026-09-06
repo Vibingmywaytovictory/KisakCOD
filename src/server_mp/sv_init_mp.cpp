@@ -70,8 +70,8 @@ void __cdecl SV_SetConfigstring(int index, const char *val)
         if (strcmp(val, SL_ConvertToString(sv.configstrings[index])))
         {
             SL_RemoveRefToString(sv.configstrings[index]);
-            caseSensitive = index < 821;
-            v2 = index < 821 ? SL_GetString_(val, 0, MT_TYPE_CONFIG_STRING) : SL_GetLowercaseString_(val, 0, MT_TYPE_CONFIG_STRING);
+            caseSensitive = index < CS_CASE_INSENSITIVE_BEGIN;
+            v2 = index < CS_CASE_INSENSITIVE_BEGIN ? SL_GetString_(val, 0, MT_TYPE_CONFIG_STRING) : SL_GetLowercaseString_(val, 0, MT_TYPE_CONFIG_STRING);
             sv.configstrings[index] = v2;
             if (SV_Loaded() || sv.restarting)
             {
@@ -277,7 +277,7 @@ void __cdecl SV_ClearServer()
 {
     int i; // [esp+0h] [ebp-4h]
 
-    for (i = 0; i < 2442; ++i)
+    for (i = 0; i < MAX_CONFIGSTRINGS; ++i)
     {
         if (sv.configstrings[i])
             SL_RemoveRefToString(sv.configstrings[i]);

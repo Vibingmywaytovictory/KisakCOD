@@ -2,7 +2,8 @@
 #include <qcommon/qcommon.h>
 #include "g_public_mp.h"
 
-#define MAX_MODELS 512
+// MAX_MODELS lives with the configstring counts in client_mp/client_mp.h,
+// because it IS the size of the CS_MODELS block -- see the note there.
 
 enum entity_event_t : __int32;
 

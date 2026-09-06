@@ -450,8 +450,8 @@ struct cgs_t // sizeof=0x3A24
     int32_t voteYes;
     int32_t voteNo;
     char voteString[256];
-    XModel *gameModels[512];
-    const FxEffectDef *fxs[100];
+    XModel *gameModels[MAX_MODELS];
+    const FxEffectDef *fxs[CS_COUNT_EFFECT_NAMES];
     const FxEffectDef *smokeGrenadeFx;
     shellshock_parms_t holdBreathParams;
     char teamChatMsgs[8][160];

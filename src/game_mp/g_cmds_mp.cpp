@@ -1188,7 +1188,7 @@ void __cdecl Cmd_MenuResponse_f(gentity_s *pEnt)
         SV_Cmd_ArgvBuffer(2, szMenuName, 1024);
         iMenuIndex = atoi(szMenuName);
         if ((uint32_t)iMenuIndex < 0x20)
-            SV_GetConfigstring(iMenuIndex + 1970, szMenuName, 1024);
+            SV_GetConfigstring(iMenuIndex + CS_SCRIPT_MENUS, szMenuName, 1024);
         SV_Cmd_ArgvBuffer(3, szResponse, 1024);
     }
     else
