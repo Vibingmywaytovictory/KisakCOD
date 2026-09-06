@@ -86,7 +86,7 @@ struct DBReorderAssetEntry // sizeof=0x10
 #define POOLSIZE_MENULIST       256        // raised from 128
 #define POOLSIZE_MENU           1280       // raised from 640 (512 on SP)
 #define POOLSIZE_LOCALIZE_ENTRY 12288      // raised from 6144
-#define POOLSIZE_WEAPON         MAX_WEAPONS // 512; raised from 128 with the protocol
+#define POOLSIZE_WEAPON         MAX_WEAPONS // 256; raised from 128 with the protocol
 #define POOLSIZE_SNDDRIVER_GLOBALS 1
 #define POOLSIZE_FX             1200       // raised from 400
 #define POOLSIZE_IMPACT_FX      16         // raised from 4
