@@ -2525,6 +2525,27 @@ float __cdecl PM_CmdScale(playerState_s *ps, usercmd_s *cmd)
     return scale;
 }
 
+// Refuse the speed PM_Accelerate just handed out if it left the player moving
+// faster than both what they arrived with and what they were asking for. Keeping
+// whichever is larger means a standing start still accelerates normally and a
+// sprinter is never braked; what goes is ending the call faster than both, which
+// is the whole of strafe jumping.
+static void PM_LimitStrafeGain(playerState_s *ps, float preAccelSpeed, float wishspeed)
+{
+    if (!bg_strafeJumping || bg_strafeJumping->current.enabled)
+        return;
+
+    const float speedCap = preAccelSpeed > wishspeed ? preAccelSpeed : wishspeed;
+    const float speedAfter = Vec2Length(ps->velocity);
+
+    if (speedAfter > speedCap && speedAfter > 0.0f)
+    {
+        const float rescale = speedCap / speedAfter;
+        ps->velocity[0] = ps->velocity[0] * rescale;
+        ps->velocity[1] = ps->velocity[1] * rescale;
+    }
+}
+
 void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
 {
     float wishdir[3]; // [esp+40h] [ebp-50h] BYREF
@@ -2535,10 +2556,6 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
     iassert(pm);
     playerState_s* ps = pm->ps; // [esp+68h] [ebp-28h]
     iassert(ps);
-
-    // Captured before friction so the clamp at the end of this function does not
-    // punish a player for the speed friction just took off them.
-    const float entrySpeed = Vec2Length(ps->velocity);
 
     // normal slowdown
     PM_Friction(ps, pml);
@@ -2565,42 +2582,23 @@ void __cdecl PM_AirMove(pmove_t *pm, pml_t *pml)
 
     wishspeed = wishspeed * scale;
 
+    // Strafe jumping. PM_Accelerate caps speed along wishdir only -- addspeed is
+    // wishspeed minus the velocity component in the direction you are pushing,
+    // never the length of the velocity -- so holding a strafe key and turning
+    // keeps wishdir near perpendicular to velocity, the cap never bites, and speed
+    // compounds. The clamp sits tight around the acceleration that causes it, so
+    // everything else in the step (slope projection, step sliding, gravity) is
+    // left alone; an earlier version clamped the whole step and could brake a
+    // player for speed they had gained legitimately.
+    const float preAccelSpeed = Vec2Length(ps->velocity);
+
     PM_Accelerate(ps, pml, wishdir, wishspeed, 1.0);
+    PM_LimitStrafeGain(ps, preAccelSpeed, wishspeed);
 
     if (pml->groundPlane)
         PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
 
     PM_StepSlideMove(pm, pml, 1);
-
-    // Strafe jumping. PM_Accelerate caps speed along wishdir only -- addspeed is
-    // wishspeed minus the velocity component in the direction you are pushing,
-    // never the length of the velocity itself -- so holding a strafe key and
-    // turning keeps wishdir near perpendicular to velocity, the cap never bites,
-    // and speed compounds every frame.
-    //
-    // The clamp is at the end of the whole airborne step rather than immediately
-    // after PM_Accelerate, because acceleration is not the only thing in here that
-    // can raise horizontal speed: PM_StepSlideMove settles the player onto
-    // surfaces, and with bounces enabled that redirect turns vertical speed into
-    // horizontal while holding the total constant. Capping once at the end covers
-    // every route.
-    //
-    // entrySpeed is taken before PM_Friction, so a player is never slowed just for
-    // being airborne and a standing jump can still accelerate to wishspeed. What
-    // is gone is leaving the step faster than both.
-    if (bg_strafeJumping && !bg_strafeJumping->current.enabled)
-    {
-        const float speedCap = entrySpeed > wishspeed ? entrySpeed : wishspeed;
-        const float speedAfter = Vec2Length(ps->velocity);
-
-        if (speedAfter > speedCap && speedAfter > 0.0f)
-        {
-            const float rescale = speedCap / speedAfter;
-            ps->velocity[0] = ps->velocity[0] * rescale;
-            ps->velocity[1] = ps->velocity[1] * rescale;
-        }
-    }
-
     PM_SetMovementDir(pm, pml);
 }
 
@@ -2759,7 +2757,14 @@ void __cdecl PM_WalkMove(pmove_t *pm, pml_t *pml)
         if ((ps->pm_flags & PMF_TIME_HARDLANDING) != 0)
             acceleration = acceleration * 0.25;
 
+        // Same clamp as the airborne path. Speed is gained on the ground too --
+        // friction alone does not stop the turn-while-strafing compounding -- so
+        // leaving ground movement out, as the first version of this did, left half
+        // the exploit in place.
+        const float preAccelSpeed = Vec2Length(ps->velocity);
+
         PM_Accelerate(ps, pml, wishdir, wishspeed, acceleration);
+        PM_LimitStrafeGain(ps, preAccelSpeed, wishspeed);
 
         if ((pml->groundTrace.surfaceFlags & SURF_SLICK) != 0 || (ps->pm_flags & PMF_TIME_KNOCKBACK) != 0)
             ps->velocity[2] = ps->velocity[2] - (double)ps->gravity * pml->frametime;
