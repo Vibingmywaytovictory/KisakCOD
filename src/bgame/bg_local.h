@@ -1858,6 +1858,7 @@ extern const dvar_t *pmove_fixed;
 extern const dvar_t *pmove_msec;
 extern const dvar_t *bg_strafeJumping;
 extern const dvar_t *bg_bounces;
+extern const dvar_t *bg_elevators;
 
 int __cdecl PM_RoundCommandTime(int serverTime);
 extern const dvar_t *bg_shock_soundEndAbort;

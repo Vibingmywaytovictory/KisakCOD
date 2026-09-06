@@ -645,6 +645,16 @@ void __cdecl BG_RegisterDvars()
         true,
         DVAR_SYSTEMINFO,
         "Allow surface redirects to preserve full speed, which is what lets players bounce");
+
+    // The elevator glitch, and the only one of these four that defaults to fixed:
+    // strafe jumping and bouncing are movement styles some communities keep, but
+    // riding a wall out of the map has no legitimate use. Left as a dvar anyway so
+    // it can be turned back on to reproduce the bug. See PM_CorrectAllSolid.
+    bg_elevators = Dvar_RegisterBool(
+        "bg_elevators",
+        false,
+        DVAR_SYSTEMINFO,
+        "Allow the stuck-correction to lift a player who is only flush against a wall (the elevator glitch)");
     minx.value.max = 1.0f;
     minx.value.min = 0.0f;
     bg_swingSpeed = Dvar_RegisterFloat(

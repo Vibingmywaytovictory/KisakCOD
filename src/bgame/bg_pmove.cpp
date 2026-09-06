@@ -3353,6 +3353,37 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
     playerState_s* ps = pm->ps; // [esp+18h] [ebp-10h]
     iassert(ps);
 
+    // The elevator glitch lives in the gap between the two kinds of trace.
+    //
+    // PM_GroundTrace decides you are stuck from a SWEPT trace, and a swept trace
+    // carries a collision epsilon, so it reports a hit when you are exactly flush
+    // against a wall rather than actually inside it. That calls us. The very first
+    // entry of CorrectSolidDeltas is straight up, and a POINT trace one unit above
+    // you passes -- because you were never embedded in anything. So you get lifted
+    // a unit, and next frame the same thing happens, and you ride the wall out of
+    // the map. Crouch, prone, running and jump elevators are all this one path.
+    //
+    // A point trace at the position you are already in settles it: if that is
+    // clear, you are not stuck and there is nothing to correct, so nothing should
+    // move. Later Call of Duty titles fixed this by re-testing the chosen
+    // candidate with a small jitter; testing the current position is the same idea
+    // with one fewer trace and no tuning constant to pick. The ground trace is
+    // still refreshed so the caller sees where the floor is.
+    if (bg_elevators && !bg_elevators->current.enabled)
+    {
+        PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask);
+
+        if (!trace->startsolid)
+        {
+            point[0] = ps->origin[0];
+            point[1] = ps->origin[1];
+            point[2] = ps->origin[2] - 1.0f - 0.25f;
+            PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
+            memcpy(&pml->groundTrace, trace, sizeof(pml->groundTrace));
+            return 1;
+        }
+    }
+
     for (uint32_t i = 0; i < 0x1A; ++i) // [esp+14h] [ebp-14h]
     {
         Vec3Add(ps->origin, CorrectSolidDeltas[i], point);

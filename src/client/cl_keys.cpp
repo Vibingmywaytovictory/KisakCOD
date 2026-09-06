@@ -1456,8 +1456,22 @@ cmd_function_s Key_Bind_f_VAR;
 cmd_function_s Key_Unbind_f_VAR;
 cmd_function_s Key_Unbindall_f_VAR;
 cmd_function_s Key_Bindlist_f_VAR;
+cmd_function_s CL_ToggleConsole_f_VAR;
+
+// "toggleconsole". The stock config binds ~ to this and nothing ever registered
+// it, so the bind silently did nothing. That matters more than it sounds:
+// CL_IsConsoleKey only recognises ` ^ ~ and 184, so on any layout whose key left
+// of 1 is not one of those -- Nordic and Baltic layouts put section or one-half
+// there -- the built in console key does not fire either, and with the bind dead
+// too there is no way to open the console at all.
+void __cdecl CL_ToggleConsole_f()
+{
+    Con_ToggleConsole();
+}
+
 void __cdecl CL_InitKeyCommands()
 {
+    Cmd_AddCommandInternal("toggleconsole", CL_ToggleConsole_f, &CL_ToggleConsole_f_VAR);
     Cmd_AddCommandInternal("bind", Key_Bind_f, &Key_Bind_f_VAR);
     Cmd_AddCommandInternal("unbind", Key_Unbind_f, &Key_Unbind_f_VAR);
     Cmd_AddCommandInternal("unbindall", Key_Unbindall_f, &Key_Unbindall_f_VAR);

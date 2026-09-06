@@ -343,7 +343,15 @@ void __cdecl Con_Init()
 {
     int32_t i; // [esp+0h] [ebp-4h]
 
-    con_restricted = Dvar_RegisterBool("monkeytoy", 1, DVAR_ARCHIVE, "Restrict console access"); // KISAK: just enable console by default
+    // The comment below was already here and the value contradicted it. The gate
+    // in CL_KeyEvent reads
+    //     if (!con_restricted->current.enabled || (keyCatchers & 1) != 0)
+    // so with this on, the console key only works while the console is already
+    // open -- which means it can never be opened at all. Defaulted off so the key
+    // does what it looks like it does. DVAR_ARCHIVE, so an existing config_mp.cfg
+    // that already saved "monkeytoy 1" still wins until it is removed or
+    // overridden with +set monkeytoy 0.
+    con_restricted = Dvar_RegisterBool("monkeytoy", 0, DVAR_ARCHIVE, "Restrict console access");
     con_matchPrefixOnly = Dvar_RegisterBool(
         "con_matchPrefixOnly",
         1,
