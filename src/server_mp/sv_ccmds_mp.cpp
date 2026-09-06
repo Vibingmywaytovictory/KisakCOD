@@ -6,6 +6,7 @@
 #include "server_mp.h"
 #include "sv_moderation_mp.h"
 #include "sv_banlist_mp.h"
+#include "sv_auth_mp.h"
 #include "sv_consay_mp.h"
 #include "sv_maprotation_mp.h"
 #include <qcommon/files.h>
@@ -304,6 +305,7 @@ void __cdecl SV_AddOperatorCommands()
         SV_BanList_AddCommands();
         SV_ConSay_AddCommands();
         SV_MapRotation_Init();
+        Auth_Init();
         Cmd_AddCommandInternal("banUser", Cbuf_AddServerText_f, &SV_Ban_f_VAR);
         Cmd_AddServerCommandInternal("banUser", SV_Ban_f, &SV_Ban_f_VAR_SERVER);
         Cmd_AddCommandInternal("banClient", Cbuf_AddServerText_f, &SV_BanNum_f_VAR);

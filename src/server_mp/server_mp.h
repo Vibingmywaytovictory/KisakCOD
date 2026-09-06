@@ -784,6 +784,15 @@ struct client_t // sizeof was 0xA5638 in the original binary; extended below
     // arriving inside the window is dropped. Appended past the original
     // 0xA5638 layout, like mutelevel above.
     int32_t floodprotect;
+
+    // Admin power granted by a successful password login, and the handle it was
+    // granted to. Both are session state: they live only as long as this
+    // connection and are never derived from the client's identity, which is the
+    // whole point -- see the note at the top of sv_auth_mp.h. 0 means the client
+    // has not authenticated. Appended past the original 0xA5638 layout, like
+    // mutelevel and floodprotect above.
+    int32_t authPower;
+    char    authName[32];
 };
 
 //sv_init_mp
