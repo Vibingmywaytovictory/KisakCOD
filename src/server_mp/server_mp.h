@@ -34,7 +34,7 @@ const NetField hudElemFields[40] =
   { NETF_HUD(fromColor.rgba), -85, 0u },
   { NETF_HUD(y), -91, 0u },
   { NETF_HUD(type), 4, 0u },
-  { NETF_HUD(materialIndex), 8, 0u },
+  { NETF_HUD(materialIndex), CS_BITS_SERVER_MATERIALS, 0u },
   { NETF_HUD(height), 10, 0u },
   { NETF_HUD(width), 10, 0u },
   { NETF_HUD(x), -92, 0u },
@@ -44,9 +44,9 @@ const NetField hudElemFields[40] =
   { NETF_HUD(alignScreen), 6, 0u },
   { NETF_HUD(sort), 0, 0u },
   { NETF_HUD(alignOrg), 4, 0u },
-  { NETF_HUD(offscreenMaterialIdx), 8, 0u },
+  { NETF_HUD(offscreenMaterialIdx), CS_BITS_SERVER_MATERIALS, 0u },
   { NETF_HUD(fontScale), -86, 0u },
-  { NETF_HUD(text), 9, 0u },
+  { NETF_HUD(text), CS_BITS_LOCALIZED_STRINGS, 0u },
   { NETF_HUD(font), 4, 0u },
   { NETF_HUD(scaleStartTime), -97, 0u },
   { NETF_HUD(scaleTime), 16, 0u },
@@ -119,13 +119,13 @@ const NetField vehicleEntityStateFields[59] =
   { NETF(lerp.apos.trDelta[1]), 0, 0u },
   { NETF(un2), 32, 0u },
   { NETF(time2), -97, 0u },
-  { NETF(loopSound), 8, 0u },
+  { NETF(loopSound), CS_BITS_SOUNDALIASES, 0u },
   { NETF(attackerEntityNum), 10, 0u },
   { NETF(fWaistPitch), 0, 0u },
   { NETF(fTorsoPitch), 0, 0u },
   { NETF(lerp.u.vehicle.bodyPitch), -100, 0u },
   { NETF(lerp.u.vehicle.bodyRoll), -100, 0u },
-  { NETF(iHeadIcon), 4, 0u },
+  { NETF(iHeadIcon), CS_BITS_HEAD_ICONS, 0u },
   { NETF(iHeadIconTeam), 2, 0u },
   { NETF(eventParm), -93, 0u },
   { NETF(lerp.u.vehicle.steerYaw), 0, 0u },
@@ -156,7 +156,7 @@ const NetField planeStateFields[60] =
   { NETF(eventParms[0]), -93, 0u },
   { NETF(events[1]), -94, 0u },
   { NETF(eventParms[1]), -93, 0u },
-  { NETF(loopSound), 8, 0u },
+  { NETF(loopSound), CS_BITS_SOUNDALIASES, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(eventParm), -93, 0u },
   { NETF(weapon), MAX_WEAPONS_BITS, 0u },
@@ -182,7 +182,7 @@ const NetField planeStateFields[60] =
   { NETF(attackerEntityNum), 10, 0u },
   { NETF(fWaistPitch), 0, 0u },
   { NETF(fTorsoPitch), 0, 0u },
-  { NETF(iHeadIcon), 4, 0u },
+  { NETF(iHeadIcon), CS_BITS_HEAD_ICONS, 0u },
   { NETF(iHeadIconTeam), 2, 0u },
   { NETF(lerp.apos.trDuration), 32, 0u },
   { NETF(torsoAnim), 10, 0u },
@@ -223,7 +223,7 @@ const NetField helicopterEntityStateFields[58] =
   { NETF(eventParms[0]), -93, 0u },
   { NETF(eventParms[2]), -93, 0u },
   { NETF(eventParms[3]), -93, 0u },
-  { NETF(loopSound), 8, 0u },
+  { NETF(loopSound), CS_BITS_SOUNDALIASES, 0u },
   { NETF(lerp.pos.trType), 8, 0u },
   { NETF(lerp.apos.trType), 8, 0u },
   { NETF(un2), 32, 0u },
@@ -254,7 +254,7 @@ const NetField helicopterEntityStateFields[58] =
   { NETF(fTorsoPitch), 0, 0u },
   { NETF(lerp.u.vehicle.bodyPitch), -100, 0u },
   { NETF(lerp.u.vehicle.bodyRoll), -100, 0u },
-  { NETF(iHeadIcon), 4, 0u },
+  { NETF(iHeadIcon), CS_BITS_HEAD_ICONS, 0u },
   { NETF(iHeadIconTeam), 2, 0u },
   { NETF(lerp.apos.trDuration), 32, 0u },
   { NETF(partBits[0]), 32, 1u },
@@ -308,12 +308,12 @@ const NetField entityStateFields[59] =
   { NETF(attackerEntityNum), 10, 0u },
   { NETF(fWaistPitch), 0, 0u },
   { NETF(fTorsoPitch), 0, 0u },
-  { NETF(iHeadIcon), 4, 0u },
+  { NETF(iHeadIcon), CS_BITS_HEAD_ICONS, 0u },
   { NETF(iHeadIconTeam), 2, 0u },
   { NETF(lerp.apos.trDuration), 32, 0u },
   { NETF(torsoAnim), 10, 0u },
   { NETF(legsAnim), 10, 0u },
-  { NETF(loopSound), 8, 0u },
+  { NETF(loopSound), CS_BITS_SOUNDALIASES, 0u },
   { NETF(otherEntityNum), 10, 0u },
   { NETF(lerp.u.anonymous.data[1]), 32, 0u },
   { NETF(lerp.u.anonymous.data[2]), 32, 0u },
@@ -329,30 +329,30 @@ const NetField entityStateFields[59] =
 #define NETF_CL(x) NETF_BASE(clientState_s, x)
 const NetField clientStateFields[24] = // LWSS: edit SV_GetAnalyzeEntityFields() if you change this
 {
-  { NETF_CL(modelindex), 9, 0u },
+  { NETF_CL(modelindex), CS_BITS_MODELS, 0u },
   { NETF_CL(name[0]), 32, 0u },
   { NETF_CL(rank), 8, 0u },
   { NETF_CL(prestige), 8, 0u },
   { NETF_CL(team), 2, 0u },
   { NETF_CL(attachedVehEntNum), 10, 0u },
   { NETF_CL(name[4]), 32, 0u },
-  { NETF_CL(attachModelIndex[0]), 9, 0u },
+  { NETF_CL(attachModelIndex[0]), CS_BITS_MODELS, 0u },
   { NETF_CL(name[8]), 32, 0u },
   { NETF_CL(perks), 32, 0u },
   { NETF_CL(name[12]), 32, 0u },
-  { NETF_CL(attachModelIndex[1]), 9, 0u },
+  { NETF_CL(attachModelIndex[1]), CS_BITS_MODELS, 0u },
   { NETF_CL(maxSprintTimeMultiplier), 0, 0u },
   { NETF_CL(attachedVehSlotIndex), 2, 0u },
-  { NETF_CL(attachTagIndex[5]), 5, 0u },
-  { NETF_CL(attachTagIndex[0]), 5, 0u },
-  { NETF_CL(attachTagIndex[1]), 5, 0u },
-  { NETF_CL(attachTagIndex[2]), 5, 0u },
-  { NETF_CL(attachTagIndex[3]), 5, 0u },
-  { NETF_CL(attachTagIndex[4]), 5, 0u },
-  { NETF_CL(attachModelIndex[2]), 9, 0u },
-  { NETF_CL(attachModelIndex[3]), 9, 0u },
-  { NETF_CL(attachModelIndex[4]), 9, 0u },
-  { NETF_CL(attachModelIndex[5]), 9, 0u }
+  { NETF_CL(attachTagIndex[5]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachTagIndex[0]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachTagIndex[1]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachTagIndex[2]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachTagIndex[3]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachTagIndex[4]), CS_BITS_TAGS, 0u },
+  { NETF_CL(attachModelIndex[2]), CS_BITS_MODELS, 0u },
+  { NETF_CL(attachModelIndex[3]), CS_BITS_MODELS, 0u },
+  { NETF_CL(attachModelIndex[4]), CS_BITS_MODELS, 0u },
+  { NETF_CL(attachModelIndex[5]), CS_BITS_MODELS, 0u }
 }; // idb
 
 #define NETF_PL(x) NETF_BASE(playerState_s, x)
@@ -365,6 +365,46 @@ const NetField clientStateFields[24] = // LWSS: edit SV_GetAnalyzeEntityFields()
 // weaponold[4..7] to weaponrechamber[0..3], and weaponrechamber[4..7] to the
 // floats that follow -- which would then be delta encoded as integers. That cost
 // a diagnostic build and a round of testing, so it is a compile error now.
+// Each configstring block is reachable only as far as the snapshot field that
+// carries its index. Retail sized every one of these to exactly fill its field,
+// so all of them start AT the cap -- raising a count without widening the field
+// truncates the index on the wire, which shows up as the wrong model or the
+// wrong sound on other clients and never as an error. These asserts are here,
+// next to the tables, so that raising a count fails to compile instead.
+static_assert(CS_COUNT_MODELS <= (1 << CS_BITS_MODELS),
+    "CS_COUNT_MODELS exceeds what clientState.modelindex, attachModelIndex[] and "
+    "playerState.viewmodelIndex can carry; widen CS_BITS_MODELS with it");
+static_assert(CS_COUNT_LOCALIZED_STRINGS <= (1 << CS_BITS_LOCALIZED_STRINGS),
+    "CS_COUNT_LOCALIZED_STRINGS exceeds what hudelem_s.text can carry");
+static_assert(CS_COUNT_SOUNDALIASES <= (1 << CS_BITS_SOUNDALIASES),
+    "CS_COUNT_SOUNDALIASES exceeds what entityState.loopSound can carry");
+static_assert(CS_COUNT_SERVER_MATERIALS <= (1 << CS_BITS_SERVER_MATERIALS),
+    "CS_COUNT_SERVER_MATERIALS exceeds what hudelem_s.materialIndex can carry");
+static_assert(CS_COUNT_TAGS <= (1 << CS_BITS_TAGS),
+    "CS_COUNT_TAGS exceeds what clientState.attachTagIndex[] can carry");
+
+// iHeadIcon reserves 0 for 'no icon', so the block is one short of the field.
+static_assert(CS_COUNT_HEAD_ICONS <= (1 << CS_BITS_HEAD_ICONS) - 1,
+    "CS_COUNT_HEAD_ICONS exceeds what entityState.iHeadIcon can carry, minus the "
+    "zero slot that means no icon");
+
+// eventParm and eventParms[] are written through field type -93, which
+// MSG_WriteDeltaField turns into 8 bits. That is a shared encoding used by every
+// event, not a per-field width, so it cannot be named in the table the way the
+// others are -- widening it costs bits on every event in the game.
+static_assert(CS_COUNT_EFFECT_TAGS <= (1 << CS_BITS_EFFECT_TAGS),
+    "CS_COUNT_EFFECT_TAGS exceeds the 8 bits that field type -93 gives eventParm; "
+    "see the -93 case in MSG_WriteDeltaField");
+
+// Effect names are bounded by an encoding, not a field: the effect-tag key is
+// built as "%02d" + tag and decoded a digit at a time in CG_PlayFxOnTag.
+static_assert(CS_COUNT_EFFECT_NAMES <= 100,
+    "the effect-tag configstring key encodes the effect id as exactly "
+    "CS_EFFECT_NAME_KEY_DIGITS decimal digits; raising this means changing the "
+    "va(\"%02d%s\") in Scr_PlayFXOnTag and the decoder in CG_PlayFxOnTag together");
+static_assert(CS_EFFECT_NAME_KEY_DIGITS == 2,
+    "CG_PlayFxOnTag reads exactly two digits and takes the tag from s + 2");
+
 static_assert(MAX_WEAPONMASK_DWORDS >= 8,
     "playerStateFields names weapons[0..7]; lowering MAX_WEAPONS below 256 needs "
     "those entries removed, not just the constant changed");
@@ -436,7 +476,7 @@ const NetField playerStateFields[] = // LWSS: edit SV_GetAnalyzeEntityFields() i
   { NETF_PL(damageEvent), 8, 0u },
   { NETF_PL(viewHeightLerpTarget), -8, 0u },
   { NETF_PL(damageYaw), 8, 0u },
-  { NETF_PL(viewmodelIndex), 9, 0u },
+  { NETF_PL(viewmodelIndex), CS_BITS_MODELS, 0u },
   { NETF_PL(damageDuration), 16, 0u },
   { NETF_PL(damagePitch), 8, 0u },
   { NETF_PL(flinchYawAnim), 2, 0u },

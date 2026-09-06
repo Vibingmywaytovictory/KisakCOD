@@ -467,6 +467,13 @@ struct cgs_t // sizeof=0x3A24
 // KISAK: a stray '#define CS_EFFECT_NAMES 244' (the SP value) lived here and shadowed the CS_EFFECT_NAMES = 1598
 // enumerator from client_mp.h, so CG_ConfigStringModified indexed cgs->fxs[] 1354 slots too far.
 
+// cg_local.h keeps its own MAX_EFFECT_NAMES for the shared cgame code. It is the
+// same number as the configstring block and has to stay that way -- this is the
+// third copy of it, and the second copy is what caused the cgs->fxs[] overrun
+// noted above.
+static_assert(MAX_EFFECT_NAMES == CS_COUNT_EFFECT_NAMES,
+    "MAX_EFFECT_NAMES must equal the CS_EFFECT_NAMES block size");
+
 extern weaponInfo_s cg_weaponsArray[1][128];
 extern cg_s cgArray[1];
 extern cgs_t cgsArray[1];

@@ -4245,7 +4245,7 @@ void Scr_PlayFXOnTag()
     if (Scr_GetNumParam() != 3)
         Scr_Error("Incorrect number of parameters");
     fxId = Scr_GetInt(0);
-    if (fxId <= 0 || fxId >= 100)
+    if (fxId <= 0 || fxId >= CS_COUNT_EFFECT_NAMES)
     {
         Scr_ParamError(0, va("effect id %i is invalid\n", fxId));
     }
@@ -4261,7 +4261,7 @@ void Scr_PlayFXOnTag()
         Scr_ParamError(2u, va("tag '%s' does not exist on entity with model '%s'", SL_ConvertToString(tag), SL_ConvertToString(G_ModelName(ent->model))));
     }
     csIndex = G_FindConfigstringIndex(va("%02d%s", fxId, SL_ConvertToString(tag)), CS_EFFECT_TAGS, CS_COUNT_EFFECT_TAGS, 1, 0);
-    if (csIndex <= 0 || csIndex >= 256)
+    if (csIndex <= 0 || csIndex >= CS_COUNT_EFFECT_TAGS)
         MyAssertHandler(".\\game_mp\\g_scr_main_mp.cpp", 4421, 0, "%s", "csIndex > 0 && csIndex < MAX_EFFECT_TAGS");
     G_AddEvent(ent, EV_PLAY_FX_ON_TAG, csIndex);
 }

@@ -1092,7 +1092,7 @@ void __cdecl CG_OpenScriptMenu(int32_t localClientNum)
     bool useMouse; // [esp+1Bh] [ebp-5h]
 
     menuIndex = atoi(Cmd_Argv(1));
-    if (menuIndex >= 0x20)
+    if (menuIndex >= CS_COUNT_SCRIPT_MENUS)
     {
         Com_Printf(14, "Server tried to open a bad script menu index: %i\n", menuIndex);
         Cbuf_AddText(localClientNum, va("cmd mr %i bad\n", menuIndex));

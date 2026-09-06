@@ -54,9 +54,9 @@ static_assert(((MAX_PARSE_CLIENTS) & (MAX_PARSE_CLIENTS - 1)) == 0, "MAX_PARSE_C
 #define CS_COUNT_EFFECT_NAMES      100
 #define CS_COUNT_EFFECT_TAGS       256
 #define CS_COUNT_SHELLSHOCKS       16
-#define CS_COUNT_SCRIPT_MENUS      32
+#define CS_COUNT_SCRIPT_MENUS      128  // raised from 32; text in a server command, no netfield
 #define CS_COUNT_SERVER_MATERIALS  256
-#define CS_COUNT_STATUS_ICONS      8
+#define CS_COUNT_STATUS_ICONS      32   // raised from 8; text in the scoreboard command, no netfield
 #define CS_COUNT_HEAD_ICONS        15
 #define CS_COUNT_TAGS              32
 
@@ -65,6 +65,41 @@ static_assert(((MAX_PARSE_CLIENTS) & (MAX_PARSE_CLIENTS - 1)) == 0, "MAX_PARSE_C
 // two had to be kept in step by hand. cached_models (server) and cgs.gameModels
 // (client) are both sized from this and both are asserted against it.
 #define MAX_MODELS CS_COUNT_MODELS
+
+// ---------------------------------------------------------------------------
+// What actually caps these tables.
+//
+// The 12-bit configstring index is NOT the binding constraint, and assuming it
+// was is the easy mistake here. A configstring slot is only reachable if some
+// snapshot field can carry its index, and those fields are narrow: a model is
+// named by a 9-bit clientState.modelindex, a sound by an 8-bit loopSound, an
+// attach tag by a 5-bit attachTagIndex. Retail sized every one of these blocks
+// to exactly fill its field, so all of them are AT their cap, not under it.
+//
+// Raising any block below is therefore a netfield widening -- the same kind of
+// protocol break MAX_WEAPONS was -- and not a constant bump. The static_asserts
+// in server_mp.h hold each count to the field that carries it, so getting this
+// wrong is a compile error rather than an index truncated on the wire.
+//
+// The two blocks with no bit width here (script menus, status icons) are the
+// exceptions: both travel as decimal text inside a server command, so they are
+// bounded by their own range checks and nothing else.
+// ---------------------------------------------------------------------------
+
+#define CS_BITS_MODELS            9   // clientState.modelindex, attachModelIndex[0..5], playerState.viewmodelIndex
+#define CS_BITS_LOCALIZED_STRINGS 9   // hudelem_s.text
+#define CS_BITS_SOUNDALIASES      8   // entityState.loopSound, and the event parms that name a sound
+#define CS_BITS_EFFECT_TAGS       8   // entityState.eventParm, carrying the EV_PLAY_FX_ON_TAG configstring index
+#define CS_BITS_SERVER_MATERIALS  8   // hudelem_s.materialIndex and offscreenMaterialIdx
+#define CS_BITS_TAGS              5   // clientState.attachTagIndex[0..5]
+#define CS_BITS_HEAD_ICONS        4   // entityState.iHeadIcon (0 means none, so the block is (1 << bits) - 1)
+
+// Effect names are capped by an encoding rather than a bit width. Scr_PlayFXOnTag
+// builds the effect-tag configstring key as va("%02d%s", fxId, tag) and
+// CG_PlayFxOnTag decodes it by hand -- 10 * (s[0] - '0') + (s[1] - '0'), then
+// reads the tag from s + 2. Exactly two digits, both sides. Going past 100 means
+// changing that format and that decoder together, not just this count.
+#define CS_EFFECT_NAME_KEY_DIGITS 2
 
 // The index is written as 12 bits on the wire; 4096 is the ceiling for the
 // whole space, not for any one block.
@@ -210,18 +245,21 @@ struct clSnapshot_t // sizeof=0x2F94
 
 #define MAX_GAMESTATE_CHARS 0x20000
 
-// The allocated size of the configstring array, as distinct from CS_MAX, which
-// is how much of it the layout above actually names. Retail sized this 2442
-// against a CS_MAX of 2315, leaving 127 slots that nothing can ever index --
-// dead space, kept here only because it is the number a retail client agrees
-// on. The static_assert is what matters: the array must cover the layout.
+// The allocated size of the configstring array. Retail froze this at 2442
+// against a CS_MAX of 2315, leaving 127 slots that nothing could ever index,
+// and every loop over the array spelled 2442 by hand. Deriving it from the
+// layout removes both the dead space and the second number to keep in step.
+//
+// It must NOT be an independent knob: if it were, it would be the first
+// static_assert to fail when a block is raised too far, and it would report
+// "array too small" when the real problem is that the index no longer fits on
+// the wire. Tied to CS_MAX, the wire asserts in server_mp.h are the ones that
+// fire, and they name the field that actually caps the block.
 #ifndef MAX_CONFIGSTRINGS // COMPILE HACK MP
-#define MAX_CONFIGSTRINGS 2442
+#define MAX_CONFIGSTRINGS CS_MAX
 #endif
-static_assert(MAX_CONFIGSTRINGS >= CS_MAX,
-    "the configstring array must be at least as large as the layout that indexes it");
 
-struct gameState_t // sizeof=0x2262C
+struct gameState_t // sizeof was 0x2262C at MAX_CONFIGSTRINGS 2442
 {                                       // XREF: clientActive_t/r
     int32_t stringOffsets[MAX_CONFIGSTRINGS];
     char stringData[MAX_GAMESTATE_CHARS];

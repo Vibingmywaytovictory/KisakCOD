@@ -359,7 +359,7 @@ void __cdecl ClientScr_GetStatusIcon(gclient_s *pSelf, const client_fields_s *pF
 
     if (!pSelf)
         MyAssertHandler(".\\game\\g_client_fields.cpp", 272, 0, "%s", "pSelf");
-    if (pSelf->sess.status_icon > 8u)
+    if (pSelf->sess.status_icon > (uint32_t)CS_COUNT_STATUS_ICONS)
         MyAssertHandler(
             ".\\game\\g_client_fields.cpp",
             274,
@@ -368,7 +368,7 @@ void __cdecl ClientScr_GetStatusIcon(gclient_s *pSelf, const client_fields_s *pF
             "pSelf->sess.status_icon >= 0 && pSelf->sess.status_icon <= MAX_STATUS_ICONS");
     if (pSelf->sess.status_icon)
     {
-        SV_GetConfigstring(pSelf->sess.status_icon + 2258, szConfigString, 1024);
+        SV_GetConfigstring(pSelf->sess.status_icon + CS_STATUS_ICONS - 1, szConfigString, 1024);
         Scr_AddString(szConfigString);
     }
     else
