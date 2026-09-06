@@ -1611,6 +1611,19 @@ void __cdecl PM_MeleeChargeClear(playerState_s *ps)
 // Quantise a usercmd time onto the fixed physics step. Both the client that
 // builds the command and the server that runs it must round identically, or the
 // two simulate different step boundaries and every jump mispredicts.
+//
+// DOWN, not up, and that is not a detail. Quake rounds up here, but this engine
+// feeds command time into the view: PM_StepSlideMove records ps->commandTime as
+// pm->viewChangeTime, cg_predict copies that into cg.stepViewStart, and
+// CG_SmoothCameraZ then measures cg.time - stepViewStart and skips the smoothing
+// entirely when that is negative. Rounding up put command time AHEAD of render
+// time, so step smoothing was applied on some frames and skipped on others, and
+// the view jittered on every staircase. The SP copy of that function asserts the
+// invariant outright -- "cgameGlob->time - cgameGlob->stepViewStart >= 0" -- which
+// is the code saying command time may never lead render time.
+//
+// Rounding down loses nothing: the remainder is simply carried into the next
+// command, and the step stays exactly pmove_msec long either way.
 int __cdecl PM_RoundCommandTime(int serverTime)
 {
     if (!pmove_fixed || !pmove_fixed->current.enabled)
@@ -1618,10 +1631,10 @@ int __cdecl PM_RoundCommandTime(int serverTime)
 
     const int step = pmove_msec->current.integer;
 
-    if (step <= 0)
+    if (step <= 0 || serverTime <= 0)
         return serverTime;
 
-    return ((serverTime + step - 1) / step) * step;
+    return (serverTime / step) * step;
 }
 
 void __cdecl Pmove(pmove_t *pm)
