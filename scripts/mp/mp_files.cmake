@@ -179,6 +179,8 @@ set(SERVER_MP
     "${SRC_DIR}/server_mp/sv_banlist_mp.h"
     "${SRC_DIR}/server_mp/sv_auth_mp.cpp"
     "${SRC_DIR}/server_mp/sv_auth_mp.h"
+    "${SRC_DIR}/server_mp/sv_ingameadmin_mp.cpp"
+    "${SRC_DIR}/server_mp/sv_ingameadmin_mp.h"
     "${SRC_DIR}/server_mp/sv_consay_mp.cpp"
     "${SRC_DIR}/server_mp/sv_consay_mp.h"
     "${SRC_DIR}/server_mp/sv_maprotation_mp.cpp"

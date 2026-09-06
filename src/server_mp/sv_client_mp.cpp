@@ -3,6 +3,7 @@
 #endif
 
 #include <universal/q_shared.h>
+#include "sv_ingameadmin_mp.h"
 #include "server_mp.h"
 #include "sv_banlist_mp.h"
 #include <qcommon/cmd.h>
@@ -877,6 +878,10 @@ void __cdecl SV_DropClient(client_t *drop, const char *reason, bool tellThem)
     bool translationForReason; // [esp+33h] [ebp-9h]
     challenge_t *challenge; // [esp+34h] [ebp-8h]
     int i; // [esp+38h] [ebp-4h]
+
+    // Admin power is session state and must not outlive the connection: slots
+    // are reused, and the next player to land here must not inherit it.
+    SV_InGameAdmin_ClientDisconnect(drop);
 
     // LWSS ADD
     if (com_dedicated->current.integer)

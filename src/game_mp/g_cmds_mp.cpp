@@ -3,6 +3,7 @@
 #endif
 
 #include <universal/q_shared.h>
+#include <server_mp/sv_ingameadmin_mp.h>
 #include "g_public_mp.h"
 #include <server/sv_game.h>
 #include <qcommon/cmd.h>
@@ -655,6 +656,13 @@ void __cdecl G_Say(gentity_s *ent, gentity_s *target, int32_t mode, char *chatTe
     const char *pszTeamString; // [esp+50h] [ebp-A8h]
     int32_t color; // [esp+54h] [ebp-A4h]
     char text[156]; // [esp+58h] [ebp-A0h] BYREF
+
+    // Admin commands come in as chat with a $, ! or / prefix. Handled before
+    // the mute and chat-disable checks below on purpose: a command is not chat.
+    // It is never shown to anyone else, it is gated by power rather than by
+    // mute, and disabling chat on a server must not also disable moderating it.
+    if (ent->s.number < MAX_CLIENTS && SV_HandleChatCommand(ent->s.number, chatText))
+        return;
 
     // Server-side mute. Enforced here rather than in Cmd_Say_f so that the
     // script-side sayall/sayteam player methods are covered by the same check.
