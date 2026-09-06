@@ -359,6 +359,15 @@ const NetField clientStateFields[24] = // LWSS: edit SV_GetAnalyzeEntityFields()
 // Sized by the initialiser: numPlayerStateFields and SV_WriteSnapshot both
 // derive their count with ARRAY_COUNT, so entries can be added without three
 // separate literals having to agree.
+// These entries name weapons[4] through weapons[7] literally, so the masks must
+// actually be that long. offsetof does not bounds check: at MAX_WEAPONS 128 the
+// masks are uint32_t[4] and weapons[4] silently resolves to weaponold[0],
+// weaponold[4..7] to weaponrechamber[0..3], and weaponrechamber[4..7] to the
+// floats that follow -- which would then be delta encoded as integers. That cost
+// a diagnostic build and a round of testing, so it is a compile error now.
+static_assert(MAX_WEAPONMASK_DWORDS >= 8,
+    "playerStateFields names weapons[0..7]; lowering MAX_WEAPONS below 256 needs "
+    "those entries removed, not just the constant changed");
 const NetField playerStateFields[] = // LWSS: edit SV_GetAnalyzeEntityFields() if you change this
 {
   { NETF_PL(commandTime), -97, 0u },
