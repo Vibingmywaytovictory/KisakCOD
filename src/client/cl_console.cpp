@@ -37,6 +37,7 @@ const dvar_t *con_typewriterColorGlowUpdated;
 const dvar_t *con_typewriterDecayDuration;
 const dvar_t *con_typewriterDecayStartTime;
 const dvar_t *con_restricted;
+const dvar_t *con_toggleKey;
 const dvar_t *con_typewriterPrintSpeed;
 
 const dvar_t *con_inputBoxColor;
@@ -352,6 +353,15 @@ void __cdecl Con_Init()
     // that already saved "monkeytoy 1" still wins until it is removed or
     // overridden with +set monkeytoy 0.
     con_restricted = Dvar_RegisterBool("monkeytoy", 0, DVAR_ARCHIVE, "Restrict console access");
+
+    // An extra key that opens the console, by name, on top of the hardcoded
+    // ` ^ ~ and 184. Those four cover US and a few European layouts and nothing
+    // else: Nordic and Baltic layouts put a DEAD key (caron, tilde, section)
+    // where the console key is supposed to be, and a dead key never delivers a
+    // normal key event, so neither the built-in check nor a bind to it fires.
+    // On those layouts there was no way to open the console at all.
+    con_toggleKey = Dvar_RegisterString("con_toggleKey", (char *)"", DVAR_ARCHIVE,
+        "Extra key that opens the console, by name (for example F1). Empty uses only the defaults.");
     con_matchPrefixOnly = Dvar_RegisterBool(
         "con_matchPrefixOnly",
         1,

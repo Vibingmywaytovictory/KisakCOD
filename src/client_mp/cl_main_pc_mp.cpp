@@ -276,8 +276,23 @@ void __cdecl CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
                 cls.localServers[i].netType = from.type;
                 cls.localServers[i].allowAnonymous = 0;
                 cls.localServers[i].punkbuster = 0;
-                String = MSG_ReadString(msg);
-                I_strncpyz(info, String, 1024);
+
+                // Parse the infoResponse into the row. Without this the entry is
+                // added with a blank hostname, no map and 0/0 players, which is
+                // why a LAN server answered the broadcast and still never
+                // appeared in the Local tab. Every other path that takes an
+                // infoResponse -- ping replies, global servers, favourites --
+                // goes through CL_SetServerInfo; only this one was missing it.
+                //
+                // Ping is -1 (unknown) because a broadcast reply has no matching
+                // cl_pinglist entry to measure against; the UI pings the row
+                // separately once it exists.
+                CL_SetServerInfo(&cls.localServers[i], infoString, -1);
+
+                // infoString was already consumed by the MSG_ReadString at the
+                // top of this function, so reading the message again here yields
+                // an empty string. Print what was actually received.
+                I_strncpyz(info, infoString, 1024);
                 if (&info[strlen(info) + 1] != &info[1])
                 {
                     if (info[&info[strlen(info) + 1] - &info[1] - 1] != 10)

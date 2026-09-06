@@ -1478,10 +1478,26 @@ void __cdecl CL_InitKeyCommands()
     Cmd_AddCommandInternal("bindlist", Key_Bindlist_f, &Key_Bindlist_f_VAR);
 }
 
+extern const dvar_t *con_toggleKey;
+
 bool __cdecl CL_IsConsoleKey(int32_t key)
 {
     // key 184 isn't apart of ASCII
-    return (key == '`' || key == '^' || key == 184 || key == '~');
+    if (key == '`' || key == '^' || key == 184 || key == '~')
+        return true;
+
+    // con_toggleKey names one more, so a layout whose console key is a dead key
+    // is not locked out. Resolved every call rather than cached because the
+    // whole point is that it can be set from a config or the command line by
+    // someone who currently has no console to set it from.
+    if (con_toggleKey && con_toggleKey->current.string && con_toggleKey->current.string[0])
+    {
+        const int32_t extra = Key_StringToKeynum(con_toggleKey->current.string);
+        if (extra > 0 && extra == key)
+            return true;
+    }
+
+    return false;
 }
 
 #ifdef KISAK_MP
