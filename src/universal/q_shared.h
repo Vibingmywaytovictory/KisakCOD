@@ -803,6 +803,12 @@ struct trace_t // sizeof=0x2C
 // win_shared
 uint32_t __cdecl Sys_Milliseconds();
 uint32_t __cdecl Sys_MillisecondsRaw();
+
+// Cryptographically secure random bytes from the OS. Returns false if the
+// platform CSPRNG is unavailable, in which case the caller must decide what to
+// do -- there is deliberately no silent fallback to rand(), because the callers
+// that want this (password salts) are exactly the ones a weak source would hurt.
+bool __cdecl Sys_RandomBytes(void *out, size_t len);
 void __cdecl Sys_SnapVector(float *v);
 
 // com_shared

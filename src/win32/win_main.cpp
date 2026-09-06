@@ -169,6 +169,38 @@ static int Sys_GetSemaphoreFileName()
 	return sprintf_s(sys_processSemaphoreFile, "__%s", moduleName);
 }
 
+// Cryptographically secure random bytes. RtlGenRandom (exported from advapi32 as
+// SystemFunction036) is used rather than the CryptoAPI provider chain because it
+// needs no context to acquire and cannot fail for reasons of a missing or broken
+// key container; it is what CryptGenRandom sits on top of anyway.
+//
+// There is no fallback to rand() here on purpose. The only caller is the admin
+// password salt, and a predictable salt is worse than an honest failure the
+// caller can warn about.
+typedef BOOLEAN(WINAPI *RtlGenRandomFn)(PVOID, ULONG);
+
+bool __cdecl Sys_RandomBytes(void *out, size_t len)
+{
+    static RtlGenRandomFn s_rtlGenRandom = NULL;
+    static bool s_resolved = false;
+
+    if (!out || !len || len > 0xFFFFFFFFu)
+        return false;
+
+    if (!s_resolved)
+    {
+        HMODULE advapi = LoadLibraryA("advapi32.dll");
+        if (advapi)
+            s_rtlGenRandom = (RtlGenRandomFn)GetProcAddress(advapi, "SystemFunction036");
+        s_resolved = true;
+    }
+
+    if (!s_rtlGenRandom)
+        return false;
+
+    return s_rtlGenRandom(out, (ULONG)len) != FALSE;
+}
+
 void __cdecl Sys_QuitAndStartProcess(const char *exeName, const char *parameters)
 {
 	char pathOrig[268]; // [esp+0h] [ebp-110h] BYREF

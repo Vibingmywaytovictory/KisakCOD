@@ -515,6 +515,8 @@ set(UNIVERSAL
     "${SRC_DIR}/universal/assertive.h"
 	"${SRC_DIR}/universal/base64.cpp"
 	"${SRC_DIR}/universal/base64.h"
+	"${SRC_DIR}/universal/sha256.cpp"
+	"${SRC_DIR}/universal/sha256.h"
     "${SRC_DIR}/universal/com_constantconfigstrings.cpp"
     "${SRC_DIR}/universal/com_constantconfigstrings.h"
     "${SRC_DIR}/universal/com_convexhull.cpp"
