@@ -6599,6 +6599,6 @@ void __cdecl Material_SortInternal(Material **sortedMaterials, uint32_t material
 void __cdecl Material_Sort()
 {
     if (IsFastFileLoad())
-        rgp.materialCount = DB_GetAllXAssetOfType(ASSET_TYPE_MATERIAL, (XAssetHeader *)&rgp, 2048);
+        rgp.materialCount = DB_GetAllXAssetOfType(ASSET_TYPE_MATERIAL, (XAssetHeader *)&rgp, ARRAY_COUNT(rgp.sortedMaterials));
     Material_SortInternal(rgp.sortedMaterials, rgp.materialCount);
 }

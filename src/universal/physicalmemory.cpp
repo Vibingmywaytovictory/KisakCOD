@@ -11,12 +11,56 @@
 PhysicalMemory g_mem;
 int g_overAllocatedSize;
 
+// Retail reserved 0x8000000, 128MB, for every zone the game has loaded at once.
+// That was never generous: measured with "assetpoolinfo" on a dedicated server
+// running stock mp_crash, common_mp and the map take 39MB each and only 46MB is
+// left over, which is why a custom map with real content meets "Need %i more
+// bytes of ram for alloc to succeed" so easily.
+//
+// This is committed up front rather than reserved and committed on demand, so a
+// server operator running many instances pays the commit charge for all of it.
+// Hence the dvar: raise it for a heavy mod, drop it back for a box full of
+// dedicated servers. Windows only backs a committed page with RAM once it is
+// touched, so the resident cost still follows what the zones actually use.
+#define PMEM_DEFAULT_MEGS 384
+#define PMEM_STOCK_MEGS   128
+#define PMEM_MIN_MEGS     64
+#define PMEM_MAX_MEGS     1536
+
 void __cdecl PMem_Init()
 {
-    uint8_t *memory; // [esp+0h] [ebp-4h]
+    // Com_InitDvars and Com_StartupVariable have both run by the time Com_Init
+    // reaches us, so a +set on the command line is already in hand here.
+    const dvar_t *zoneMegs = Dvar_RegisterInt(
+        "sys_zoneMegs",
+        PMEM_DEFAULT_MEGS,
+        PMEM_MIN_MEGS,
+        PMEM_MAX_MEGS,
+        DVAR_LATCH | DVAR_ARCHIVE,
+        "Megabytes reserved for loaded fastfile zones (needs a restart)");
 
-    memory = (uint8_t *)VirtualAlloc(0, 0x8000000u, 0x1000u, 4u);
-    PMem_InitPhysicalMemory(&g_mem, memory, 0x8000000u);
+    uint32_t megs = (uint32_t)zoneMegs->current.integer;
+    uint8_t *memory = 0;
+
+    // Back off rather than hand PMem_InitPhysicalMemory a null pointer, which is
+    // what the stock code did on failure. Never go below the retail size: if even
+    // that will not commit there is nothing useful left to do.
+    for (;;)
+    {
+        memory = (uint8_t *)VirtualAlloc(0, megs << 20, MEM_COMMIT, PAGE_READWRITE);
+
+        if (memory)
+            break;
+
+        if (megs <= PMEM_STOCK_MEGS)
+            Sys_OutOfMemErrorInternal(".\\universal\\physicalmemory.cpp", __LINE__);
+
+        megs = megs / 2 > PMEM_STOCK_MEGS ? megs / 2 : PMEM_STOCK_MEGS;
+        Com_PrintWarning(16, "Could not reserve %i MB for zone memory; trying %i MB\n",
+            zoneMegs->current.integer, megs);
+    }
+
+    PMem_InitPhysicalMemory(&g_mem, memory, megs << 20);
 }
 
 void __cdecl PMem_DumpMemStats()

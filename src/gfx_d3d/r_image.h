@@ -79,10 +79,18 @@ struct GfxRawImage // sizeof=0x54
     GfxRawPixel *pixels;                // ...
 };
 
-struct ImageList // sizeof=0x2004
-{                                       // ...
-    uint32_t count;                 // ...
-    GfxImage *image[2048];              // ...
+// Has to hold every loaded image, because that is exactly what R_GetImageList
+// puts in it. Retail sized this 2048 while the image pool held 2400, so a
+// content heavy map could already run RB_TouchImages off the end of an 8KB
+// stack buffer -- and RB_TouchImages runs while rendering, not just from the
+// imagelist command. Pinned to POOLSIZE_IMAGE by a static_assert in
+// db_registry.cpp.
+#define MAX_IMAGE_LIST 4096
+
+struct ImageList
+{
+    uint32_t count;
+    GfxImage *image[MAX_IMAGE_LIST];
 };
 
 struct Image_MemUsage // sizeof=0xC

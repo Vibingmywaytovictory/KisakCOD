@@ -1,5 +1,7 @@
 #pragma once
 
+#define MAX_UI_MENUS 1280
+
 #include <bgame/bg_local.h> // team_t
 
 #include <gfx_d3d/r_font.h>
@@ -594,7 +596,9 @@ struct UiContext // sizeof=0x1678
     float screenAspect;
     float FPS;
     float blurRadiusOut;
-    menuDef_t *Menus[640];
+    // Caps how many menu assets the UI can register, independently of
+    // POOLSIZE_MENU. db_registry.cpp static_asserts the two stay in step.
+    menuDef_t *Menus[MAX_UI_MENUS];
     int menuCount;
     menuDef_t *menuStack[16];
     int openMenuCount;

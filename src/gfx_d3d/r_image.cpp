@@ -117,7 +117,13 @@ void __cdecl R_GetImageList(ImageList *imageList)
 
 void __cdecl R_AddImageToList(XAssetHeader header, ImageList* imageList)
 {
+    // An assert alone is not a bound: this is a DB_EnumXAssets callback writing
+    // into a stack buffer, and it kept writing after the assert fired.
     iassert( imageList->count < ARRAY_COUNT( imageList->image ) );
+
+    if (imageList->count >= ARRAY_COUNT(imageList->image))
+        return;
+
     imageList->image[imageList->count++] = header.image;
 }
 

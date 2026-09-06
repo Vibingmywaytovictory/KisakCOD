@@ -6880,18 +6880,18 @@ void __cdecl UI_AddMenuList(UiContext *dc, MenuList *menuList)
 
 void __cdecl UI_AddMenu(UiContext *dc, menuDef_t *menu)
 {
-    if (dc->menuCount >= 640)
+    if (dc->menuCount >= MAX_UI_MENUS)
         Com_Error(ERR_DROP, "UI_AddMenu: EXE_ERR_OUT_OF_MEMORY");
     if (!menu)
         MyAssertHandler(".\\ui\\ui_shared.cpp", 6297, 0, "%s", "menu");
-    if (dc->menuCount >= 0x280u)
+    if (dc->menuCount >= (uint32_t)MAX_UI_MENUS)
         MyAssertHandler(
             ".\\ui\\ui_shared.cpp",
             6298,
             0,
             "dc->menuCount doesn't index ARRAY_COUNT( dc->Menus )\n\t%i not in [0, %i)",
             dc->menuCount,
-            640);
+            MAX_UI_MENUS);
     if (IsFastFileLoad() && DB_FindXAssetHeader(ASSET_TYPE_MENU, menu->window.name).menu != menu)
         MyAssertHandler(".\\ui\\ui_shared.cpp", 6304, 0, "%s", "touchMenu == menu");
     dc->Menus[dc->menuCount++] = menu;

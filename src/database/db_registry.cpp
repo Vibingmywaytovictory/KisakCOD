@@ -42,16 +42,39 @@ struct DBReorderAssetEntry // sizeof=0x10
     const char *assetName;
 };
 
+// Asset pool ceilings.
+//
+// Every number to the right of a "raised from" is what the retail 1.0 build
+// shipped. The stock numbers are not headroom for a mod, they are barely
+// headroom for the stock game: measured on a dedicated server running stock
+// mp_crash with only a bot script loaded, xmodel sat at 899/1000 and weapon at
+// 116/128. "assetpoolinfo" prints that table on any running build, so re-measure
+// rather than guess before moving one of these again.
+//
+// Raising a pool is a purely local decision. Zone files address assets by name
+// and the wire never carries a pool index -- what the network carries is a
+// configstring index, which these do not touch -- so a raised pool stays
+// compatible with stock clients and with unmodified fastfiles. The two limits
+// that are NOT local are called out below.
+//
+// POOLSIZE_WEAPON is deliberately left at 128 even though it is the fullest
+// pool in the game. It is the one asset whose index goes on the wire:
+// playerState weapon and offHandIndex are sent in MAX_WEAPONS_BITS (7) bits
+// each (msg_mp.cpp), the weapons-owned bitmask is 16 bytes, and item entity
+// indices are packed model * MAX_WEAPONS + weapon into a 2048 entry
+// bg_itemlist. Raising it changes the protocol and locks out stock clients, so
+// it is a separate decision, not a constant to bump.
+
 #define POOLSIZE_XMODELPIECES   64
-#define POOLSIZE_PHYSPRESET     64
-#define POOLSIZE_XANIMPARTS     4096
-#define POOLSIZE_XMODEL         1000
-#define POOLSIZE_MATERIAL       2048
-#define POOLSIZE_TECHNIQUE_SET  1024 // 512 on SP (XBox?)
-#define POOLSIZE_IMAGE          2400
+#define POOLSIZE_PHYSPRESET     128        // raised from 64
+#define POOLSIZE_XANIMPARTS     8192       // raised from 4096
+#define POOLSIZE_XMODEL         4096       // raised from 1000
+#define POOLSIZE_MATERIAL       4096       // raised from 2048
+#define POOLSIZE_TECHNIQUE_SET  2048       // raised from 1024 (512 on SP)
+#define POOLSIZE_IMAGE          4096       // raised from 2400
 #define POOLSIZE_SOUND          16'000
-#define POOLSIZE_SOUND_CURVE    64
-#define POOLSIZE_LOADED_SOUND   1200
+#define POOLSIZE_SOUND_CURVE    128        // raised from 64
+#define POOLSIZE_LOADED_SOUND   4096       // raised from 1200
 #define POOLSIZE_CLIPMAP        1
 #define POOLSIZE_CLIPMAP_PVS    1
 #define POOLSIZE_COMWORLD       1
@@ -59,23 +82,34 @@ struct DBReorderAssetEntry // sizeof=0x10
 #define POOLSIZE_GAMEWORLD_MP   1
 #define POOLSIZE_MAP_ENTS       2
 #define POOLSIZE_GFXWORLD       1
-#define POOLSIZE_LIGHT_DEF      32
+#define POOLSIZE_LIGHT_DEF      128        // raised from 32
 #define POOLSIZE_UI_MAP         0
-#define POOLSIZE_FONT           16
-#define POOLSIZE_MENULIST       128
-#define POOLSIZE_MENU           640 // 512 on SP
-#define POOLSIZE_LOCALIZE_ENTRY 6144
-#define POOLSIZE_WEAPON         128
+#define POOLSIZE_FONT           32         // raised from 16
+#define POOLSIZE_MENULIST       256        // raised from 128
+#define POOLSIZE_MENU           1280       // raised from 640 (512 on SP)
+#define POOLSIZE_LOCALIZE_ENTRY 12288      // raised from 6144
+#define POOLSIZE_WEAPON         128        // protocol locked, see above
 #define POOLSIZE_SNDDRIVER_GLOBALS 1
-#define POOLSIZE_FX             400
-#define POOLSIZE_IMPACT_FX      4
+#define POOLSIZE_FX             1200       // raised from 400
+#define POOLSIZE_IMPACT_FX      16         // raised from 4
 #define POOLSIZE_AITYPE         0
 #define POOLSIZE_MPTYPE         0
 #define POOLSIZE_CHARACTER      0
 #define POOLSIZE_XMODELALIAS    0
-#define POOLSIZE_RAWFILE        1024
-#define POOLSIZE_STRINGTABLE    50
+#define POOLSIZE_RAWFILE        4096       // raised from 1024
+#define POOLSIZE_STRINGTABLE    256        // raised from 50
 
+// Two tables outside this file mirror a pool size and would silently cap a
+// raise made here: the renderer sorts materials through a fixed array, and the
+// UI registers menus into one. Both were sized to the retail pool, so they are
+// pinned to it rather than left to drift.
+static_assert(MAX_SORTED_MATERIALS >= POOLSIZE_MATERIAL,
+    "rgp.sortedMaterials cannot hold the material pool; materials past the end "
+    "never get a materialSortedIndex");
+static_assert(MAX_IMAGE_LIST >= POOLSIZE_IMAGE,
+    "ImageList cannot hold the image pool; R_GetImageList would truncate");
+static_assert(MAX_UI_MENUS >= POOLSIZE_MENU,
+    "UiContext::Menus cannot hold the menu pool; UI_AddMenu will drop the rest");
 int32_t g_poolSize[ASSET_TYPE_COUNT] =
 {
     POOLSIZE_XMODELPIECES,
@@ -418,7 +452,21 @@ XAssetPool<FxImpactTable, POOLSIZE_IMPACT_FX> g_FxImpactTablePool;
 XAssetPool<RawFile, POOLSIZE_RAWFILE> g_RawFilePool;
 XAssetPool<StringTable, POOLSIZE_STRINGTABLE> g_StringTablePool;
 
-XAssetEntryPoolEntry g_assetEntryPool[32768];
+// Every loaded asset of every type takes one of these, so this is the ceiling
+// above all the per type ceilings: run out here and the error is "Could not
+// allocate asset - increase XASSET_ENTRY_POOL_SIZE" rather than the name of
+// whichever pool you were filling. Retail shipped 32768; the raised per type
+// pools above sum to more than that, so it moves with them.
+//
+// 65536 is the hard ceiling for this array, not a preference: entries address
+// each other through XAssetEntry::nextHash and ::nextOverride, both uint16_t,
+// and db_hashTable stores uint16_t indices as well. Index 0 doubles as the end
+// of a chain, so entry 0 is never handed out.
+#define XASSET_ENTRY_POOL_SIZE 65536
+
+XAssetEntryPoolEntry g_assetEntryPool[XASSET_ENTRY_POOL_SIZE];
+static_assert(XASSET_ENTRY_POOL_SIZE <= 65536,
+    "asset entry indices are uint16_t; index 0 is the null link");
 uint8_t g_fileBuf[524288];
 
 fileData_s *com_fileDataHashTable[1024];
@@ -600,36 +648,38 @@ void *DB_XAssetPool[ASSET_TYPE_COUNT] =
   &g_StringTablePool
 }; // idb
 
+// The byte counts here used to be literals lifted from the 1.0 build, so every
+// one of them silently went wrong the moment a pool moved. Derived now.
 void __cdecl TRACK_db_registry()
 {
-    track_static_alloc_internal(db_hashTable, 0x10000, "db_hashTable", 10);
-    track_static_alloc_internal(g_copyInfo, 0x2000, "g_copyInfo", 10);
-    track_static_alloc_internal(g_zones, 5544, "g_zones", 10);
-    track_static_alloc_internal(g_zoneHandles, 32, "g_zoneHandles", 10);
-    track_static_alloc_internal(g_zoneNameList, 2080, "g_zoneNameList", 10);
-    track_static_alloc_internal(&g_XModelPiecesPool, 772, "g_XModelPiecesPool", 10);
-    track_static_alloc_internal(&g_PhysPresetPool, 2820, "g_PhysPresetPool", 10);
-    track_static_alloc_internal(&g_XAnimPartsPool, 360452, "g_XAnimPartsPool", 10);
-    track_static_alloc_internal(&g_XModelPool, 220004, "g_XModelPool", 10);
-    track_static_alloc_internal(&g_MaterialPool, 163848, "g_MaterialPool", 10);
-    track_static_alloc_internal(&g_MaterialTechniqueSetPool, 151556, "g_MaterialTechniqueSetPool", 10);
-    track_static_alloc_internal(&g_GfxImagePool, 86404, "g_GfxImagePool", 10);
-    track_static_alloc_internal(&g_SoundPool, 192004, "g_SoundPool", 10);
-    track_static_alloc_internal(&g_SndCurvePool, 4612, "g_SndCurvePool", 10);
-    track_static_alloc_internal(&g_LoadedSoundPool, 52804, "g_LoadedSoundPool", 10);
-    track_static_alloc_internal(&g_MapEntsPool, 28, "g_MapEntsPool", 10);
-    track_static_alloc_internal(&g_GfxLightDefPool, 516, "g_GfxLightDefPool", 10);
-    track_static_alloc_internal(&g_FontPool, 388, "g_FontPool", 10);
-    track_static_alloc_internal(&g_MenuListPool, 1540, "g_MenuListPool", 10);
-    track_static_alloc_internal(&g_MenuPool, 181764, "g_MenuPool", 10);
-    track_static_alloc_internal(&g_LocalizeEntryPool, 49156, "g_LocalizeEntryPool", 10);
-    track_static_alloc_internal(&g_WeaponDefPool, 277508, "g_WeaponDefPool", 10);
-    track_static_alloc_internal(&g_FxEffectDefPool, 12804, "g_FxEffectDefPool", 10);
-    track_static_alloc_internal(&g_FxImpactTablePool, 36, "g_FxImpactTablePool", 10);
-    track_static_alloc_internal(&g_RawFilePool, 12292, "g_RawFilePool", 10);
-    track_static_alloc_internal(&g_StringTablePool, 804, "g_StringTablePool", 10);
-    track_static_alloc_internal(g_assetEntryPool, 0x80000, "g_assetEntryPool", 10);
-    track_static_alloc_internal(g_fileBuf, 0x80000, "g_fileBuf", 10);
+    track_static_alloc_internal(db_hashTable, sizeof(db_hashTable), "db_hashTable", 10);
+    track_static_alloc_internal(g_copyInfo, sizeof(g_copyInfo), "g_copyInfo", 10);
+    track_static_alloc_internal(g_zones, sizeof(g_zones), "g_zones", 10);
+    track_static_alloc_internal(g_zoneHandles, sizeof(g_zoneHandles), "g_zoneHandles", 10);
+    track_static_alloc_internal(g_zoneNameList, sizeof(g_zoneNameList), "g_zoneNameList", 10);
+    track_static_alloc_internal(&g_XModelPiecesPool, sizeof(g_XModelPiecesPool), "g_XModelPiecesPool", 10);
+    track_static_alloc_internal(&g_PhysPresetPool, sizeof(g_PhysPresetPool), "g_PhysPresetPool", 10);
+    track_static_alloc_internal(&g_XAnimPartsPool, sizeof(g_XAnimPartsPool), "g_XAnimPartsPool", 10);
+    track_static_alloc_internal(&g_XModelPool, sizeof(g_XModelPool), "g_XModelPool", 10);
+    track_static_alloc_internal(&g_MaterialPool, sizeof(g_MaterialPool), "g_MaterialPool", 10);
+    track_static_alloc_internal(&g_MaterialTechniqueSetPool, sizeof(g_MaterialTechniqueSetPool), "g_MaterialTechniqueSetPool", 10);
+    track_static_alloc_internal(&g_GfxImagePool, sizeof(g_GfxImagePool), "g_GfxImagePool", 10);
+    track_static_alloc_internal(&g_SoundPool, sizeof(g_SoundPool), "g_SoundPool", 10);
+    track_static_alloc_internal(&g_SndCurvePool, sizeof(g_SndCurvePool), "g_SndCurvePool", 10);
+    track_static_alloc_internal(&g_LoadedSoundPool, sizeof(g_LoadedSoundPool), "g_LoadedSoundPool", 10);
+    track_static_alloc_internal(&g_MapEntsPool, sizeof(g_MapEntsPool), "g_MapEntsPool", 10);
+    track_static_alloc_internal(&g_GfxLightDefPool, sizeof(g_GfxLightDefPool), "g_GfxLightDefPool", 10);
+    track_static_alloc_internal(&g_FontPool, sizeof(g_FontPool), "g_FontPool", 10);
+    track_static_alloc_internal(&g_MenuListPool, sizeof(g_MenuListPool), "g_MenuListPool", 10);
+    track_static_alloc_internal(&g_MenuPool, sizeof(g_MenuPool), "g_MenuPool", 10);
+    track_static_alloc_internal(&g_LocalizeEntryPool, sizeof(g_LocalizeEntryPool), "g_LocalizeEntryPool", 10);
+    track_static_alloc_internal(&g_WeaponDefPool, sizeof(g_WeaponDefPool), "g_WeaponDefPool", 10);
+    track_static_alloc_internal(&g_FxEffectDefPool, sizeof(g_FxEffectDefPool), "g_FxEffectDefPool", 10);
+    track_static_alloc_internal(&g_FxImpactTablePool, sizeof(g_FxImpactTablePool), "g_FxImpactTablePool", 10);
+    track_static_alloc_internal(&g_RawFilePool, sizeof(g_RawFilePool), "g_RawFilePool", 10);
+    track_static_alloc_internal(&g_StringTablePool, sizeof(g_StringTablePool), "g_StringTablePool", 10);
+    track_static_alloc_internal(g_assetEntryPool, sizeof(g_assetEntryPool), "g_assetEntryPool", 10);
+    track_static_alloc_internal(g_fileBuf, sizeof(g_fileBuf), "g_fileBuf", 10);
 }
 
 void __cdecl DB_GetIndexBufferAndBase(uint8_t zoneHandle, void *indices, void **ib, int32_t *baseIndex)
@@ -2226,6 +2276,64 @@ void __cdecl DB_SyncXAssets()
 }
 
 cmd_function_s DB_LoadZone_f_VAR;
+cmd_function_s DB_AssetPoolInfo_f_VAR;
+
+// Counting callback for DB_AssetPoolInfo_f.
+static void __cdecl DB_CountXAsset(XAssetHeader header, void *inData)
+{
+    ++*(uint32_t *)inData;
+}
+
+// "assetpoolinfo" -- where every asset ceiling actually stands right now.
+// Three separate limits can end a map load and the error names only one of
+// them, so print all three: the per type pool, the shared asset entry pool
+// behind "increase XASSET_ENTRY_POOL_SIZE", and the zone memory behind
+// "Need %i more bytes of ram for alloc to succeed".
+void __cdecl DB_AssetPoolInfo_f()
+{
+    uint32_t totalUsed = 0;
+    uint32_t totalBytes = 0;
+
+    Com_Printf(0, "%-22s %6s %6s %5s %9s\n", "asset type", "used", "limit", "pct", "bytes");
+    Com_Printf(0, "---------------------- ------ ------ ----- ---------\n");
+
+    for (XAssetType type = (XAssetType)0; type < ASSET_TYPE_COUNT; ++type)
+    {
+        const int32_t limit = g_poolSize[type];
+
+        // Singletons and the types this build never pools carry no free list.
+        if (limit <= 1 || !DB_XAssetPool[type] || !DB_InitPoolHeaderHandler[type])
+            continue;
+
+        uint32_t used = 0;
+        DB_EnumXAssets(type, DB_CountXAsset, &used, 1);
+
+        const uint32_t bytes = (uint32_t)limit * DB_GetXAssetTypeSize(type);
+
+        totalUsed += used;
+        totalBytes += bytes;
+
+        Com_Printf(0, "%-22s %6u %6i %4u%% %9u\n",
+            g_assetNames[type], used, limit, (used * 100) / (uint32_t)limit, bytes);
+    }
+
+    uint32_t entriesFree = 0;
+    for (const XAssetEntryPoolEntry *entry = g_freeAssetEntryHead; entry; entry = entry->next)
+        ++entriesFree;
+
+    const uint32_t entryTotal = (uint32_t)ARRAY_COUNT(g_assetEntryPool);
+
+    Com_Printf(0, "---------------------- ------ ------ ----- ---------\n");
+    Com_Printf(0, "%-22s %6u %6u %4u%% %9u\n", "(pooled assets)", totalUsed, entryTotal,
+        (totalUsed * 100) / entryTotal, totalBytes);
+    Com_Printf(0, "%-22s %6u %6u %4u%% %9u\n", "asset entries",
+        entryTotal - entriesFree, entryTotal,
+        ((entryTotal - entriesFree) * 100) / entryTotal, (uint32_t)sizeof(g_assetEntryPool));
+
+    Com_Printf(0, "\nzone memory (MB):\n");
+    PMem_DumpMemStats();
+}
+
 void __cdecl DB_LoadXAssets(XZoneInfo *zoneInfo, uint32_t zoneCount, int32_t sync)
 {
     uint32_t j; // [esp+4h] [ebp-14h]
@@ -2243,6 +2351,7 @@ void __cdecl DB_LoadXAssets(XZoneInfo *zoneInfo, uint32_t zoneCount, int32_t syn
         g_zoneInited = 1;
         DB_Init();
         Cmd_AddCommandInternal("loadzone", DB_LoadZone_f, &DB_LoadZone_f_VAR);
+        Cmd_AddCommandInternal("assetpoolinfo", DB_AssetPoolInfo_f, &DB_AssetPoolInfo_f_VAR);
     }
 
     unloadedZone = 0;
@@ -2302,12 +2411,19 @@ void DB_Init()
     for (XAssetType type = (XAssetType)0; type < ASSET_TYPE_COUNT; ++type)
         DB_InitPoolHeader(type);
 
-    g_freeAssetEntryHead = g_assetEntryPool + 16;
+    // Entry 0 is reserved: an index of 0 means "end of chain" everywhere else in
+    // this file, so the free list starts at 1 and runs to the last entry.
+    //
+    // This used to read "g_assetEntryPool + 16", which skipped fifteen entries
+    // the loop below had already linked and nothing could ever reach. 16 is the
+    // size of one XAssetEntry: the original was byte arithmetic for &pool[1],
+    // and it came across as an element index.
+    g_freeAssetEntryHead = &g_assetEntryPool[1];
 
-    for (int32_t i = 1; i < 0x7FFF; ++i)
+    for (int32_t i = 1; i < XASSET_ENTRY_POOL_SIZE - 1; ++i)
         g_assetEntryPool[i].next = &g_assetEntryPool[i + 1];
 
-    g_assetEntryPool[0x7FFF].next = NULL;
+    g_assetEntryPool[XASSET_ENTRY_POOL_SIZE - 1].next = NULL;
 }
 
 void __cdecl DB_InitPoolHeader(XAssetType type)
