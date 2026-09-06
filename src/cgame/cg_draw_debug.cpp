@@ -97,6 +97,38 @@ void __cdecl CG_CalculateFPS()
     ++fps_index;
 }
 
+// Horizontal speed readout, in the same units the movement dvars use.
+//
+// Stock CoD4 has no way to see your own speed, which makes any speed exploit
+// impossible to test: you cannot tell whether strafe jumping still gains you
+// anything by feel. Peak is the useful number -- a strafe jump spikes and then
+// bleeds off -- so it is held until you are back on the ground and moving slowly,
+// which is the point a new attempt starts from.
+double __cdecl CG_DrawSpeed(const ScreenPlacement *scrPlace, float y, int32_t localClientNum)
+{
+    static float peakSpeed;
+
+    const playerState_s *ps = CG_GetPredictedPlayerState(localClientNum);
+    const float speed = Vec2Length(ps->velocity);
+
+    const bool onGround = ps->groundEntityNum != ENTITYNUM_NONE;
+
+    if (speed > peakSpeed)
+        peakSpeed = speed;
+    else if (onGround && speed < 40.0f)
+        peakSpeed = speed;
+
+    const float farRight = cg_debugInfoCornerOffset->current.value
+        + scrPlace->virtualViewableMax[0] - scrPlace->virtualViewableMin[0];
+    const float labelWidth = R_TextWidth(" cg ms/frame", 0, cgMedia.smallDevFont) * 0.75f;
+
+    char *s = va("%.0f", speed);
+    const float y1 = CG_CornerDebugPrint(scrPlace, farRight, y, labelWidth, s, (char *)" speed", colorWhite) + y;
+
+    s = va("%.0f", peakSpeed);
+    return CG_CornerDebugPrint(scrPlace, farRight, y1, labelWidth, s, (char *)" peak", colorWhite) + y1;
+}
+
 double __cdecl CG_DrawFPS(const ScreenPlacement *scrPlace, float y, meminfo_t *meminfo)
 {
     float frac; // [esp+20h] [ebp-B8h]
@@ -342,6 +374,9 @@ void __cdecl CG_DrawUpperRightDebugInfo(int32_t localClientNum)
 
     if (cg_drawFPS->current.integer)
         y = CG_DrawFPS(&scrPlaceFull, y, &meminfo);
+
+    if (cg_drawSpeed->current.enabled)
+        y = CG_DrawSpeed(&scrPlaceFull, y, localClientNum);
 
     if (com_statmon->current.enabled)
         y = CG_DrawStatmon(&scrPlaceFull, y, &meminfo);

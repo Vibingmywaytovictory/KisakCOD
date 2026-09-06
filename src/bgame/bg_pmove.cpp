@@ -258,11 +258,6 @@ void __cdecl PM_ProjectVelocity(const float *velIn, const float *normal, float *
         adjustedLengthSq = newZ * newZ + lengthSq2D;
         lengthScale = sqrt(originalLengthSq / adjustedLengthSq);
 
-        // lengthScale > 1 means the redirected vector is shorter than what came in,
-        // so scaling it back up to the original magnitude hands the player speed
-        // they did not have along the surface. That is the bounce.
-        if (bg_bounces && !bg_bounces->current.enabled && lengthScale > 1.0f)
-            lengthScale = 1.0f;
 
         if (lengthScale < 1.0 || newZ < 0.0 || velIn[2] > 0.0)
         {
@@ -3369,20 +3364,35 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
     // candidate with a small jitter; testing the current position is the same idea
     // with one fewer trace and no tuning constant to pick. The ground trace is
     // still refreshed so the caller sees where the floor is.
-    if (bg_elevators && !bg_elevators->current.enabled)
-    {
-        PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask);
+    // Elevator glitch. PM_GroundTrace decides you are stuck from a SWEPT trace,
+    // whose collision epsilon fires when you are exactly flush against a wall
+    // rather than inside it, so we get called when nothing is actually wrong. The
+    // first delta below is straight up and a POINT trace there passes, so you rise
+    // a unit; repeat every frame and you ride the wall out of the map.
+    //
+    // The lift itself cannot simply be refused. It is what makes the ground trace
+    // at the end of this function start from a clear position -- a trace beginning
+    // at the origin is startsolid whenever you are stood on something, which sends
+    // the caller down its startsolid path and drops you to airborne for a frame.
+    // Doing that on stairs alternates grounded and airborne every frame and the
+    // view jitters, which is exactly what an earlier attempt at this fix did.
+    //
+    // So keep the correction and reject only the runaway: a lift is allowed to
+    // land you on something, but not to leave you hanging. On stairs the trace
+    // after the lift finds the step and the move commits, identical to stock. On a
+    // wall face there is nothing to find, so the move is undone and you stay put.
+    const bool blockElevator = (bg_elevators && !bg_elevators->current.enabled);
+    bool reallyStuck = true;
 
-        if (!trace->startsolid)
-        {
-            point[0] = ps->origin[0];
-            point[1] = ps->origin[1];
-            point[2] = ps->origin[2] - 1.0f - 0.25f;
-            PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
-            memcpy(&pml->groundTrace, trace, sizeof(pml->groundTrace));
-            return 1;
-        }
+    if (blockElevator)
+    {
+        trace_t pointTrace;
+        PM_playerTrace(pm, &pointTrace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask);
+        reallyStuck = pointTrace.startsolid;
     }
+
+    float originBefore[3];
+    Vec3Copy(ps->origin, originBefore);
 
     for (uint32_t i = 0; i < 0x1A; ++i) // [esp+14h] [ebp-14h]
     {
@@ -3395,6 +3405,15 @@ int32_t __cdecl PM_CorrectAllSolid(pmove_t *pm, pml_t *pml, trace_t *trace)
             ps->origin[2] = point[2];
             point[2] = ps->origin[2] - 1.0 - 0.25;
             PM_playerTrace(pm, trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
+
+            // Nothing under us after an upward correction we did not need: this is
+            // the elevator, so put the origin back and keep looking.
+            if (blockElevator && !reallyStuck && CorrectSolidDeltas[i][2] > 0.0f && trace->fraction == 1.0f)
+            {
+                Vec3Copy(originBefore, ps->origin);
+                continue;
+            }
+
             memcpy(&pml->groundTrace, trace, sizeof(pml->groundTrace));
             Vec3Lerp(ps->origin, point, trace->fraction, ps->origin);
             return 1;

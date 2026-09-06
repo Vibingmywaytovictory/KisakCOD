@@ -381,6 +381,7 @@ extern const dvar_t *cg_drawFriendlyFireCrosshair;
 extern const dvar_t *cg_bloodLimitMsec;
 extern const dvar_t *cg_hudGrenadeIconMaxRangeFrag;
 extern const dvar_t *cg_drawFPS;
+extern const dvar_t *cg_drawSpeed;
 extern const dvar_t *cg_drawVersionX;
 extern const dvar_t *vehHelicopterHeadSwayOnRollHorz;
 extern const dvar_t *cg_drawHealth;

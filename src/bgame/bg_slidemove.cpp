@@ -146,7 +146,21 @@ void __cdecl PM_StepSlideMove(pmove_t *pm, pml_t *pml, int32_t gravity)
                     return;
                 }
                 Vec3Lerp(ps->origin, down, trace.fraction, ps->origin);
-                PM_ProjectVelocity(ps->velocity, trace.normal, ps->velocity);
+
+                // This is the bounce. PM_ProjectVelocity redirects velocity to run
+                // along the surface and then rescales it to the magnitude it came
+                // in with, so arriving fast and horizontally onto a slope turns
+                // that horizontal speed into upward speed -- energy the player
+                // never had vertically. PM_ClipVelocity does the same redirect by
+                // removing the component into the surface, which cannot add any.
+                //
+                // The two agree on flat ground (normal 0,0,1 leaves a horizontal
+                // velocity untouched either way); they only differ on the slopes
+                // and ledges bounces are performed on.
+                if (bg_bounces && !bg_bounces->current.enabled)
+                    PM_ClipVelocity(ps->velocity, trace.normal, ps->velocity);
+                else
+                    PM_ProjectVelocity(ps->velocity, trace.normal, ps->velocity);
             }
         }
         stepDelta = ps->origin[0] - start_o[0];

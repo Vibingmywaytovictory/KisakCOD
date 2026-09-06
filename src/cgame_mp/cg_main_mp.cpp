@@ -52,6 +52,7 @@ const dvar_t *cg_drawBreathHint;
 const dvar_t *cg_enemyNameFadeIn;
 const dvar_t *cg_hudGrenadeIconMaxRangeFrag;
 const dvar_t *cg_drawFPS;
+const dvar_t *cg_drawSpeed;
 const dvar_t *cg_drawVersionX;
 const dvar_t *cg_thirdPerson;
 const dvar_t *cg_overheadNamesNearDist;
@@ -375,6 +376,11 @@ void __cdecl CG_RegisterDvars()
     cg_drawBreathHint = Dvar_RegisterBool("cg_drawBreathHint", 1, DVAR_ARCHIVE, "Draw a 'hold breath to steady' hint");
     cg_drawMantleHint = Dvar_RegisterBool("cg_drawMantleHint", 1, DVAR_ARCHIVE, "Draw a 'press key to mantle' hint");
     cg_drawFPS = Dvar_RegisterEnum("cg_drawFPS", cg_drawFpsNames, 1, DVAR_ARCHIVE, "Draw frames per second");
+    cg_drawSpeed = Dvar_RegisterBool(
+        "cg_drawSpeed",
+        false,
+        DVAR_ARCHIVE,
+        "Draw horizontal speed and the peak since last standing still");
     cg_drawFPSLabels = Dvar_RegisterBool("cg_drawFPSLabels", 1, DVAR_ARCHIVE, "Draw FPS Info Labels");
     minc.value.max = 640.0f;
     minc.value.min = -200.0f;

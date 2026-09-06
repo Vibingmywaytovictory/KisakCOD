@@ -1234,6 +1234,7 @@ extern const dvar_t *cg_drawBreathHint;
 extern const dvar_t *cg_enemyNameFadeIn;
 extern const dvar_t *cg_hudGrenadeIconMaxRangeFrag;
 extern const dvar_t *cg_drawFPS;
+extern const dvar_t *cg_drawSpeed;
 extern const dvar_t *cg_drawVersionX;
 extern const dvar_t *cg_thirdPerson;
 extern const dvar_t *cg_overheadNamesNearDist;
