@@ -653,9 +653,9 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
                 ++edit->cursor;
             if (isCtrlDown)
             {
-                while (edit->cursor < len && isalnum(edit->buffer[edit->cursor]))
+                while (edit->cursor < len && isalnum((unsigned char)edit->buffer[edit->cursor]))
                     ++edit->cursor;
-                while (edit->cursor < len && !isalnum(edit->buffer[edit->cursor]))
+                while (edit->cursor < len && !isalnum((unsigned char)edit->buffer[edit->cursor]))
                     ++edit->cursor;
             }
             break;
@@ -664,7 +664,7 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
                 --edit->cursor;
             if (isCtrlDown)
             {
-                while (edit->cursor > 0 && isalnum(*((char *)&edit->fixedSize + edit->cursor + 3)))
+                while (edit->cursor > 0 && isalnum((unsigned char)*((char *)&edit->fixedSize + edit->cursor + 3)))
                     --edit->cursor;
             }
             if (edit->cursor < edit->scroll)
@@ -973,7 +973,7 @@ void __cdecl ReplaceConsoleInputArgument(int32_t replaceCount, char *replacement
     if (*replacement)
     {
         //for (cmdLineLen = strlen(g_consoleField.buffer); cmdLineLen && isspace(*(char *)(cmdLineLen + 11748111)); --cmdLineLen);
-        for (cmdLineLen = strlen(g_consoleField.buffer); cmdLineLen && isspace(g_consoleField.buffer[cmdLineLen]); --cmdLineLen);
+        for (cmdLineLen = strlen(g_consoleField.buffer); cmdLineLen && isspace((unsigned char)g_consoleField.buffer[cmdLineLen]); --cmdLineLen);
 
         if (replaceCount >= cmdLineLen)
         {
@@ -1059,8 +1059,8 @@ void __cdecl FindMatches(char *s)
             {
                 for (i = 0; s[i]; ++i)
                 {
-                    v1 = tolower(s_shortestMatch[i]);
-                    if (v1 != tolower(s[i]))
+                    v1 = tolower((unsigned char)s_shortestMatch[i]);
+                    if (v1 != tolower((unsigned char)s[i]))
                         break;
                 }
                 v2 = !s[i] || s_hasExactMatch && !s_shortestMatch[i];
@@ -1457,8 +1457,19 @@ cmd_function_s Key_Bind_f_VAR;
 cmd_function_s Key_Unbind_f_VAR;
 cmd_function_s Key_Unbindall_f_VAR;
 cmd_function_s Key_Bindlist_f_VAR;
+cmd_function_s CL_ToggleConsole_f_VAR;
+
+// "toggleconsole". The stock config binds the console key to this and nothing
+// ever registered it, so that bind silently did nothing -- which left no way to
+// open the console on a keyboard where the built-in key check also failed.
+void __cdecl CL_ToggleConsole_f()
+{
+    Con_ToggleConsole();
+}
+
 void __cdecl CL_InitKeyCommands()
 {
+    Cmd_AddCommandInternal("toggleconsole", CL_ToggleConsole_f, &CL_ToggleConsole_f_VAR);
     Cmd_AddCommandInternal("bind", Key_Bind_f, &Key_Bind_f_VAR);
     Cmd_AddCommandInternal("unbind", Key_Unbind_f, &Key_Unbind_f_VAR);
     Cmd_AddCommandInternal("unbindall", Key_Unbindall_f, &Key_Unbindall_f_VAR);
@@ -1533,7 +1544,17 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
     if (!down || keys[key].repeats <= 1)
     {
     LABEL_38:
-        if ((clientUIActives[0].keyCatchers & 2) == 0 || (clientUIActives[0].keyCatchers & 1) != 0)
+        // The console key is let through even while the UI has the keyboard.
+        // Quake makes this key hardcoded precisely so it can never be captured
+        // or unbound, and the recovered condition here dropped that: with
+        // KEYCATCH_UI set and the console closed, the whole block below was
+        // skipped, so the console could be opened in game but NOT from the main
+        // menu -- which is also where you would want it to type connect.
+        //
+        // The inner branches are unchanged, so con_restricted still governs what
+        // actually happens once the key is recognised.
+        if ((clientUIActives[0].keyCatchers & 2) == 0 || (clientUIActives[0].keyCatchers & 1) != 0
+            || CL_IsConsoleKey(key))
         {
             if (!con_restricted->current.enabled || (clientUIActives[0].keyCatchers & 1) != 0)
             {
@@ -1819,7 +1840,17 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
     if (!down || keys[key].repeats <= 1)
     {
     LABEL_38:
-        if ((clientUIActives[0].keyCatchers & 2) == 0 || (clientUIActives[0].keyCatchers & 1) != 0)
+        // The console key is let through even while the UI has the keyboard.
+        // Quake makes this key hardcoded precisely so it can never be captured
+        // or unbound, and the recovered condition here dropped that: with
+        // KEYCATCH_UI set and the console closed, the whole block below was
+        // skipped, so the console could be opened in game but NOT from the main
+        // menu -- which is also where you would want it to type connect.
+        //
+        // The inner branches are unchanged, so con_restricted still governs what
+        // actually happens once the key is recognised.
+        if ((clientUIActives[0].keyCatchers & 2) == 0 || (clientUIActives[0].keyCatchers & 1) != 0
+            || CL_IsConsoleKey(key))
         {
             if (!con_restricted->current.enabled || (clientUIActives[0].keyCatchers & 1) != 0)
             {
