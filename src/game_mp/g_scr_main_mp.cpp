@@ -618,7 +618,7 @@ void __cdecl Scr_ConstructMessageString(
                         else
                         {
                             Com_PrintWarning(
-                                17,
+                                CON_CHANNEL_PLAYERWEAP,
                                 "WARNING: Non-localized %s string is not allowed to have letters in it. Must be changed over to a localiz"
                                 "ed string: \"%s\"\n",
                                 errorContext,
@@ -1020,7 +1020,7 @@ void Scr_GetWeaponModel()
         {
             if (I_stricmp(pszWeaponName, "none"))
             {
-                Com_Printf(17, va("unknown weapon '%s' in getWeaponModel\n", pszWeaponName));
+                Com_Printf(CON_CHANNEL_PLAYERWEAP, va("unknown weapon '%s' in getWeaponModel\n", pszWeaponName));
             }
         }
         Scr_AddString((char *)"");
@@ -1180,14 +1180,14 @@ void GScr_SpawnPlane()
     currentOrigin[2] = origin[2];
     ent->spawnflags = iSpawnFlags;
     team = owner->client->sess.cs.team;
-    if ((uint32_t )team >= 4)
+    if ((uint32_t )team >= TEAM_NUM_TEAMS)
         MyAssertHandler(
             ".\\game_mp\\g_scr_main_mp.cpp",
             964,
             0,
             "team doesn't index (1 << 2)\n\t%i not in [0, %i)",
             team,
-            4);
+            TEAM_NUM_TEAMS);
     ownerIndex = owner->client - level.clients;
     if (G_CallSpawnEntity(ent))
     {
@@ -1324,14 +1324,14 @@ void __cdecl ScrCmd_detach(scr_entref_t entref)
         v6 = Scr_GetConstLowercaseString(1);
     if (!G_EntDetach(ent, modelName, v6))
     {
-        Com_Printf(23, "Current attachments:\n");
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Current attachments:\n");
         for (i = 0; i < 19; ++i)
         {
             if (ent->attachModelNames[i])
             {
                 if (ent->attachTagNames[i])
                 {
-                    Com_Printf(23, "model: '%s', tag: '%s'\n", SL_ConvertToString(G_ModelName(ent->attachModelNames[i])), SL_ConvertToString(ent->attachTagNames[i]));
+                    Com_Printf(CON_CHANNEL_PARSERSCRIPT, "model: '%s', tag: '%s'\n", SL_ConvertToString(G_ModelName(ent->attachModelNames[i])), SL_ConvertToString(ent->attachTagNames[i]));
                 }
             }
         }
@@ -1715,9 +1715,9 @@ void __cdecl ScrCmd_PlaySoundToTeam(scr_entref_t entref)
         Scr_Error(va("Illegal team string '%s'. Must be allies, or axis.", SL_ConvertToString(team)));
     }
     if (team == scr_const.allies)
-        teamNum = 2;
+        teamNum = TEAM_ALLIES;
     else
-        teamNum = 1;
+        teamNum = TEAM_AXIS;
     if (Scr_GetNumParam() >= 3)
     {
         ignoreClientEnt = Scr_GetEntity(2);
@@ -1878,7 +1878,7 @@ void __cdecl ScrCmd_SetNormalHealth(scr_entref_t entref)
     if (newHealth > 0)
         ent->health = newHealth;
     else
-        Com_PrintError(23, "ERROR: Cannot setnormalhealth to 0 or below.\n");
+        Com_PrintError(CON_CHANNEL_PARSERSCRIPT, "ERROR: Cannot setnormalhealth to 0 or below.\n");
 }
 
 void __cdecl ScrCmd_Show(scr_entref_t entref)
@@ -2017,11 +2017,11 @@ void __cdecl GScr_SetCursorHint(scr_entref_t entref)
                 return;
             }
         }
-        Com_Printf(23, "List of valid hint type strings\n");
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "List of valid hint type strings\n");
         if (pEnt->classname == scr_const.trigger_use || pEnt->classname == scr_const.trigger_use_touch)
-            Com_Printf(23, "HINT_INHERIT (for trigger_use or trigger_use_touch entities only)\n");
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "HINT_INHERIT (for trigger_use or trigger_use_touch entities only)\n");
         for (ia = 1; ia < 5; ++ia)
-            Com_Printf(23, "%s\n", hintStrings[ia]);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "%s\n", hintStrings[ia]);
         Scr_Error(va("%s is not a valid hint type. See above for list of valid hint types\n", pszHint));
     }
 }
@@ -2209,7 +2209,7 @@ void __cdecl ClearObjective(objective_t *obj)
     obj->origin[1] = 0.0;
     obj->origin[2] = 0.0;
     obj->entNum = ENTITYNUM_NONE;
-    obj->teamNum = 0;
+    obj->teamNum = TEAM_FREE;
     obj->icon = 0;
 }
 
@@ -2251,7 +2251,7 @@ void Scr_Objective_Add()
         if (numParam >= 4)
             SetObjectiveIcon(obj, 3u);
     }
-    obj->teamNum = 0;
+    obj->teamNum = TEAM_FREE;
 }
 
 void __cdecl ClearObjective_OnEntity(objective_t *obj)
@@ -2427,15 +2427,15 @@ void GScr_Objective_Team()
     team = Scr_GetConstString(1);
     if (team == scr_const.allies)
     {
-        obj->teamNum = 2;
+        obj->teamNum = TEAM_ALLIES;
     }
     else if (team == scr_const.axis)
     {
-        obj->teamNum = 1;
+        obj->teamNum = TEAM_AXIS;
     }
     else if (team == scr_const.none)
     {
-        obj->teamNum = 0;
+        obj->teamNum = TEAM_FREE;
     }
     else
     {
@@ -2549,7 +2549,7 @@ void GScr_PrecacheMenu()
         SV_GetConfigstring(iConfigNum + 1970, szConfigString, 1024);
         if (!I_stricmp(szConfigString, pszNewMenu))
         {
-            Com_DPrintf(23, "Script tried to precache the menu '%s' more than once\n", pszNewMenu);
+            Com_DPrintf(CON_CHANNEL_PARSERSCRIPT, "Script tried to precache the menu '%s' more than once\n", pszNewMenu);
             return;
         }
     }
@@ -2596,7 +2596,7 @@ void GScr_PrecacheStatusIcon()
         SV_GetConfigstring(iConfigNum + 2259, szConfigString, 1024);
         if (!I_stricmp(szConfigString, pszNewIcon))
         {
-            Com_DPrintf(23, "Script tried to precache the player status icon '%s' more than once\n", pszNewIcon);
+            Com_DPrintf(CON_CHANNEL_PARSERSCRIPT, "Script tried to precache the player status icon '%s' more than once\n", pszNewIcon);
             return;
         }
     }
@@ -2645,7 +2645,7 @@ void GScr_PrecacheHeadIcon()
         SV_GetConfigstring(iConfigNum + 2267, szConfigString, 1024);
         if (!I_stricmp(szConfigString, pszNewIcon))
         {
-            Com_DPrintf(23, "Script tried to precache the player head icon '%s' more than once\n", pszNewIcon);
+            Com_DPrintf(CON_CHANNEL_PARSERSCRIPT, "Script tried to precache the player head icon '%s' more than once\n", pszNewIcon);
             return;
         }
     }
@@ -2892,7 +2892,7 @@ void GScr_PrecacheLocationSelector()
         SV_GetConfigstring(iConfigNum + 827, szConfigString, 1024);
         if (!I_stricmp(szConfigString, pszNewMtl))
         {
-            Com_DPrintf(23, "Script tried to precache the location selector '%s' more than once\n", pszNewMtl);
+            Com_DPrintf(CON_CHANNEL_PARSERSCRIPT, "Script tried to precache the location selector '%s' more than once\n", pszNewMtl);
             return;
         }
     }
@@ -3081,7 +3081,7 @@ void Scr_RandomInt()
     }
     else
     {
-        Com_Printf(23, "RandomInt parm: %d  ", iMax);
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "RandomInt parm: %d  ", iMax);
         Scr_Error("RandomInt parm must be positive integer.\n");
     }
 }
@@ -3104,7 +3104,7 @@ void Scr_RandomIntRange()
     iMax = Scr_GetInt(1);
     if (iMax <= iMin)
     {
-        Com_Printf(23, "RandomIntRange parms: %d %d ", iMin, iMax);
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "RandomIntRange parms: %d %d ", iMin, iMax);
         Scr_Error("RandomIntRange range must be positive integer.\n");
     }
     v0 = irand(iMin, iMax);
@@ -3121,7 +3121,7 @@ void Scr_RandomFloatRange()
     if (fMin >= (double)fMax)
     {
         Com_Printf(
-            23,
+            CON_CHANNEL_PARSERSCRIPT,
             "Scr_RandomFloatRange parms: %d %d ",
             fMin, fMax
             //(uint32_t )COERCE_UNSIGNED_INT64(fMin),
@@ -3809,7 +3809,7 @@ int32_t Scr_PrecacheShader()
     return G_MaterialIndex(shaderName);
 }
 
-char *Scr_PrecacheString()
+void Scr_PrecacheString()
 {
     const char *result; // eax
 
@@ -3817,8 +3817,9 @@ char *Scr_PrecacheString()
         Scr_Error("precacheString must be called before any wait statements in the gametype or level script\n");
     result = Scr_GetIString(0);
     if (*result)
-        return (char *)G_LocalizedStringIndex((char*)result);
-    return (char*)result;
+    {
+        G_LocalizedStringIndex((char *)result);
+    }
 }
 
 void Scr_AmbientPlay()
@@ -4612,7 +4613,7 @@ void Scr_TableLookup()
     }
     else
     {
-        Com_Printf(16, "You cannot do table lookups without fastfiles.\n");
+        Com_Printf(CON_CHANNEL_SYSTEM, "You cannot do table lookups without fastfiles.\n");
         Scr_AddString((char *)"");
     }
 }
@@ -4644,7 +4645,7 @@ void Scr_TableLookupIString()
     }
     else
     {
-        Com_Printf(16, "You cannot do table lookups without fastfiles.\n");
+        Com_Printf(CON_CHANNEL_SYSTEM, "You cannot do table lookups without fastfiles.\n");
         Scr_AddIString((char *)"");
     }
 }
@@ -4755,9 +4756,9 @@ void GScr_GetTeamScore()
         Scr_Error(va("Illegal team string '%s'. Must be allies, or axis.", SL_ConvertToString(team)));
     }
     if (team == scr_const.allies)
-        Scr_AddInt(level.teamScores[2]);
+        Scr_AddInt(level.teamScores[TEAM_ALLIES]);
     else
-        Scr_AddInt(level.teamScores[1]);
+        Scr_AddInt(level.teamScores[TEAM_AXIS]);
 }
 
 void GScr_SetTeamScore()
@@ -4774,12 +4775,12 @@ void GScr_SetTeamScore()
     teamScore = Scr_GetInt(1);
     if (team == scr_const.allies)
     {
-        level.teamScores[2] = teamScore;
+        level.teamScores[TEAM_ALLIES] = teamScore;
         v2 = va("%c %i", 72, teamScore);
     }
     else
     {
-        level.teamScores[1] = teamScore;
+        level.teamScores[TEAM_AXIS] = teamScore;
         v2 = va("%c %i", 71, teamScore);
     }
     SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, v2);
@@ -4847,9 +4848,9 @@ void GScr_GetTeamPlayersAlive()
         Scr_Error(va("Illegal team string '%s'. Must be allies, or axis.", SL_ConvertToString(team)));
     }
     if (team == scr_const.allies)
-        iTeamNum = 2;
+        iTeamNum = TEAM_ALLIES;
     else
-        iTeamNum = 1;
+        iTeamNum = TEAM_AXIS;
     iLivePlayers = 0;
     for (i = 0; i < g_maxclients->current.integer; ++i)
     {
@@ -5247,7 +5248,7 @@ void __cdecl GScr_PlaceSpawnPoint(scr_entref_t entref)
         MASK_PLAYERSOLID);
     if (trace.allsolid)
         Com_PrintWarning(
-            23,
+            CON_CHANNEL_PARSERSCRIPT,
             "WARNING: Spawn point entity %i is in solid at (%i, %i, %i)\n",
             pEnt->s.number,
             (int)pEnt->r.currentOrigin[0],
@@ -5515,7 +5516,7 @@ void GScr_OpenFile()
         }
         if (!f)
         {
-            Com_Printf(23, "OpenFile failed.  %i files already open\n", 1);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "OpenFile failed.  %i files already open\n", 1);
             Scr_AddInt(-1);
             return;
         }
@@ -5550,7 +5551,7 @@ void GScr_OpenFile()
         {
             if (strcmp(mode, "append"))
             {
-                Com_Printf(23, "Valid openfile modes are 'write', 'read', and 'append'\n");
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Valid openfile modes are 'write', 'read', and 'append'\n");
                 Scr_AddInt(-1);
                 return;
             }
@@ -5574,7 +5575,7 @@ void GScr_CloseFile()
         filenum = Scr_GetInt(0);
         if ((uint32_t )filenum >= 2)
         {
-            Com_Printf(23, "CloseFile failed, invalid file number %i\n", filenum);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "CloseFile failed, invalid file number %i\n", filenum);
             Scr_AddInt(-1);
             return;
         }
@@ -5597,7 +5598,7 @@ void GScr_CloseFile()
         {
             if (!level.openScriptIOFileBuffers[filenum])
             {
-                Com_Printf(23, "CloseFile failed, file number %i was not open\n", filenum);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "CloseFile failed, file number %i was not open\n", filenum);
                 Scr_AddInt(-1);
                 return;
             }
@@ -5641,19 +5642,19 @@ void __cdecl Scr_FPrint_internal(bool commaBetweenFields)
             }
             else
             {
-                Com_Printf(23, "FPrintln failed, file number %i was not open for writing\n", filenum);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "FPrintln failed, file number %i was not open for writing\n", filenum);
                 Scr_AddInt(-1);
             }
         }
         else
         {
-            Com_Printf(23, "FPrintln failed, invalid file number %i\n", filenum);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "FPrintln failed, invalid file number %i\n", filenum);
             Scr_AddInt(-1);
         }
     }
     else
     {
-        Com_Printf(23, "fprintln requires at least 2 parameters (file, output)\n");
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "fprintln requires at least 2 parameters (file, output)\n");
         Scr_AddInt(-1);
     }
 }
@@ -5707,19 +5708,19 @@ void GScr_FReadLn()
             }
             else
             {
-                Com_Printf(23, "freadln failed, file number %i was not open for reading\n", filenum);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadln failed, file number %i was not open for reading\n", filenum);
                 Scr_AddInt(-1);
             }
         }
         else
         {
-            Com_Printf(23, "freadln failed, invalid file number %i\n", filenum);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadln failed, invalid file number %i\n", filenum);
             Scr_AddInt(-1);
         }
     }
     else
     {
-        Com_Printf(23, "freadln requires a parameter - the file to read from\n");
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadln requires a parameter - the file to read from\n");
         Scr_AddInt(-1);
     }
 }
@@ -5751,7 +5752,7 @@ void GScr_FGetArg()
                         if (!*token)
                         {
                             Com_Printf(
-                                23,
+                                CON_CHANNEL_PARSERSCRIPT,
                                 "freadline failed, there aren't %i arguments on this line, there are only %i arguments\n",
                                 arg + 1,
                                 i);
@@ -5763,25 +5764,25 @@ void GScr_FGetArg()
                 }
                 else
                 {
-                    Com_Printf(23, "freadline failed, file number %i was not open for reading\n", filenum);
+                    Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadline failed, file number %i was not open for reading\n", filenum);
                     Scr_AddString((char *)"");
                 }
             }
             else
             {
-                Com_Printf(23, "freadline failed, invalid argument number %i\n", arg);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadline failed, invalid argument number %i\n", arg);
                 Scr_AddString((char *)"");
             }
         }
         else
         {
-            Com_Printf(23, "freadline failed, invalid file number %i\n", filenum);
+            Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadline failed, invalid file number %i\n", filenum);
             Scr_AddString((char *)"");
         }
     }
     else
     {
-        Com_Printf(23, "freadline requires at least 2 parameters (file, string)\n");
+        Com_Printf(CON_CHANNEL_PARSERSCRIPT, "freadline requires at least 2 parameters (file, string)\n");
         Scr_AddString((char *)"");
     }
 }
@@ -5860,15 +5861,15 @@ void __cdecl GScr_SetTeamForTrigger(scr_entref_t entref)
     team = Scr_GetConstString(0);
     if (team == scr_const.allies)
     {
-        ent->team = 2;
+        ent->team = TEAM_ALLIES;
     }
     else if (team == scr_const.axis)
     {
-        ent->team = 1;
+        ent->team = TEAM_AXIS;
     }
     else if (team == scr_const.none)
     {
-        ent->team = 0;
+        ent->team = TEAM_FREE;
     }
     else
     {
@@ -5994,18 +5995,18 @@ bool GScr_SetTeamRadar()
     if (team == scr_const.allies)
     {
         result = radarAvailable;
-        level.teamHasRadar[2] = radarAvailable;
+        level.teamHasRadar[TEAM_ALLIES] = radarAvailable;
     }
     else if (team == scr_const.axis)
     {
         result = radarAvailable;
-        level.teamHasRadar[1] = radarAvailable;
+        level.teamHasRadar[TEAM_AXIS] = radarAvailable;
     }
     else
     {
         iassert(team == scr_const.none);
         result = radarAvailable;
-        level.teamHasRadar[0] = radarAvailable;
+        level.teamHasRadar[TEAM_FREE] = radarAvailable;
     }
     return result;
 }
@@ -6018,11 +6019,11 @@ void GScr_GetTeamRadar()
     team = Scr_GetConstString(0);
     if (team == scr_const.allies)
     {
-        radarAvailable = level.teamHasRadar[2];
+        radarAvailable = level.teamHasRadar[TEAM_ALLIES];
     }
     else if (team == scr_const.axis)
     {
-        radarAvailable = level.teamHasRadar[1];
+        radarAvailable = level.teamHasRadar[TEAM_AXIS];
     }
     else
     {
@@ -6031,7 +6032,7 @@ void GScr_GetTeamRadar()
             Scr_ParamError(0, va("Illegal team string '%s'. Must be allies, axis, or none.", SL_ConvertToString(team)));
             return;
         }
-        radarAvailable = level.teamHasRadar[0];
+        radarAvailable = level.teamHasRadar[TEAM_FREE];
     }
     Scr_AddInt(radarAvailable);
 }
@@ -6262,7 +6263,7 @@ int32_t Scr_ParseGameTypeList_LoadObj()
                 src[v10 - 4] = 0;
             if (v11 == 32)
             {
-                Com_Printf(23, "Too many game type scripts found! Only loading the first %i\n", 31);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Too many game type scripts found! Only loading the first %i\n", 31);
                 break;
             }
             dest = g_scr_data.gametype.list[v11].pszScript;
@@ -6285,12 +6286,12 @@ int32_t Scr_ParseGameTypeList_LoadObj()
                 if (len > 0)
                 {
                     v1 = va("maps/mp/gametypes/%s.txt", src);
-                    Com_PrintWarning(23, "WARNING: GameType description file %s is too big to load.\n", v1);
+                    Com_PrintWarning(CON_CHANNEL_PARSERSCRIPT, "WARNING: GameType description file %s is too big to load.\n", v1);
                 }
                 else
                 {
                     v0 = va("maps/mp/gametypes/%s.txt", src);
-                    Com_PrintWarning(23, "WARNING: Could not load GameType description file %s for gametype %s\n", v0, src);
+                    Com_PrintWarning(CON_CHANNEL_PARSERSCRIPT, "WARNING: Could not load GameType description file %s for gametype %s\n", v0, src);
                 }
                 I_strncpyz(dest + 64, dest, 64);
                 *((_DWORD *)dest + 32) = 0;
@@ -6346,7 +6347,7 @@ XAssetHeader Scr_ParseGameTypeList_FastFile()
                 break;
             if (iNumGameTypes == 32)
             {
-                Com_Printf(23, "Too many game type scripts found! Only loading the first %i\n", 31);
+                Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Too many game type scripts found! Only loading the first %i\n", 31);
                 break;
             }
             pGameType = &g_scr_data.gametype.list[iNumGameTypes];
@@ -6374,13 +6375,13 @@ XAssetHeader Scr_ParseGameTypeList_FastFile()
                 if (iFileLength > 0)
                 {
                     v2 = va("maps/mp/gametypes/%s.txt", pszFileName);
-                    Com_PrintWarning(23, "WARNING: GameType description file %s is too big to load.\n", v2);
+                    Com_PrintWarning(CON_CHANNEL_PARSERSCRIPT, "WARNING: GameType description file %s is too big to load.\n", v2);
                 }
                 else
                 {
                     v1 = va("maps/mp/gametypes/%s.txt", pszFileName);
                     Com_PrintWarning(
-                        23,
+                        CON_CHANNEL_PARSERSCRIPT,
                         "WARNING: Could not load GameType description file %s for gametype %s\n",
                         v1,
                         pszFileName);

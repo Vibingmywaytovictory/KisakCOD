@@ -58,7 +58,7 @@ void __cdecl TRACK_snd()
 void __cdecl SND_DebugAliasPrint(bool condition, const snd_alias_t *alias, const char *msg)
 {
     if (condition && !I_stricmp(snd_debugAlias->current.string, alias->aliasName))
-        Com_DPrintf(9, "^5SND_DEBUG_ALIAS (%s): %s\n", alias->aliasName, msg);
+        Com_DPrintf(CON_CHANNEL_SOUND, "^5SND_DEBUG_ALIAS (%s): %s\n", alias->aliasName, msg);
 }
 
 int __cdecl SND_GetEntChannelCount()
@@ -163,17 +163,17 @@ int __cdecl SND_GetEntChannelFromName(const char *channelName)
 
 char __cdecl SND_ValidateEnvEffectsPriorityValue(const char *priorityName, int *priority)
 {
-    const char *priorityStrings[3]; // [esp+0h] [ebp-10h]
+    const char *priorityStrings[SND_ENVEFFECTPRIO_COUNT]; // [esp+0h] [ebp-10h]
     int stringIndex; // [esp+Ch] [ebp-4h]
 
-    priorityStrings[0] = "none";
-    priorityStrings[1] = "level";
-    priorityStrings[2] = "shellshock";
+    priorityStrings[SND_ENVEFFECTPRIO_NONE] = "none";
+    priorityStrings[SND_ENVEFFECTPRIO_LEVEL] = "level";
+    priorityStrings[SND_ENVEFFECTPRIO_SHELLSHOCK] = "shellshock";
 
     iassert(priorityName);
     iassert(priority);
 
-    for (stringIndex = 1; stringIndex < 3; ++stringIndex)
+    for (stringIndex = SND_ENVEFFECTPRIO_LEVEL; stringIndex < SND_ENVEFFECTPRIO_COUNT; ++stringIndex)
     {
         if (!I_stricmp(priorityName, priorityStrings[stringIndex]))
         {
@@ -182,9 +182,9 @@ char __cdecl SND_ValidateEnvEffectsPriorityValue(const char *priorityName, int *
         }
     }
 
-    Com_Printf(9, "invalid priority string '%s', it must be one of the following strings:\n", priorityName);
-    for (stringIndex = 1; stringIndex < 3; ++stringIndex)
-        Com_Printf(9, "  %s\n", priorityStrings[stringIndex]);
+    Com_Printf(CON_CHANNEL_SOUND, "invalid priority string '%s', it must be one of the following strings:\n", priorityName);
+    for (stringIndex = SND_ENVEFFECTPRIO_LEVEL; stringIndex < SND_ENVEFFECTPRIO_COUNT; ++stringIndex)
+        Com_Printf(CON_CHANNEL_SOUND, "  %s\n", priorityStrings[stringIndex]);
     return 0;
 }
 
@@ -213,16 +213,16 @@ void __cdecl SND_SetEnvironmentEffects_f()
                         if (fademsec >= 0)
                             SND_SetEnvironmentEffects(priority, roomstring, drylevel, wetlevel, fademsec);
                         else
-                            Com_Printf(9, "invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
+                            Com_Printf(CON_CHANNEL_SOUND, "invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
                     }
                     else
                     {
-                        Com_Printf(9, "invalid 'wetlevel' %g, must be in the range of 0.0-1.0\n", wetlevel);
+                        Com_Printf(CON_CHANNEL_SOUND, "invalid 'wetlevel' %g, must be in the range of 0.0-1.0\n", wetlevel);
                     }
                 }
                 else
                 {
-                    Com_Printf(9, "invalid 'drylevel' %g, must be in the range of 0.0-1.0\n", drylevel);
+                    Com_Printf(CON_CHANNEL_SOUND, "invalid 'drylevel' %g, must be in the range of 0.0-1.0\n", drylevel);
                 }
             }
         }
@@ -230,7 +230,7 @@ void __cdecl SND_SetEnvironmentEffects_f()
     else
     {
         Com_Printf(
-            9,
+            CON_CHANNEL_SOUND,
             "USAGE: snd_setEnvironmentEffects <const char *priority> <const char *roomstring> <float drylevel> <float wetlevel>"
             " <int fademsec>\n");
     }
@@ -249,12 +249,12 @@ int __cdecl SND_RoomtypeFromString(const char *string)
             return stringIndex;
     }
 
-    Com_Printf(9, "invalid roomtype string '%s', it must be one of the following strings:\n", string);
+    Com_Printf(CON_CHANNEL_SOUND, "invalid roomtype string '%s', it must be one of the following strings:\n", string);
 
     for (stringIndexa = 0; snd_roomStrings[stringIndexa]; ++stringIndexa)
     {
         if (*snd_roomStrings[stringIndexa])
-            Com_Printf(9, "  %s\n", snd_roomStrings[stringIndexa]);
+            Com_Printf(CON_CHANNEL_SOUND, "  %s\n", snd_roomStrings[stringIndexa]);
     }
 
     return 0;
@@ -273,12 +273,12 @@ void __cdecl SND_DeactivateEnvironmentEffects_f()
             if (fademsec >= 0)
                 SND_DeactivateEnvironmentEffects(priority, fademsec);
             else
-                Com_Printf(9, "invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
+                Com_Printf(CON_CHANNEL_SOUND, "invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
         }
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_deactivateEnvironmentEffects <int priority> <int fademsec>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_deactivateEnvironmentEffects <int priority> <int fademsec>\n");
     }
 }
 
@@ -307,18 +307,18 @@ void __cdecl SND_SetEq_f()
                     if (q > 0.0)
                         SND_SetEqParams(entchannel, eqIndex, band, type, gain, freq, q);
                     else
-                        Com_Printf(9, "invalid 'q' %f, must be > 0\n", q);
+                        Com_Printf(CON_CHANNEL_SOUND, "invalid 'q' %f, must be > 0\n", q);
                 }
                 else
                 {
-                    Com_Printf(9, "invalid 'freq' %f, must be >= 0 and <= %i\n", freq, 20000);
+                    Com_Printf(CON_CHANNEL_SOUND, "invalid 'freq' %f, must be >= 0 and <= %i\n", freq, 20000);
                 }
             }
         }
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_setEq <const char *channelName> <int eqIndex> <int band> <const char *type> <float gain> <float freq> <float q>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_setEq <const char *channelName> <int eqIndex> <int band> <const char *type> <float gain> <float freq> <float q>\n");
         SND_PrintEqParams();
     }
 }
@@ -336,12 +336,12 @@ SND_EQTYPE __cdecl SND_EqTypeFromString(const char *typeString)
             return (SND_EQTYPE)stringIndex;
     }
 
-    Com_Printf(9, "invalid eq type string '%s', it must be one of the following strings:\n", typeString);
+    Com_Printf(CON_CHANNEL_SOUND, "invalid eq type string '%s', it must be one of the following strings:\n", typeString);
 
     for (stringIndexa = 0; snd_eqTypeStrings[stringIndexa]; ++stringIndexa)
     {
         if (*snd_eqTypeStrings[stringIndexa])
-            Com_Printf(9, "  %s\n", snd_eqTypeStrings[stringIndexa]);
+            Com_Printf(CON_CHANNEL_SOUND, "  %s\n", snd_eqTypeStrings[stringIndexa]);
     }
 
     return (SND_EQTYPE)5; // SND_EQTYPE_COUNT
@@ -369,19 +369,19 @@ char __cdecl SND_ParseChannelAndBand_f(int *entchannel, int *eqIndex, int *band)
             }
             else
             {
-                Com_Printf(9, "invalid 'band' %i, must be >= 0 and < %i\n", *band, 3);
+                Com_Printf(CON_CHANNEL_SOUND, "invalid 'band' %i, must be >= 0 and < %i\n", *band, 3);
                 return 0;
             }
         }
         else
         {
-            Com_Printf(9, "invalid 'eqIndex' %i, must be >= 0 and < %i\n", *eqIndex, 2);
+            Com_Printf(CON_CHANNEL_SOUND, "invalid 'eqIndex' %i, must be >= 0 and < %i\n", *eqIndex, 2);
             return 0;
         }
     }
     else
     {
-        Com_Printf(9, "Unknown channel name (%s), please check channel definitions file\n", channelName);
+        Com_Printf(CON_CHANNEL_SOUND, "Unknown channel name (%s), please check channel definitions file\n", channelName);
         return 0;
     }
 }
@@ -401,12 +401,12 @@ void __cdecl SND_SetEqFreq_f()
             if (freq >= 0.0 && freq <= 20000.0)
                 SND_SetEqFreq(entchannel, eqIndex, band, freq);
             else
-                Com_Printf(9, "invalid 'freq' %f, must be >= 0 and < %i\n", freq, 20000);
+                Com_Printf(CON_CHANNEL_SOUND, "invalid 'freq' %f, must be >= 0 and < %i\n", freq, 20000);
         }
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_setEqFreq <const char *channelName> <int eqIndex> <int band> <float freq>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_setEqFreq <const char *channelName> <int eqIndex> <int band> <float freq>\n");
     }
 }
 
@@ -428,7 +428,7 @@ void __cdecl SND_SetEqType_f()
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_setEqType <const char *channelName> <int eqIndex> <int band> <const char *type>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_setEqType <const char *channelName> <int eqIndex> <int band> <const char *type>\n");
     }
 }
 
@@ -449,7 +449,7 @@ void __cdecl SND_SetEqGain_f()
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_setEqGain <const char *channelName> <int eqIndex> <int band> <float gain>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_setEqGain <const char *channelName> <int eqIndex> <int band> <float gain>\n");
     }
 }
 
@@ -468,12 +468,12 @@ void __cdecl SND_SetEqQ_f()
             if (q > 0.0)
                 SND_SetEqQ(entchannel, eqIndex, band, q);
             else
-                Com_Printf(9, "invalid 'q' %f, must be > 0\n", q);
+                Com_Printf(CON_CHANNEL_SOUND, "invalid 'q' %f, must be > 0\n", q);
         }
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_setEqQ <const char *channelName> <int eqIndex> <int band> <float q>\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_setEqQ <const char *channelName> <int eqIndex> <int band> <float q>\n");
     }
 }
 
@@ -507,17 +507,17 @@ void __cdecl SND_DeactivateEq_f()
                 if (band <= 2)
                     SND_DeactivateEq(channelName, eqIndex, band);
                 else
-                    Com_Printf(9, "invalid 'band' %i, must be >= 0 and < %i\n", band, 3);
+                    Com_Printf(CON_CHANNEL_SOUND, "invalid 'band' %i, must be >= 0 and < %i\n", band, 3);
             }
         }
         else
         {
-            Com_Printf(9, "invalid 'eqIndex' %i, must be >= 0 and < %i\n", eqIndex, 2);
+            Com_Printf(CON_CHANNEL_SOUND, "invalid 'eqIndex' %i, must be >= 0 and < %i\n", eqIndex, 2);
         }
     }
     else
     {
-        Com_Printf(9, "USAGE: snd_deactivateEq <int eqIndex> [(optional) const char *channelName] [(optional) int band]\n");
+        Com_Printf(CON_CHANNEL_SOUND, "USAGE: snd_deactivateEq <int eqIndex> [(optional) const char *channelName] [(optional) int band]\n");
     }
 }
 
@@ -918,7 +918,7 @@ int __cdecl SND_FindFree2DChannel(SndStartAliasInfo *startAliasInfo, int entchan
                 v10 = g_snd.chaninfo[ia].totalMsec + g_snd.chaninfo[ia].startTime - g_snd.time;
                 v9 = SND_GetPriority(g_snd.chaninfo[ia].entchannel);
                 Com_Printf(
-                    14,
+                    CON_CHANNEL_CLIENT,
                     "Stopping 2d sound channel that's playing '%s' (prio: %i, %ims left) so we can play '%s' (prio: %i) instead\n",
                     g_snd.chaninfo[ia].alias0->aliasName,
                     v9,
@@ -1127,7 +1127,7 @@ int __cdecl SND_FindFree3DChannel(SndStartAliasInfo *startAliasInfo, int entchan
                 v8 = g_snd.chaninfo[i].totalMsec + g_snd.chaninfo[i].startTime - g_snd.time;
                 v7 = SND_GetPriority(g_snd.chaninfo[i].entchannel);
                 Com_DPrintf(
-                    14,
+                    CON_CHANNEL_CLIENT,
                     "Stopping 3d sound channel that's playing '%s' (prio: %i, %ims left, dist: %f) so we can play '%s' (prio: %i, d"
                     "ist: %f) instead\n",
                     g_snd.chaninfo[i].alias0->aliasName,
@@ -1293,7 +1293,7 @@ void __cdecl SND_AddPlayFXSoundAlias(snd_alias_t *alias, SndEntHandle sndEnt, co
 {
     if (g_FXPlaySoundCount == 32)
     {
-        Com_PrintError(20, "ERROR: too many FX sounds %d\n", 32);
+        Com_PrintError(CON_CHANNEL_PHYS, "ERROR: too many FX sounds %d\n", 32);
     }
     else
     {
@@ -1465,7 +1465,7 @@ int __cdecl SND_PlaySoundAlias_Internal(
                     && !Com_AliasNameRefersToSingleAlias(alias0->secondaryAliasName))
                 {
                     Com_PrintError(
-                        9,
+                        CON_CHANNEL_SOUND,
                         "Error: a looping alias cannot have a looping secondary aliasName that refers to multiple aliases.\n"
                         "Alias sequence: '%s'->'%s'\n",
                         alias0->aliasName,
@@ -1475,7 +1475,7 @@ int __cdecl SND_PlaySoundAlias_Internal(
             else
             {
                 Com_PrintError(
-                    9,
+                    CON_CHANNEL_SOUND,
                     "Error: a non-looping alias cannot have a looping secondary alias.\nAlias sequence: '%s'->'%s'\n",
                     alias0->aliasName,
                     alias0->secondaryAliasName);
@@ -1488,7 +1488,7 @@ int __cdecl SND_PlaySoundAlias_Internal(
                 if (!I_stricmp(alias0->aliasName, tertiaryAlias->secondaryAliasName))
                 {
                     Com_PrintError(
-                        9,
+                        CON_CHANNEL_SOUND,
                         "Error: Infinite recursion in secondary aliases sequenced together.\nAlias sequence start: '%s'->'%s'\n",
                         alias0->aliasName,
                         alias0->secondaryAliasName);
@@ -1511,7 +1511,7 @@ int __cdecl SND_PlaySoundAlias_Internal(
         }
         else
         {
-            Com_PrintError(9, "Error: unable to find '%s' alias\n", alias0->secondaryAliasName);
+            Com_PrintError(CON_CHANNEL_SOUND, "Error: unable to find '%s' alias\n", alias0->secondaryAliasName);
         }
     }
     SND_DebugAliasPrint(playbackId != SND_PLAYBACKID_NOTPLAYED, alias0, "Started");
@@ -1599,7 +1599,7 @@ int __cdecl SND_StartAliasSample(SndStartAliasInfo *startAliasInfo, int *pChanne
     {
         Com_GetSoundFileName(startAliasInfo->alias0, filename, 128);
         Com_DPrintf(
-            9,
+            CON_CHANNEL_SOUND,
             "Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
             filename,
             startAliasInfo->alias0->aliasName);
@@ -1711,7 +1711,7 @@ int __cdecl SND_FindFreeStreamChannel(SndStartAliasInfo *startAliasInfo, int ent
                 v10 = SND_GetPriority(entchannel);
                 v9 = startAliasInfo->alias0->aliasName;
                 Com_DPrintf(
-                    9,
+                    CON_CHANNEL_SOUND,
                     "Stopping stream sound channel that's playing '%s' (prio: %i, %ims left, dist: %f) so we can play '%s' (prio: %"
                     "i, dist: %f) instead\n",
                     g_snd.chaninfo[i].alias0->aliasName,
@@ -2125,9 +2125,9 @@ void __cdecl SND_PlayMusicAlias(
     if (g_snd.Initialized2d && alias)
     {
         if (SND_IsStreamChannelFree(SND_FIRST_STREAM_CHANNEL))
-            SND_StartBackground(localClientNum, 0, alias, 0, 0.0, useTimescale, system);
+            SND_StartBackground(localClientNum, SND_TRACK_MUSIC, alias, 0, 0.0, useTimescale, system);
         else
-            Com_PrintWarning(9, "Unable to play music alias %s\n", alias->aliasName);
+            Com_PrintWarning(CON_CHANNEL_SOUND, "Unable to play music alias %s\n", alias->aliasName);
     }
 }
 
@@ -2287,7 +2287,7 @@ void SND_UnpauseSounds()
 void __cdecl SND_StopMusic(int fadetime)
 {
     if (g_snd.Initialized2d)
-        SND_StopBackground(0, fadetime);
+        SND_StopBackground(SND_TRACK_MUSIC, fadetime);
 }
 
 void __cdecl SND_StopBackground(uint32_t track, int fadetime)
@@ -2412,10 +2412,10 @@ void __cdecl SND_StopAmbient(int localClientNum, int fadetime)
     {
         iassert(fadetime >= 0);
 
-        SND_StopBackground(1u, fadetime);
-        SND_StopBackground(2u, fadetime);
-        SND_StopBackground(3u, fadetime);
-        SND_StopBackground(4u, fadetime);
+        SND_StopBackground(SND_TRACK_AMBIENT_PRIMARY_0, fadetime);
+        SND_StopBackground(SND_TRACK_AMBIENT_SECONDARY_0, fadetime);
+        SND_StopBackground(SND_TRACK_AMBIENT_PRIMARY_1, fadetime);
+        SND_StopBackground(SND_TRACK_AMBIENT_SECONDARY_1, fadetime);
     }
 }
 
@@ -2622,7 +2622,7 @@ void __cdecl SND_SetEnvironmentEffects(
         }
         else
         {
-            for (i = priority + 1; i < 3; ++i)
+            for (i = priority + 1; i < SND_ENVEFFECTPRIO_COUNT; ++i)
             {
                 if (g_snd.envEffects[i].active)
                     return;
@@ -2645,7 +2645,7 @@ void __cdecl SND_DeactivateEnvironmentEffects(int priority, int fademsec)
     effect->active = 0;
     if (effect == g_snd.effect)
     {
-        for (i = priority - 1; i >= 0 && !g_snd.envEffects[i].active; --i)
+        for (i = priority - 1; i >= SND_ENVEFFECTPRIO_NONE && !g_snd.envEffects[i].active; --i)
             ;
 
         iassert(i >= SND_ENVEFFECTPRIO_NONE);
@@ -2707,7 +2707,7 @@ void __cdecl SND_DeactivateEq(const char *channelName, int eqIndex, uint32_t ban
     if (entchannel >= 0)
         SND_DisableEq(entchannel, eqIndex, band);
     else
-        Com_PrintError(9, "Unknown channel name (%s), please check channel definitions file\n", channelName);
+        Com_PrintError(CON_CHANNEL_SOUND, "Unknown channel name (%s), please check channel definitions file\n", channelName);
 }
 
 void __cdecl SND_Update()
@@ -3188,7 +3188,7 @@ void __cdecl SND_StopSounds(snd_stopsounds_arg_t which)
 
         if ((which & 1) == 0)
         {
-            for (int i = 1; i < 3; ++i)
+            for (int i = SND_ENVEFFECTPRIO_LEVEL; i < SND_ENVEFFECTPRIO_COUNT; ++i)
                 SND_DeactivateEnvironmentEffects(i, 0);
         }
 
@@ -3220,7 +3220,7 @@ void __cdecl SND_Init()
     int i; // [esp+1Ch] [ebp-8h]
     int ia; // [esp+1Ch] [ebp-8h]
 
-    Com_Printf(9, "\n------- sound system initialization -------\n");
+    Com_Printf(CON_CHANNEL_SOUND, "\n------- sound system initialization -------\n");
 
     snd_errorOnMissing = Dvar_RegisterBool("snd_errorOnMissing", 0, DVAR_ARCHIVE, "Cause a Com_Error if a sound file is missing.");
     min.value.max = 1.0f;
@@ -3281,8 +3281,8 @@ void __cdecl SND_Init()
         "Check whether stream sound files exist while loading");
 
     g_snd.effect = g_snd.envEffects;
-    g_snd.envEffects[0].roomtype = 0;
-    g_snd.envEffects[0].drylevel = 1.0f;
+    g_snd.envEffects[SND_ENVEFFECTPRIO_NONE].roomtype = 0;
+    g_snd.envEffects[SND_ENVEFFECTPRIO_NONE].drylevel = 1.0f;
     g_snd.effect->drygoal = 1.0f;
     g_snd.effect->dryrate = 0.0f;
     g_snd.effect->wetlevel = 0.0f;
@@ -3335,7 +3335,7 @@ void __cdecl SND_Init()
     Cmd_AddCommandInternal("snd_setEqType", SND_SetEqType_f, &SND_SetEqType_f_VAR);
     Cmd_AddCommandInternal("snd_deactivateEq", SND_DeactivateEq_f, &SND_DeactivateEq_f_VAR);
 
-    Com_Printf(9, "------- sound system successfully initialized -------\n");
+    Com_Printf(CON_CHANNEL_SOUND, "------- sound system successfully initialized -------\n");
 #ifdef KISAK_MP
     Voice_Init();
 #endif
@@ -3397,7 +3397,7 @@ void __cdecl SND_PlayLocal_f()
             v11 = soundPos[1];
             v10 = soundPos[0];
             v8 = Cmd_Argv(1);
-            Com_Printf(14, "Playing local sound alias \"%s\" at (%.2f, %.2f, %.2f).\n", v8, v10, v11, v12);
+            Com_Printf(CON_CHANNEL_CLIENT, "Playing local sound alias \"%s\" at (%.2f, %.2f, %.2f).\n", v8, v10, v11, v12);
             if (dist >= 400.0)
                 v13 = 1.5;
             else
@@ -3411,12 +3411,12 @@ void __cdecl SND_PlayLocal_f()
         else
         {
             v7 = Cmd_Argv(1);
-            Com_Printf(14, "Couldn't find sound alias \"%s\".\n", v7);
+            Com_Printf(CON_CHANNEL_CLIENT, "Couldn't find sound alias \"%s\".\n", v7);
         }
         break;
     default:
         v4 = Cmd_Argv(0);
-        Com_Printf(0, "USAGE: %s <sndalias> [<dist> <yaw> <pitch>]\n", v4);
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "USAGE: %s <sndalias> [<dist> <yaw> <pitch>]\n", v4);
         break;
     }
 }
@@ -3514,7 +3514,7 @@ void __cdecl SND_ParseEntChannelFile(const char *buffer)
                 {
                     maxVoices = SND_MAX_CHANNELS;
                     Com_PrintError(
-                        9,
+                        CON_CHANNEL_SOUND,
                         "channel '%s' has nonnumeric or negative value (%s) in file [%s], defaulting to max (%i).\n",
                         channelName,
                         value,
@@ -3525,7 +3525,7 @@ void __cdecl SND_ParseEntChannelFile(const char *buffer)
                 {
                     maxVoices = SND_MAX_CHANNELS;
                     Com_PrintError(
-                        9,
+                        CON_CHANNEL_SOUND,
                         "max number (%d) of voices exceeded for channel '%s' in file [%s], defaulting to max (%i).\n",
                         SND_MAX_CHANNELS,
                         channelName,
@@ -3570,7 +3570,7 @@ char __cdecl SND_BooleanFromString(const char *value, const char *trueValue, con
         return 0;
 
     Com_PrintError(
-        9,
+        CON_CHANNEL_SOUND,
         "unknown value (%s), should be either '%s' or '%s'.  using default: %d.\n",
         value,
         trueValue,
@@ -3620,7 +3620,7 @@ void __cdecl SND_Save(MemoryFile *memFile)
     for (int i = 1; i < SND_CHANNELVOLPRIO_COUNT; ++i)
         MemFile_WriteData(memFile, 772, &g_snd.channelVolGroups[i]);
 
-    for (int i = 1; i < 3; ++i)
+    for (int i = SND_ENVEFFECTPRIO_LEVEL; i < SND_ENVEFFECTPRIO_COUNT; ++i)
         MemFile_WriteData(memFile, 32, &g_snd.envEffects[i]);
 
     SND_SaveEq(memFile);
@@ -3821,12 +3821,12 @@ void __cdecl SND_Restore(MemoryFile *memFile)
                 g_snd.channelvol = &g_snd.channelVolGroups[i];
         }
 
-        for (int i = 1; i < 3; ++i)
+        for (int i = SND_ENVEFFECTPRIO_LEVEL; i < SND_ENVEFFECTPRIO_COUNT; ++i)
             MemFile_ReadData(memFile, 32, (uint8_t *)&g_snd.envEffects[i]);
 
         SND_RestoreEq(memFile);
 
-        for (int i = 0; i < 3; ++i)
+        for (int i = SND_ENVEFFECTPRIO_NONE; i < SND_ENVEFFECTPRIO_COUNT; ++i)
         {
             if (g_snd.envEffects[i].active)
                 g_snd.effect = &g_snd.envEffects[i];
@@ -3877,7 +3877,7 @@ char __cdecl SND_Restore3DChannel(MemoryFile *memFile)
 
     if (alias0->soundFile == alias1->soundFile
         && alias0->soundFile->exists
-        && alias0->soundFile->type == 1
+        && alias0->soundFile->type == SAT_LOADED
         && SND_ValidateSoundAliasBlend(alias0, alias1, 0))
     {
         if (!SND_AnyActiveListeners())
@@ -4032,7 +4032,7 @@ char __cdecl SND_Restore2DChannel(MemoryFile *memFile)
 
     if (alias0->soundFile == alias1->soundFile
         && alias0->soundFile->exists
-        && alias0->soundFile->type == 1
+        && alias0->soundFile->type == SAT_LOADED
         && SND_ValidateSoundAliasBlend(alias0, alias1, 0))
     {
         if (!snd_enable2D->current.enabled)
@@ -4354,7 +4354,7 @@ void __cdecl SND_StopChannelAndPlayChainAlias(uint32_t chanId)
         if (chainAlias == chaninfo->alias0)
         {
             Com_PrintError(
-                9,
+                CON_CHANNEL_SOUND,
                 "Soundalias \"%s\" is trying to chain to itself - check sound .csv files and correct.\n",
                 chaninfo->alias0->chainAliasName);
             StopChannel(chanId);
@@ -4466,7 +4466,7 @@ void SND_SetEq(
     if (EntChannelFromName >= 0)
         SND_SetEqParams(EntChannelFromName, eqIndex, band, type, gain, freq, q);
     else
-        Com_PrintError(9, "Unknown channel name (%s), please check channel definitions file\n", channelName);
+        Com_PrintError(CON_CHANNEL_SOUND, "Unknown channel name (%s), please check channel definitions file\n", channelName);
 }
 
 void SND_StopAmplify()

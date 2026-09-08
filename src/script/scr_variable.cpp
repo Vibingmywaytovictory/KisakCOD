@@ -511,16 +511,16 @@ void  AddRefToValue(int type, VariableUnion u)
 {
 	uint32_t value; // [esp+0h] [ebp-4h]
 
-	value = type - 1;
-	if ((uint32_t)(type - 1) < 4)
+	value = type - VAR_BEGIN_REF;
+	if ((uint32_t)(type - VAR_BEGIN_REF) < VAR_END_REF - VAR_BEGIN_REF)
 	{
-		if (type == 1)
+		if (type == VAR_POINTER)
 		{
 			AddRefToObject(u.stringValue);
 		}
 		else if (value > 2)
 		{
-			if (type != 4)
+			if (type != VAR_VECTOR)
 				MyAssertHandler(
 					".\\script\\scr_variable.cpp",
 					2393,
@@ -791,7 +791,7 @@ uint32_t GetObject(uint32_t id)
 	iassert((entryValue->w.status & VAR_STAT_MASK) != VAR_STAT_FREE);
 	iassert((entryValue->w.type & VAR_MASK) == VAR_UNDEFINED || (entryValue->w.type & VAR_MASK) == VAR_POINTER);
 
-	if ((entryValue->w.status & 0x1F) == 0)
+	if ((entryValue->w.status & VAR_MASK) == VAR_UNDEFINED)
 	{
 		entryValue->w.status |= VAR_POINTER;
 		entryValue->u.u.pointerValue = AllocObject();
@@ -1096,7 +1096,7 @@ uint32_t  Scr_FindAllThreads(uint32_t selfId, uint32_t* threads, uint32_t localI
 	for (id = 1; id < 0xFFFE; ++id)
 	{
 		entryValue = &scrVarGlob.variableList[id + VARIABLELIST_CHILD_BEGIN];
-		if ((entryValue->w.status & 0x60) != 0 && (entryValue->w.status & 0x1F) == 0xA)
+		if ((entryValue->w.status & VAR_STAT_MASK) != 0 && (entryValue->w.status & VAR_MASK) == VAR_STACK)
 		{
 			for (threadId = *(uint32_t*)(entryValue->u.u.intValue + 8);
 				threadId;
@@ -1124,7 +1124,7 @@ uint32_t  Scr_FindAllThreads(uint32_t selfId, uint32_t* threads, uint32_t localI
 			iassert(timeId);
 			for (stackId = FindFirstSibling(timeId); stackId; stackId = FindNextSibling(stackId))
 			{
-				if (GetValueType(stackId) == 10)
+				if (GetValueType(stackId) == VAR_STACK)
 				{
 					for (threadId = *(uint32_t*)(GetVariableValueAddress(stackId)->u.intValue + 8);
 						threadId;
@@ -1238,7 +1238,7 @@ void  Scr_DumpScriptVariables(bool spreadsheet,
 			}
 			if (total)
 			{
-				Com_Printf(0, "num vars:          %d\n", num);
+				Com_Printf(CON_CHANNEL_DONT_FILTER, "num vars:          %d\n", num);
 				Z_VirtualFree(infoArray);
 			}
 			else
@@ -1272,20 +1272,20 @@ void  Scr_DumpScriptVariables(bool spreadsheet,
 					qsort(infoArray, num, 0x10u, (int(*)(const void *, const void *))VariableInfoFileLineCompare);
 				else
 					qsort(infoArray, num, 0x10u, (int(*)(const void *, const void *))VariableInfoCountCompare);
-				Com_Printf(23, "********************************\n");
+				Com_Printf(CON_CHANNEL_PARSERSCRIPT, "********************************\n");
 				if (spreadsheet)
 				{
 					if (summary)
 					{
-						Com_Printf(0, "count\tfile\n");
+						Com_Printf(CON_CHANNEL_DONT_FILTER, "count\tfile\n");
 					}
 					else if (functionSummary)
 					{
-						Com_Printf(0, "count\tfile\tfunction\n");
+						Com_Printf(CON_CHANNEL_DONT_FILTER, "count\tfile\tfunction\n");
 					}
 					else
 					{
-						Com_Printf(0, "count\tfile\tline\tsource\tcol\n");
+						Com_Printf(CON_CHANNEL_DONT_FILTER, "count\tfile\tline\tsource\tcol\n");
 					}
 				}
 				count = 0;
@@ -1301,32 +1301,32 @@ void  Scr_DumpScriptVariables(bool spreadsheet,
 							filteredCount += pInfob->varUsage;
 							if (spreadsheet)
 							{
-								Com_Printf(0, "%d\t", pInfob->varUsage);
-								Scr_PrintPrevCodePosSpreadSheet(0, (char *)pInfob->pos, summary, functionSummary);
+								Com_Printf(CON_CHANNEL_DONT_FILTER, "%d\t", pInfob->varUsage);
+								Scr_PrintPrevCodePosSpreadSheet(CON_CHANNEL_DONT_FILTER, (char *)pInfob->pos, summary, functionSummary);
 							}
 							else
 							{
 								if (summary)
 									MyAssertHandler(".\\script\\scr_variable.cpp", 746, 0, "%s", "!summary");
-								Com_Printf(0, "count: %d\n", pInfob->varUsage);
-								Scr_PrintPrevCodePos(0, (char*)pInfob->pos, 0);
+								Com_Printf(CON_CHANNEL_DONT_FILTER, "count: %d\n", pInfob->varUsage);
+								Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, (char*)pInfob->pos, 0);
 							}
 						}
 					}
 				}
 				if (num != count)
 					MyAssertHandler(".\\script\\scr_variable.cpp", 753, 0, "%s", "num == count");
-				Com_Printf(0, "********************************\n");
-				Com_Printf(0, "num vars:          %d\n", filteredCount);
+				Com_Printf(CON_CHANNEL_DONT_FILTER, "********************************\n");
+				Com_Printf(CON_CHANNEL_DONT_FILTER, "num vars:          %d\n", filteredCount);
 				NumScriptVars = Scr_GetNumScriptVars();
-				Com_Printf(0, "num unlisted vars: %d\n", NumScriptVars - filteredCount);
-				Com_Printf(0, "********************************\n");
+				Com_Printf(CON_CHANNEL_DONT_FILTER, "num unlisted vars: %d\n", NumScriptVars - filteredCount);
+				Com_Printf(CON_CHANNEL_DONT_FILTER, "********************************\n");
 				Z_VirtualFree(infoArray);
 			}
 		}
 		else
 		{
-			Com_Printf(23, "Cannot dump script variables: out of memory\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Cannot dump script variables: out of memory\n");
 		}
 	}
 }
@@ -1483,14 +1483,14 @@ uint32_t  Scr_FindAllVariableField(uint32_t parentId, uint32_t* names)
 
 	switch (parentValue->w.status & 0x1F)
 	{
-	case 0xEu:
-	case 0xFu:
-	case 0x10u:
-	case 0x11u:
-	case 0x12u:
-	case 0x13u:
+	case VAR_THREAD:
+	case VAR_NOTIFY_THREAD:
+	case VAR_TIME_THREAD:
+	case VAR_CHILD_THREAD:
+	case VAR_OBJECT:
+	case VAR_DEAD_ENTITY:
 		goto $LN18_17;
-	case 0x14u:
+	case VAR_ENTITY:
 		classnum = parentValue->w.status >> 8;
 		if (classnum >= CLASS_NUM_COUNT)
 			MyAssertHandler(".\\script\\scr_variable.cpp", 2558, 0, "%s", "classnum < CLASS_NUM_COUNT");
@@ -1520,7 +1520,7 @@ uint32_t  Scr_FindAllVariableField(uint32_t parentId, uint32_t* names)
 			}
 		}
 		break;
-	case 0x15u:
+	case VAR_ARRAY:
 		for (idb = FindFirstSibling(parentId); idb; idb = FindNextSibling(idb))
 		{
 			nameb = scrVarGlob.variableList[idb + VARIABLELIST_CHILD_BEGIN].w.status >> 8;
@@ -1914,7 +1914,7 @@ void  Scr_UnmatchingTypesError(VariableValue* value1, VariableValue* value2)
 
 void  Scr_EvalOr(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 		value1->u.intValue |= value2->u.intValue;
 	else
 		Scr_UnmatchingTypesError(value1, value2);
@@ -1922,14 +1922,14 @@ void  Scr_EvalOr(VariableValue* value1, VariableValue* value2)
 
 void  Scr_EvalExOr(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 		value1->u.intValue ^= value2->u.intValue;
 	else
 		Scr_UnmatchingTypesError(value1, value2);
 }
 void  Scr_EvalAnd(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 		value1->u.intValue &= value2->u.intValue;
 	else
 		Scr_UnmatchingTypesError(value1, value2);
@@ -1994,14 +1994,14 @@ void  Scr_EvalLessEqual(VariableValue* value1, VariableValue* value2)
 }
 void  Scr_EvalShiftLeft(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 		value1->u.intValue <<= value2->u.intValue;
 	else
 		Scr_UnmatchingTypesError(value1, value2);
 }
 void  Scr_EvalShiftRight(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 		value1->u.intValue >>= value2->u.intValue;
 	else
 		Scr_UnmatchingTypesError(value1, value2);
@@ -2027,7 +2027,7 @@ void  Scr_EvalPlus(VariableValue* value1, VariableValue* value2)
 	iassert(value1->type == value2->type);
 	switch (value1->type)
 	{
-	case 2:
+	case VAR_STRING:
 		v12 = (char*)SL_ConvertToString(value1->u.intValue);
 		v13 = (char*)SL_ConvertToString(value2->u.intValue);
 		StringLen_DONE = SL_GetStringLen(value1->u.intValue);
@@ -2063,7 +2063,7 @@ void  Scr_EvalPlus(VariableValue* value1, VariableValue* value2)
 			//Scr_Error(v2);
 		}
 		break;
-	case 4:
+	case VAR_VECTOR:
 		v11 = Scr_AllocVector();
 		*v11 = *(float*)value1->u.intValue + *(float*)value2->u.intValue;
 		v11[1] = *(float*)(value1->u.intValue + 4) + *(float*)(value2->u.intValue + 4);
@@ -2072,10 +2072,10 @@ void  Scr_EvalPlus(VariableValue* value1, VariableValue* value2)
 		RemoveRefToVector(value2->u.vectorValue);
 		value1->u.intValue = (int)v11;
 		break;
-	case 5:
+	case VAR_FLOAT:
 		value1->u.floatValue = value1->u.floatValue + value2->u.floatValue;
 		break;
-	case 6:
+	case VAR_INTEGER:
 		value1->u.intValue += value2->u.intValue;
 		break;
 	default:
@@ -2095,7 +2095,7 @@ void  Scr_EvalMinus(VariableValue* value1, VariableValue* value2)
 
 	switch (type)
 	{
-	case 4:
+	case VAR_VECTOR:
 		tempVector = Scr_AllocVector();
 		*tempVector = *(float*)value1->u.intValue - *(float*)value2->u.intValue;
 		tempVector[1] = *(float*)(value1->u.intValue + 4) - *(float*)(value2->u.intValue + 4);
@@ -2104,10 +2104,10 @@ void  Scr_EvalMinus(VariableValue* value1, VariableValue* value2)
 		RemoveRefToVector(value2->u.vectorValue);
 		value1->u.intValue = (int)tempVector;
 		break;
-	case 5:
+	case VAR_FLOAT:
 		value1->u.floatValue = value1->u.floatValue - value2->u.floatValue;
 		break;
-	case 6:
+	case VAR_INTEGER:
 		value1->u.intValue -= value2->u.intValue;
 		break;
 	default:
@@ -2125,7 +2125,7 @@ void  Scr_EvalMultiply(VariableValue* value1, VariableValue* value2)
 	type = value1->type;
 	switch (type)
 	{
-	case 4:
+	case VAR_VECTOR:
 		tempVector = Scr_AllocVector();
 		*tempVector = *(float*)value1->u.intValue * *(float*)value2->u.intValue;
 		tempVector[1] = *(float*)(value1->u.intValue + 4) * *(float*)(value2->u.intValue + 4);
@@ -2134,10 +2134,10 @@ void  Scr_EvalMultiply(VariableValue* value1, VariableValue* value2)
 		RemoveRefToVector(value2->u.vectorValue);
 		value1->u.intValue = (int)tempVector;
 		break;
-	case 5:
+	case VAR_FLOAT:
 		value1->u.floatValue = value1->u.floatValue * value2->u.floatValue;
 		break;
-	case 6:
+	case VAR_INTEGER:
 		value1->u.intValue *= value2->u.intValue;
 		break;
 	default:
@@ -2157,7 +2157,7 @@ void  Scr_EvalDivide(VariableValue* value1, VariableValue* value2)
 	type = value1->type;
 	switch (type)
 	{
-	case 4:
+	case VAR_VECTOR:
 		tempVector = Scr_AllocVector();
 		if (*(float*)value2->u.intValue == 0.0
 			|| *(float*)(value2->u.intValue + 4) == 0.0
@@ -2181,7 +2181,7 @@ void  Scr_EvalDivide(VariableValue* value1, VariableValue* value2)
 			value1->u.intValue = (int)tempVector;
 		}
 		break;
-	case 5:
+	case VAR_FLOAT:
 		if (value2->u.floatValue == 0.0)
 		{
 		LABEL_8:
@@ -2191,7 +2191,7 @@ void  Scr_EvalDivide(VariableValue* value1, VariableValue* value2)
 		}
 		value1->u.floatValue = value1->u.floatValue / value2->u.floatValue;
 		break;
-	case 6:
+	case VAR_INTEGER:
 		value1->type = VAR_FLOAT;
 		if (value2->u.intValue)
 		{
@@ -2206,7 +2206,7 @@ void  Scr_EvalDivide(VariableValue* value1, VariableValue* value2)
 }
 void  Scr_EvalMod(VariableValue* value1, VariableValue* value2)
 {
-	if (value1->type == 6 && value2->type == 6)
+	if (value1->type == VAR_INTEGER && value2->type == VAR_INTEGER)
 	{
 		if (value2->u.intValue)
 		{
@@ -2268,7 +2268,7 @@ void Scr_FreeObjects()
 	{
 		entryValue = &scrVarGlob.variableList[id + 1];
 		if ((entryValue->w.status & 0x60) != 0
-			&& ((entryValue->w.status & 0x1F) == 0x12 || (entryValue->w.status & 0x1F) == 0x13))
+			&& ((entryValue->w.status & VAR_MASK) == VAR_OBJECT || (entryValue->w.status & VAR_MASK) == VAR_DEAD_ENTITY))
 		{
 			Scr_CancelNotifyList(id);
 			ClearObject(id);
@@ -2323,7 +2323,7 @@ uint32_t  Scr_GetEntityId(uint32_t entnum, uint32_t classnum)
 	iassert(id);
 	entryValue = &scrVarGlob.variableList[id + VARIABLELIST_CHILD_BEGIN];
 	iassert((entryValue->w.status & VAR_STAT_MASK) != VAR_STAT_FREE);
-	if ((entryValue->w.status & 0x1F) != 0)
+	if ((entryValue->w.status & VAR_MASK) != VAR_UNDEFINED)
 	{
 		iassert((entryValue->w.type & VAR_MASK) == VAR_POINTER);
 		return entryValue->u.u.stringValue;
@@ -2388,7 +2388,7 @@ void Scr_DumpScriptThreads(void)
 	for (id = 1; id < 0xFFFE; ++id)
 	{
 		entryValue = &scrVarGlob.variableList[id + VARIABLELIST_CHILD_BEGIN];
-		if ((entryValue->w.status & 0x60) != 0 && (entryValue->w.status & 0x1F) == 0xA)
+		if ((entryValue->w.status & VAR_STAT_MASK) != 0 && (entryValue->w.status & VAR_MASK) == VAR_STACK)
 			++num;
 	}
 	if (num)
@@ -2400,7 +2400,7 @@ void Scr_DumpScriptThreads(void)
 			for (id = 1; id < 0xFFFE; ++id)
 			{
 				entryValue = &scrVarGlob.variableList[id + VARIABLELIST_CHILD_BEGIN];
-				if ((entryValue->w.status & 0x60) != 0 && (entryValue->w.status & 0x1F) == 0xA)
+				if ((entryValue->w.status & VAR_STAT_MASK) != 0 && (entryValue->w.status & VAR_MASK) == VAR_STACK)
 				{
 					pInfo = &infoArray[num++];
 					info.posSize = 0;
@@ -2414,7 +2414,7 @@ void Scr_DumpScriptThreads(void)
 						type = *buf++;
 						u.intValue = *(int*)buf;
 						buf += 4;
-						if (type == 7)
+						if (type == VAR_CODEPOS)
 							info.pos[info.posSize++] = u.codePosValue;
 					}
 					info.pos[info.posSize++] = pos;
@@ -2426,7 +2426,7 @@ void Scr_DumpScriptThreads(void)
 				}
 			}
 			qsort(infoArray, num, 0x8Cu, (int(*)(const void*, const void*))ThreadInfoCompare);
-			Com_Printf(23, "********************************\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "********************************\n");
 			varUsage = 0.0;
 			endonUsage = 0.0;
 			i = 0;
@@ -2444,18 +2444,18 @@ void Scr_DumpScriptThreads(void)
 				} while (i < num && !ThreadInfoCompare((uint32*)pInfo, (uint32*)&infoArray[i]));
 				varUsage = varUsage + info.varUsage;
 				endonUsage = endonUsage + info.endonUsage;
-				Com_Printf(23, "count: %d, var usage: %d, endon usage: %d\n", count, (int)info.varUsage, (int)info.endonUsage);
-				Scr_PrintPrevCodePos(23, (char*)pInfo->pos[0], 0);
+				Com_Printf(CON_CHANNEL_PARSERSCRIPT, "count: %d, var usage: %d, endon usage: %d\n", count, (int)info.varUsage, (int)info.endonUsage);
+				Scr_PrintPrevCodePos(CON_CHANNEL_PARSERSCRIPT, (char*)pInfo->pos[0], 0);
 				for (ja = 1; ja < pInfo->posSize; ++ja)
 				{
-					Com_Printf(23, "called from:\n");
-					Scr_PrintPrevCodePos(23, (char*)pInfo->pos[ja], 0);
+					Com_Printf(CON_CHANNEL_PARSERSCRIPT, "called from:\n");
+					Scr_PrintPrevCodePos(CON_CHANNEL_PARSERSCRIPT, (char*)pInfo->pos[ja], 0);
 				}
 			}
 			Z_VirtualFree(infoArray);
-			Com_Printf(23, "********************************\n");
-			Com_Printf(23, "var usage: %d, endon usage: %d\n", (int)varUsage, (int)endonUsage);
-			Com_Printf(23, "\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "********************************\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "var usage: %d, endon usage: %d\n", (int)varUsage, (int)endonUsage);
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "\n");
 			for (classnum = 0; classnum < CLASS_NUM_COUNT; ++classnum)
 			{
 				if (g_classMap[classnum].entArrayId)
@@ -2465,30 +2465,30 @@ void Scr_DumpScriptThreads(void)
 					for (entId = FindFirstSibling(g_classMap[classnum].entArrayId); entId; entId = FindNextSibling(entId))
 					{
 						++count;
-						if ((scrVarGlob.variableList[entId + VARIABLELIST_CHILD_BEGIN].w.status & 0x1F) == 1)
+					if ((scrVarGlob.variableList[entId + VARIABLELIST_CHILD_BEGIN].w.status & VAR_MASK) == VAR_POINTER)
 						{
 							ObjectUsage = Scr_GetObjectUsage(scrVarGlob.variableList[entId + VARIABLELIST_CHILD_BEGIN].u.u.stringValue);
 							info.varUsage = ObjectUsage + info.varUsage;
 						}
 					}
 					Com_Printf(
-						23,
+						CON_CHANNEL_PARSERSCRIPT,
 						"ent type '%s'... count: %d, var usage: %d\n",
 						g_classMap[classnum].name,
 						count,
 						(int)info.varUsage);
 				}
 			}
-			Com_Printf(23, "********************************\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "********************************\n");
 			NumScriptVars = Scr_GetNumScriptVars();
-			Com_Printf(23, "num vars:    %d\n", NumScriptVars);
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "num vars:    %d\n", NumScriptVars);
 			NumScriptThreads = Scr_GetNumScriptThreads();
-			Com_Printf(23, "num threads: %d\n", NumScriptThreads);
-			Com_Printf(23, "********************************\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "num threads: %d\n", NumScriptThreads);
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "********************************\n");
 		}
 		else
 		{
-			Com_Printf(23, "Cannot dump script threads: out of memory\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "Cannot dump script threads: out of memory\n");
 		}
 	}
 }
@@ -2526,7 +2526,7 @@ void RemoveRefToObject(uint32_t id)
 			iassert(scrVarDebugPub->leakCount[VARIABLELIST_PARENT_BEGIN + id]);
 			--scrVarDebugPub->leakCount[id + 1];
 		}
-		if (!--entryValue->u.next && (entryValue->w.status & 0x1F) == 0x14 && !entryValue->nextSibling)
+		if (!--entryValue->u.next && (entryValue->w.status & VAR_MASK) == VAR_ENTITY && !entryValue->nextSibling)
 		{
 			entryValue->w.status &= 0xFFFFFFE0;
 			entryValue->w.status |= 0x13u;
@@ -2562,7 +2562,7 @@ void  ClearVariableField(uint32_t parentId, uint32_t name, VariableValue* value)
 	else
 	{
 		parentValue = &scrVarGlob.variableList[parentId + 1];
-		if ((parentValue->w.status & 0x1F) == 0x14)
+		if ((parentValue->w.status & VAR_MASK) == VAR_ENTITY)
 		{
 			iassert((parentValue->w.classnum >> VAR_NAME_BITS) < CLASS_NUM_COUNT);
 			classnum = parentValue->w.status >> 8;
@@ -2603,7 +2603,7 @@ void  Scr_EvalSizeValue(VariableValue* value)
 		entryValue = &scrVarGlob.variableList[value->u.intValue + 1];
 		value->type = VAR_INTEGER;
 
-		if ((entryValue->w.status & 0x1F) == 0x15)
+		if ((entryValue->w.status & VAR_MASK) == VAR_ARRAY)
 			v1.intValue = entryValue->u.o.u.size;
 		else
 			v1.intValue = 1;
@@ -2631,7 +2631,7 @@ void  Scr_EvalSizeValue(VariableValue* value)
 void  Scr_EvalBoolNot(VariableValue* value)
 {
 	Scr_CastBool(value);
-	if (value->type == 6)
+	if (value->type == VAR_INTEGER)
 		value->u.intValue = value->u.intValue == 0;
 }
 
@@ -2652,8 +2652,8 @@ void  Scr_EvalEquality(VariableValue* value1, VariableValue* value2)
 		value1->u.intValue = 1;
 		break;
 	case VAR_POINTER:
-		if (((scrVarGlob.variableList[value1->u.intValue + VARIABLELIST_CHILD_BEGIN].w.status & 0x1F) == 0x15
-			|| (scrVarGlob.variableList[value2->u.intValue + VARIABLELIST_CHILD_BEGIN].w.status & 0x1F) == 0x15)
+		if (((scrVarGlob.variableList[value1->u.intValue + VARIABLELIST_CHILD_BEGIN].w.status & VAR_MASK) == VAR_ARRAY
+			|| (scrVarGlob.variableList[value2->u.intValue + VARIABLELIST_CHILD_BEGIN].w.status & VAR_MASK) == VAR_ARRAY)
 			&& !scrVarPub.evaluate)
 		{
 			goto LABEL_20;
@@ -2976,7 +2976,7 @@ uint32_t Scr_EvalArrayRef(uint32_t parentId)
 			{
 				if (varValue.type == VAR_POINTER && !scrVarGlob.variableList[varValue.u.intValue + 1].u.next)
 				{
-					RemoveRefToValue(1, varValue.u);
+					RemoveRefToValue(VAR_POINTER, varValue.u);
 					scrVarPub.error_index = 1;
 					Scr_Error("read-only array cannot be changed");
 					return 0;
@@ -3032,9 +3032,9 @@ void  ClearArray(uint32_t parentId, VariableValue* value)
 			Scr_Error(va("%s is not an array", var_typename[varValue.type]));
 			return;
 		}
-		if (varValue.type == 1 && !scrVarGlob.variableList[varValue.u.intValue + 1].u.next)
+		if (varValue.type == VAR_POINTER && !scrVarGlob.variableList[varValue.u.intValue + 1].u.next)
 		{
-			RemoveRefToValue(1, varValue.u);
+			RemoveRefToValue(VAR_POINTER, varValue.u);
 			scrVarPub.error_index = 1;
 			Scr_Error("read-only array cannot be changed");
 			return;
@@ -3196,24 +3196,24 @@ void  Scr_CheckLeakRange(uint32_t begin, uint32_t end)
 		{
 		case ' ':
 			Com_Printf(
-				23,
+				CON_CHANNEL_PARSERSCRIPT,
 				"move: %d -> %d\n",
 				begin + entry->id,
 				begin + scrVarGlob.variableList[begin + value->v.next].hash.id);
 		LABEL_11:
-			Com_Printf(23, "%d -> %d\n", begin + entry->id, scrVarGlob.variableList[begin + value->nextSibling].hash.id);
-			Com_Printf(23, "%d <- %d\n", begin + entry->id, scrVarGlob.variableList[begin + entry->u.prev].hash.id);
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "%d -> %d\n", begin + entry->id, scrVarGlob.variableList[begin + value->nextSibling].hash.id);
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "%d <- %d\n", begin + entry->id, scrVarGlob.variableList[begin + entry->u.prev].hash.id);
 			continue;
 		case '@':
 			Com_Printf(
-				23,
+				CON_CHANNEL_PARSERSCRIPT,
 				"head: %d -> %d\n",
 				begin + entry->id,
 				begin + scrVarGlob.variableList[begin + value->v.next].hash.id);
 			goto LABEL_11;
 		case '`':
 			Com_Printf(
-				23,
+				CON_CHANNEL_PARSERSCRIPT,
 				"ext: %d %d\n",
 				begin + entry->id,
 				begin + scrVarGlob.variableList[begin + value->v.next].hash.id);
@@ -3246,13 +3246,13 @@ void  Scr_CheckLeaks(void)
 		}
 		if (bLeak)
 		{
-			Com_Printf(23, "leak:\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "leak:\n");
 			for (ida = 0; ida < 0x18000; ++ida)
 			{
 				if (scrVarDebugPub->leakCount[ida])
-					Com_Printf(23, "%d, %d\n", ida, scrVarDebugPub->leakCount[ida]);
+					Com_Printf(CON_CHANNEL_PARSERSCRIPT, "%d, %d\n", ida, scrVarDebugPub->leakCount[ida]);
 			}
-			Com_Printf(23, "\n");
+			Com_Printf(CON_CHANNEL_PARSERSCRIPT, "\n");
 			if ((!scrStringDebugGlob || !scrStringDebugGlob->ignoreLeaks) && !alwaysfails)
 				MyAssertHandler(".\\script\\scr_variable.cpp", 182, 0, "leak");
 		}
@@ -3519,7 +3519,7 @@ float  Scr_GetEntryUsage(uint32_t type, VariableUnion u)
 {
 	VariableValueInternal* parentValue; // [esp+Ch] [ebp-4h]
 
-	if (type != 1)
+	if (type != VAR_POINTER)
 		return 0.0;
 
 	parentValue = &scrVarGlob.variableList[u.intValue + 1];

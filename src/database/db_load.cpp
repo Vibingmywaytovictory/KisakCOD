@@ -1572,7 +1572,7 @@ void __cdecl Load_StreamedSound(bool atStreamStart)
 
 void __cdecl Load_SoundFileRef(bool atStreamStart)
 {
-    if (varSoundFile->type == 1)
+    if (varSoundFile->type == SAT_LOADED)
     {
         varLoadedSoundPtr = &varSoundFileRef->loadSnd;
         Load_LoadedSoundPtr(atStreamStart);
@@ -1791,7 +1791,7 @@ void __cdecl Mark_LoadedSoundPtr()
 
 void __cdecl Mark_SoundFileRef()
 {
-    if (varSoundFile->type == 1)
+    if (varSoundFile->type == SAT_LOADED)
     {
         varLoadedSoundPtr = &varSoundFileRef->loadSnd;
         Mark_LoadedSoundPtr();
@@ -2456,7 +2456,7 @@ void __cdecl Load_MaterialTechnique(bool atStreamStart)
 
 void __cdecl Load_MaterialTextureDefInfo(bool atStreamStart)
 {
-    if (varMaterialTextureDef->semantic == 11)
+    if (varMaterialTextureDef->semantic == TS_WATER_MAP)
     {
         if (*varMaterialTextureDefInfo)
         {
@@ -2547,7 +2547,7 @@ void __cdecl Load_MaterialTechniqueSet(bool atStreamStart)
     varXString = &varMaterialTechniqueSet->name;
     Load_XString(0);
     varMaterialTechniquePtr = varMaterialTechniqueSet->techniques;
-    Load_MaterialTechniquePtrArray(0, 34);
+    Load_MaterialTechniquePtrArray(0, TECHNIQUE_COUNT);
     DB_PopStreamPos();
 }
 
@@ -2680,7 +2680,7 @@ void __cdecl Load_MaterialHandleArray(bool atStreamStart, int32_t count)
 
 void __cdecl Mark_MaterialTextureDefInfo()
 {
-    if (varMaterialTextureDef->semantic == 11)
+    if (varMaterialTextureDef->semantic == TS_WATER_MAP)
     {
         if (varMaterialTextureDefInfo)
         {

@@ -42,7 +42,7 @@ void __cdecl G_DumpConfigStrings(int start, int max)
         {
             ConfigstringConst = SV_GetConfigstringConst(v4 + start);
             v6 = SL_ConvertToString(ConfigstringConst);
-            Com_Printf(24, "G_FindConfigstringIndex: overflow (%d) [%d] %s\n", start, v4, v6);
+            Com_Printf(CON_CHANNEL_SCRIPT, "G_FindConfigstringIndex: overflow (%d) [%d] %s\n", start, v4, v6);
         }
     }
 }
@@ -197,7 +197,7 @@ LABEL_24:
     LABEL_34:
         //Profile_EndInternal(0);
         if (i)
-            Com_PrintWarning(24, "WARNING: %s \"%s\" not precached\n", origErrorMsg, string);
+            Com_PrintWarning(CON_CHANNEL_SCRIPT, "WARNING: %s \"%s\" not precached\n", origErrorMsg, string);
         return i;
     }
     //Profile_EndInternal(0);
@@ -643,7 +643,7 @@ void __cdecl G_ClearDemoEntities()
     if (g_entities[0].r.inuse)
     {
         G_FreeEntities();
-        memset(g_entities, 0, 628 * level.num_entities);
+        memset(g_entities, 0, sizeof(gentity_s) * level.num_entities);
     }
     else
     {
@@ -1708,7 +1708,7 @@ void __cdecl G_PrintEntities()
                     v6 = SL_ConvertToStringSafe(p_model[2]);
                     EntityTypeName = BG_GetEntityTypeName(*((unsigned __int8 *)p_model - 280));
                     Com_Printf(
-                        15,
+                        CON_CHANNEL_SERVER,
                         "%4i: Type: %s, Class: %s, model '%s', origin: %6.1f %6.1f %6.1f\n",
                         v0,
                         EntityTypeName,
@@ -1726,7 +1726,7 @@ void __cdecl G_PrintEntities()
                     v10 = *((float *)p_model - 14);
                     v11 = BG_GetEntityTypeName(*((unsigned __int8 *)p_model - 280));
                     Com_Printf(
-                        15,
+                        CON_CHANNEL_SERVER,
                         "%4i: Type: %s, Class: %s, origin: %6.1f %6.1f %6.1f\n",
                         v0,
                         v11,
@@ -2714,7 +2714,7 @@ void __cdecl G_EntUnlink(gentity_s *ent)
             }
         }
         Scr_SetString(&tagInfo->name, 0);
-        MT_Free((unsigned char *)tagInfo, 112);
+        MT_Free((unsigned char *)tagInfo, sizeof(tagInfo_s));
     }
     //Profile_EndInternal(0);
 }
@@ -3147,7 +3147,7 @@ int __cdecl G_EntLinkToInternal(gentity_s *ent, gentity_s *parent, unsigned int 
         p_parent = &i->tagInfo->parent;
         if (!p_parent)
         {
-            v10 = (tagInfo_s *)MT_Alloc(112, MT_TYPE_TAG_INFO);
+            v10 = (tagInfo_s *)MT_Alloc(sizeof(tagInfo_s), MT_TYPE_TAG_INFO);
             v10->parent = parent;
             v10->name = 0;
             if (tagName && !SL_IsLowercaseString(tagName))

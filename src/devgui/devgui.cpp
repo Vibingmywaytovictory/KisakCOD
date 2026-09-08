@@ -3,6 +3,7 @@
 #include <qcommon/mem_track.h>
 #include <qcommon/qcommon.h>
 #include <qcommon/cmd.h>
+#include <ui/keycodes.h>
 #include <client/client.h>
 #include <cgame/cg_local.h>
 
@@ -58,7 +59,7 @@ void __cdecl DevGui_AddDvar(const char *path, const dvar_s *dvar)
         else
         {
             Com_Printf(
-                11,
+                CON_CHANNEL_DEVGUI,
                 "Path '%s' can't be used for dvar '%s' because it is already used for something else.\n",
                 path,
                 (const char *)dvar);
@@ -293,7 +294,7 @@ char __cdecl DevGui_IsValidPath(const char *path)
         tokResult = DevGui_PathToken(&path, label, &sortKey);
         if (tokResult == DEVGUI_TOKEN_LAST)
         {
-            Com_Printf(11, "Path '%s' must have at least one menu separator ('/' character).\n", originalPath);
+            Com_Printf(CON_CHANNEL_DEVGUI, "Path '%s' must have at least one menu separator ('/' character).\n", originalPath);
             return 0;
         }
         else
@@ -303,7 +304,7 @@ char __cdecl DevGui_IsValidPath(const char *path)
                 if (tokResult == DEVGUI_TOKEN_ERROR)
                 {
                     Com_Printf(
-                        11,
+                        CON_CHANNEL_DEVGUI,
                         "path '%s' is invalid.  Format is 'menu name:sortkey/submenu/...', where 'sortkey' is any (possibly signed) integer.\n",
                         originalPath);
                     return 0;
@@ -315,7 +316,7 @@ char __cdecl DevGui_IsValidPath(const char *path)
     }
     else
     {
-        Com_Printf(11, "Path '%s' must be no longer than %i characters (currently %i).\n", path, 120, strlen(path));
+        Com_Printf(CON_CHANNEL_DEVGUI, "Path '%s' must be no longer than %i characters (currently %i).\n", path, 120, strlen(path));
         return 0;
     }
 }
@@ -344,7 +345,7 @@ void __cdecl DevGui_AddCommand(const char *path, char *command)
         else
         {
             Com_Printf(
-                11,
+                CON_CHANNEL_DEVGUI,
                 "Path '%s' can't be used for command '%s' because it is already used for something else.\n",
                 path,
                 command);
@@ -389,7 +390,7 @@ void __cdecl DevGui_AddGraph(const char *path, DevGraph *graph)
         }
         else
         {
-            Com_Printf(11, "Path '%s' can't be added for this graph because it is already used for something else.\n", path);
+            Com_Printf(CON_CHANNEL_DEVGUI, "Path '%s' can't be added for this graph because it is already used for something else.\n", path);
         }
     }
 }
@@ -838,7 +839,7 @@ void __cdecl DevGui_DrawSliders(const DevMenuItem *menu)
     rowCount = DevGui_DvarRowCount(dvar);
     width = rowWidth + 8;
     height = rowHeight * (rowCount + 2) + 2 * rowCount + 14;
-    if (dvar->type == 8)
+    if (dvar->type == DVAR_TYPE_COLOR)
         height += rowHeight + 2;
     xa = devguiGlob.left + (devguiGlob.right - devguiGlob.left - width) / 2;
     x_4a = devguiGlob.bottom - height;
@@ -852,7 +853,7 @@ void __cdecl DevGui_DrawSliders(const DevMenuItem *menu)
     x = xa + 4;
     x_4 = x_4a + 6;
     DevGui_DrawSliderPath(x, x_4);
-    if (dvar->type == 8)
+    if (dvar->type == DVAR_TYPE_COLOR)
     {
         x_4 += rowHeight + 2;
         DevGui_DrawBox(x, x_4, rowWidth, rowHeight, (const uint8_t *)&dvar->latched);
@@ -867,7 +868,7 @@ void __cdecl DevGui_DrawSliders(const DevMenuItem *menu)
             DevGui_DrawSingleSlider(x, x_4, rowWidth, rowHeight, fractiona, (const uint8_t *)p_current);
         }
     }
-    else if (dvar->type == 2 || dvar->type == 3 || dvar->type == 4)
+    else if (dvar->type == DVAR_TYPE_FLOAT_2 || dvar->type == DVAR_TYPE_FLOAT_3 || dvar->type == DVAR_TYPE_FLOAT_4)
     {
         for (rowa = 0; rowa < rowCount; ++rowa)
         {
@@ -884,7 +885,7 @@ void __cdecl DevGui_DrawSliders(const DevMenuItem *menu)
     else
     {
         x_4 += rowHeight + 2;
-        if (dvar->type)
+        if (dvar->type != DVAR_TYPE_BOOL)
         {
             switch (dvar->type)
             {
@@ -992,9 +993,9 @@ void __cdecl DevGui_DrawDvarValue(int32_t x, int32_t y, const dvar_s *dvar)
     const char *v4; // [esp+0h] [ebp-8h]
     char *text; // [esp+4h] [ebp-4h]
 
-    if (dvar->type)
+    if (dvar->type != DVAR_TYPE_BOOL)
     {
-        if (dvar->type == 6)
+        if (dvar->type == DVAR_TYPE_ENUM)
         {
             v3 = Dvar_DisplayableLatchedValue(dvar);
             text = va("%i: %s", dvar->latched.integer, v3);
@@ -1343,11 +1344,11 @@ void __cdecl DevGui_KeyPressed(int32_t key)
     if (devguiGlob.bindNextKey)
     {
         devguiGlob.bindNextKey = 0;
-        if (key != 27)
+        if (key != K_ESCAPE)
         {
-            if (key == 9 || key == 167)
+            if (key == K_TAB || key == K_F1)
             {
-                Com_Printf(11, "Can't rebind 'tab' or 'F1'\n");
+                Com_Printf(CON_CHANNEL_DEVGUI, "Can't rebind 'tab' or 'F1'\n");
             }
             else
             {
@@ -2163,7 +2164,7 @@ void __cdecl DevGui_AddGraphKnot(DevGraph *graph, int32_t localClientNum)
         MyAssertHandler(".\\devgui\\devgui.cpp", 1795, 0, "%s", "graph->selectedKnot < *graph->knotCount");
     if (*graph->knotCount == graph->knotCountMax)
     {
-        Com_Printf(11, "^3Maximum number of knots have reached for this graph\n");
+        Com_Printf(CON_CHANNEL_DEVGUI, "^3Maximum number of knots have reached for this graph\n");
     }
     else
     {

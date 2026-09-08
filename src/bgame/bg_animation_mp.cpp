@@ -11,7 +11,7 @@
 #include <universal/com_memory.h>
 #include <script/scr_main.h>
 
-animStringItem_t animParseModesStr[6] =
+animStringItem_t animParseModesStr[NUM_PARSEMODES + 1] =
 {
   { "defines", -1 },
   { "animations", -1 },
@@ -21,15 +21,15 @@ animStringItem_t animParseModesStr[6] =
   { NULL, -1 }
 }; // idb
 
-int numDefines[10] = { 0 };
+int numDefines[NUM_ANIM_CONDITIONS] = { 0 };
 char defineStrings[10000] = { 0 };
-animStringItem_t defineStr[10][16];
-uint32_t defineBits[10][16][2];
+animStringItem_t defineStr[NUM_ANIM_CONDITIONS][16];
+uint32_t defineBits[NUM_ANIM_CONDITIONS][16][2];
 animStringItem_t weaponStrings[128] = { 0 };
 
-animStringItem_t animStateStr[2] = { { "COMBAT", -1 }, { NULL, -1 } };
+animStringItem_t animStateStr[MAX_AISTATES + 1] = { { "COMBAT", -1 }, { NULL, -1 } };
 
-animStringItem_t animMoveTypesStr[44] =
+animStringItem_t animMoveTypesStr[NUM_ANIM_MOVETYPES + 1] =
 {
   { "** UNUSED **", -1 },
   { "IDLE", -1 },
@@ -77,7 +77,7 @@ animStringItem_t animMoveTypesStr[44] =
   { NULL, -1 }
 };
 
-animStringItem_t animEventTypesStr[22] =
+animStringItem_t animEventTypesStr[NUM_ANIM_EVENTTYPES + 1] =
 {
   { "PAIN", -1 },
   { "DEATH", -1 },
@@ -103,7 +103,7 @@ animStringItem_t animEventTypesStr[22] =
   { NULL, -1 }
 };
 
-animStringItem_t animBodyPartsStr[5] =
+animStringItem_t animBodyPartsStr[NUM_ANIM_BODYPARTS + 1] =
 {
   { "** UNUSED **", -1 },
   { "LEGS", -1 },
@@ -114,7 +114,7 @@ animStringItem_t animBodyPartsStr[5] =
 
 animStringItem_t animConditionMountedStr[3] = { { "** UNUSED **", -1 }, { "MG42", -1 }, { NULL, -1 } };
 
-animStringItem_t animWeaponClassStr[11] =
+animStringItem_t animWeaponClassStr[WEAPCLASS_NUM + 1] =
 {
   { "RIFLE", -1 },
   { "MG", -1 },
@@ -129,18 +129,18 @@ animStringItem_t animWeaponClassStr[11] =
   { NULL, -1 }
 };
 
-animStringItem_t animWeaponPositionStr[3] = { { "HIP", -1 }, { "ADS", -1 }, { NULL, -1 } };
+animStringItem_t animWeaponPositionStr[NUM_ANIM_WEAPONPOSITIONS + 1] = { { "HIP", -1 }, { "ADS", -1 }, { NULL, -1 } };
 
-animStringItem_t animStrafeStateStr[4] = { { "NOT", -1 }, { "LEFT", -1 }, { "RIGHT", -1 }, { NULL, -1 } };
+animStringItem_t animStrafeStateStr[NUM_ANIM_STRAFESTATES + 1] = { { "NOT", -1 }, { "LEFT", -1 }, { "RIGHT", -1 }, { NULL, -1 } };
 
-animStringItem_t animPerkStateStr[4] =
+animStringItem_t animPerkStateStr[NUM_ANIM_PERKSTATES + 1] =
 {
   { "** UNUSED **", -1 },
   { "LASTSTAND", -1 },
   { "GRENADEDEATH", -1 },
   { NULL, -1 }
 };
-animStringItem_t animConditionsStr[11] =
+animStringItem_t animConditionsStr[NUM_ANIM_CONDITIONS + 1] =
 {
   { "PLAYERANIMTYPE", -1 },
   { "WEAPONCLASS", -1 },
@@ -155,7 +155,7 @@ animStringItem_t animConditionsStr[11] =
   { NULL, -1 }
 };
 
-animConditionTable_t animConditionsTable[10] =
+animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
 {
   { ANIM_CONDTYPE_BITFLAGS, weaponStrings },
   { ANIM_CONDTYPE_BITFLAGS, animWeaponClassStr },
@@ -370,14 +370,14 @@ void __cdecl BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, 
                 {
                     if (i >= scriptItem->numConditions)
                         goto LABEL_34;
-                    if (scriptItem->conditions[i].index == 8)
+                    if (scriptItem->conditions[i].index == ANIM_COND_STRAFING)
                         break;
                 }
-                if (scriptItem->conditions[i].value[0] == 1)
+                if (scriptItem->conditions[i].value[0] == ANIM_STRAFE_LEFT)
                 {
                     scriptData->animations[command->animIndex[partIndex]].flags |= 0x10u;
                 }
-                else if (scriptItem->conditions[i].value[0] == 2)
+                else if (scriptItem->conditions[i].value[0] == ANIM_STRAFE_RIGHT)
                 {
                     scriptData->animations[command->animIndex[partIndex]].flags |= 0x20u;
                 }
@@ -530,14 +530,14 @@ int32_t __cdecl BG_PlayAnim(
                     {
                         if (bodyPart == ANIM_BP_BOTH)
                             Com_Printf(
-                                19,
+                                CON_CHANNEL_ANIM,
                                 "Playing (client %i) %s on %s\n",
                                 ps->clientNum,
                                 globalScriptData->animations[animNum].name,
                                 "body");
                         else
                             Com_Printf(
-                                19,
+                                CON_CHANNEL_ANIM,
                                 "Playing (client %i) %s on %s\n",
                                 ps->clientNum,
                                 globalScriptData->animations[animNum].name,
@@ -560,12 +560,12 @@ int32_t __cdecl BG_PlayAnim(
             }
             else if (xanim_debug->current.enabled && (ps->legsAnim & 0xFFFFFDFF) != animNum)
             {
-                Com_Printf(19, "anim failed because");
+                Com_Printf(CON_CHANNEL_ANIM, "anim failed because");
                 if ((ps->legsAnim & 0xFFFFFDFF) == animNum)
                 {
-                    Com_Printf(19, ", isContinue is true");
+                    Com_Printf(CON_CHANNEL_ANIM, ", isContinue is true");
                     Com_Printf(
-                        19,
+                        CON_CHANNEL_ANIM,
                         ", legsAnim is %s, asking to play %s",
                         globalScriptData->animations[ps->legsAnim].name,
                         globalScriptData->animations[animNum].name);
@@ -573,13 +573,13 @@ int32_t __cdecl BG_PlayAnim(
                 if (setTimer)
                 {
                     if ((globalScriptData->animations[animNum].flags & 0x80) == 0)
-                        Com_Printf(19, ", on a non-looped anim");
+                        Com_Printf(CON_CHANNEL_ANIM, ", on a non-looped anim");
                 }
                 else
                 {
-                    Com_Printf(19, ", setTimer is false");
+                    Com_Printf(CON_CHANNEL_ANIM, ", setTimer is false");
                 }
-                Com_Printf(19, "\n");
+                Com_Printf(CON_CHANNEL_ANIM, "\n");
             }
         }
         else
@@ -593,14 +593,14 @@ int32_t __cdecl BG_PlayAnim(
             {
                 if (bodyPart == ANIM_BP_BOTH)
                     Com_Printf(
-                        19,
+                        CON_CHANNEL_ANIM,
                         "Playing (client %i) %s on %s\n",
                         ps->clientNum,
                         globalScriptData->animations[animNum].name,
                         "body");
                 else
                     Com_Printf(
-                        19,
+                        CON_CHANNEL_ANIM,
                         "Playing (client %i) %s on %s\n",
                         ps->clientNum,
                         globalScriptData->animations[animNum].name,
@@ -722,7 +722,7 @@ int32_t __cdecl BG_AnimScriptAnimation(playerState_s *ps, aistateEnum_t state, s
     {
         if (scriptItem->numCommands)
         {
-            BG_SetConditionBit(ps->clientNum, 3, movetype);
+            BG_SetConditionBit(ps->clientNum, ANIM_COND_MOVETYPE, movetype);
 
             iassert(ps->clientNum <= MAX_CLIENTS);
 
@@ -739,14 +739,14 @@ int32_t __cdecl BG_AnimScriptAnimation(playerState_s *ps, aistateEnum_t state, s
         else
         {
             if (xanim_debug->current.enabled)
-                Com_Printf(19, "Animation has no commands associated, finding new animation\n");
+                Com_Printf(CON_CHANNEL_ANIM, "Animation has no commands associated, finding new animation\n");
             return -1;
         }
     }
     else
     {
         if (xanim_debug->current.enabled)
-            Com_Printf(19, "Failed playing animation, finding new animation\n");
+            Com_Printf(CON_CHANNEL_ANIM, "Failed playing animation, finding new animation\n");
         return -1;
     }
 }
@@ -766,19 +766,19 @@ animScriptItem_t *__cdecl BG_FirstValidItem(uint32_t client, animScript_t *scrip
     {
         if (animscript_debug->current.enabled)
         {
-            Com_Printf(19, "Evaluating whether to play: ");
+            Com_Printf(CON_CHANNEL_ANIM, "Evaluating whether to play: ");
             for (command = 0; command < (*ppScriptItem)->numCommands; ++command)
             {
                 const char* BodyPart = GetBodyPart((*ppScriptItem)->commands[command].bodyPart[0]); // eax
                 Com_Printf(
-                    19,
+                    CON_CHANNEL_ANIM,
                     "%s on %s",
                     globalScriptData->animations[(*ppScriptItem)->commands[command].animIndex[0]].name,
                     BodyPart);
                 if (command > 0)
-                    Com_Printf(19, ", ");
+                    Com_Printf(CON_CHANNEL_ANIM, ", ");
             }
-            Com_Printf(19, "\n");
+            Com_Printf(CON_CHANNEL_ANIM, "\n");
         }
         
         bcassert(client, MAX_CLIENTS);
@@ -816,37 +816,37 @@ int32_t __cdecl BG_EvaluateConditions(clientInfo_t *ci, animScriptItem_t *script
         {
             switch (scriptItem->conditions[i].index)
             {
-            case 0:
+            case ANIM_COND_PLAYERANIMTYPE:
                 index = GetValueForBitfield(scriptItem->conditions[i].value[0]);
-                Com_Printf(19, "Checking to see if weapon animtype is %i...\n", index);
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if weapon animtype is %i...\n", index);
                 break;
-            case 1:
+            case ANIM_COND_WEAPONCLASS:
                 ValueForBitfield = GetValueForBitfield(scriptItem->conditions[i].value[0]);
                 WeaponTypeName = GetWeaponTypeName(ValueForBitfield);
-                Com_Printf(19, "Checking to see if weapon type is %s...\n", WeaponTypeName);
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if weapon type is %s...\n", WeaponTypeName);
                 break;
-            case 2:
-                Com_Printf(19, "Checking to see if player is mounted...\n");
+            case ANIM_COND_MOUNTED:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if player is mounted...\n");
                 break;
-            case 3:
+            case ANIM_COND_MOVETYPE:
                 v4 = GetValueForBitfield(scriptItem->conditions[i].value[0]);
                 MoveTypeName = GetMoveTypeName(v4);
-                Com_Printf(19, "Checking to see if movetype is %s...\n", MoveTypeName);
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if movetype is %s...\n", MoveTypeName);
                 break;
-            case 4:
-                Com_Printf(19, "Checking to see if player using underhand...\n");
+            case ANIM_COND_UNDERHAND:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if player using underhand...\n");
                 break;
-            case 5:
-                Com_Printf(19, "Checking to see if player is crouching...\n");
+            case ANIM_COND_CROUCHING:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if player is crouching...\n");
                 break;
-            case 6:
-                Com_Printf(19, "Checking to see if player is firing...\n");
+            case ANIM_COND_FIRING:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if player is firing...\n");
                 break;
-            case 7:
-                Com_Printf(19, "Checking weapon position...\n");
+            case ANIM_COND_WEAPON_POSITION:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking weapon position...\n");
                 break;
-            case 8:
-                Com_Printf(19, "Checking to see if player is strafing...\n");
+            case ANIM_COND_STRAFING:
+                Com_Printf(CON_CHANNEL_ANIM, "Checking to see if player is strafing...\n");
                 break;
             default:
                 break;
@@ -858,7 +858,7 @@ int32_t __cdecl BG_EvaluateConditions(clientInfo_t *ci, animScriptItem_t *script
             if (type == ANIM_CONDTYPE_VALUE && ci->clientConditions[cond->index][0] != cond->value[0])
             {
                 if (animscript_debug->current.enabled)
-                    Com_Printf(19, "failed\n");
+                    Com_Printf(CON_CHANNEL_ANIM, "failed\n");
                 return 0;
             }
         }
@@ -866,14 +866,14 @@ int32_t __cdecl BG_EvaluateConditions(clientInfo_t *ci, animScriptItem_t *script
             && (cond->value[1] & ci->clientConditions[cond->index][1]) == 0)
         {
             if (animscript_debug->current.enabled)
-                Com_Printf(19, "failed\n");
+                Com_Printf(CON_CHANNEL_ANIM, "failed\n");
             return 0;
         }
         ++i;
         ++cond;
     }
     if (animscript_debug->current.enabled)
-        Com_Printf(19, "Success\n");
+        Com_Printf(CON_CHANNEL_ANIM, "Success\n");
     return 1;
 }
 
@@ -883,67 +883,67 @@ const char *__cdecl GetMoveTypeName(int32_t type)
 
     switch (type)
     {
-    case 0:
+    case ANIM_MT_UNUSED:
         result = "ANIM_MT_UNUSED";
         break;
-    case 1:
+    case ANIM_MT_IDLE:
         result = "Idle";
         break;
-    case 2:
+    case ANIM_MT_IDLECR:
         result = "Crouching Idle";
         break;
-    case 3:
+    case ANIM_MT_IDLEPRONE:
         result = "Prone Idle";
         break;
-    case 4:
+    case ANIM_MT_WALK:
         result = "Walk";
         break;
-    case 5:
+    case ANIM_MT_WALKBK:
         result = "Walk Backward";
         break;
-    case 6:
+    case ANIM_MT_WALKCR:
         result = "Crouching Walk";
         break;
-    case 7:
+    case ANIM_MT_WALKCRBK:
         result = "Crouching Walk Backward";
         break;
-    case 8:
+    case ANIM_MT_WALKPRONE:
         result = "Prone Crawl";
         break;
-    case 9:
+    case ANIM_MT_WALKPRONEBK:
         result = "Prone Crawl Backward";
         break;
-    case 10:
+    case ANIM_MT_RUN:
         result = "Run";
         break;
-    case 11:
+    case ANIM_MT_RUNBK:
         result = "Run Backward";
         break;
-    case 12:
+    case ANIM_MT_RUNCR:
         result = "Crouching Run";
         break;
-    case 13:
+    case ANIM_MT_RUNCRBK:
         result = "Crouching Run Backward";
         break;
-    case 14:
+    case ANIM_MT_TURNRIGHT:
         result = "Turning Right";
         break;
-    case 15:
+    case ANIM_MT_TURNLEFT:
         result = "Turning Left";
         break;
-    case 16:
+    case ANIM_MT_TURNRIGHTCR:
         result = "Turning Right Crouching";
         break;
-    case 17:
+    case ANIM_MT_TURNLEFTCR:
         result = "Turning Left Crouching";
         break;
-    case 18:
+    case ANIM_MT_CLIMBUP:
         result = "Climbing Up";
         break;
-    case 19:
+    case ANIM_MT_CLIMBDOWN:
         result = "Climbing Down";
         break;
-    case 20:
+    case ANIM_MT_SPRINT:
         result = "Sprinting";
         break;
     default:
@@ -1013,7 +1013,7 @@ int32_t __cdecl BG_AnimScriptEvent(playerState_s *ps, scriptAnimEventTypes_t eve
         return -1;
 
     if (G_IsServerGameSystem(ps->clientNum))
-        Com_Printf(19, "event: %s\n", animEventTypesStr[event].string);
+        Com_Printf(CON_CHANNEL_ANIM, "event: %s\n", animEventTypesStr[event].string);
 
     if (!globalScriptData->scriptEvents[event].numItems)
         return -1;
@@ -1051,7 +1051,7 @@ void __cdecl BG_SetConditionValue(uint32_t client, uint32_t condition, uint64_t 
 
         ConditionBit = BG_GetConditionBit(&bgs->clientinfo[client], condition);
         ConditionString = BG_GetConditionString(condition, ConditionBit);
-        Com_Printf(19, "condition: %s: %s\n", animConditionsStr[condition].string, ConditionString);
+        Com_Printf(CON_CHANNEL_ANIM, "condition: %s: %s\n", animConditionsStr[condition].string, ConditionString);
     }
 }
 
@@ -1065,33 +1065,33 @@ const char *__cdecl BG_GetConditionString(int32_t condition, uint32_t value)
 
     switch (condition)
     {
-    case 0:
+    case ANIM_COND_PLAYERANIMTYPE:
         result = BG_GetPlayerAnimTypeName(value);
         break;
-    case 1:
+    case ANIM_COND_WEAPONCLASS:
         result = animWeaponClassStr[value].string;
         break;
-    case 2:
+    case ANIM_COND_MOUNTED:
         result = animConditionMountedStr[value].string;
         break;
-    case 3:
+    case ANIM_COND_MOVETYPE:
         iassert(value <= 0x2A);
 
         result = animMoveTypesStr[value].string;
         break;
-    case 4:
-    case 5:
-    case 6:
+    case ANIM_COND_UNDERHAND:
+    case ANIM_COND_CROUCHING:
+    case ANIM_COND_FIRING:
         if (value)
             v4 = "true";
         else
             v4 = "false";
         result = v4;
         break;
-    case 7:
+    case ANIM_COND_WEAPON_POSITION:
         result = animWeaponPositionStr[value].string;
         break;
-    case 8:
+    case ANIM_COND_STRAFING:
         result = animStrafeStateStr[value].string;
         break;
     default:
@@ -1120,7 +1120,7 @@ void __cdecl BG_SetConditionBit(uint32_t client, int32_t condition, int32_t valu
         && G_IsServerGameSystem(client))
     {
         ConditionString = BG_GetConditionString(condition, value);
-        Com_Printf(19, "condition: %s: %s\n", animConditionsStr[condition].string, ConditionString);
+        Com_Printf(CON_CHANNEL_ANIM, "condition: %s: %s\n", animConditionsStr[condition].string, ConditionString);
     }
 
     bgs->clientinfo[client].clientConditions[condition][0] = 0;
@@ -1158,30 +1158,30 @@ void __cdecl BG_AnimUpdatePlayerStateConditions(pmove_t *pmove)
 
     iassert(weaponDef);
 
-    BG_SetConditionBit(ps->clientNum, 0, weaponDef->playerAnimType);
-    BG_SetConditionBit(ps->clientNum, 1, weaponDef->weapClass);
+    BG_SetConditionBit(ps->clientNum, ANIM_COND_PLAYERANIMTYPE, weaponDef->playerAnimType);
+    BG_SetConditionBit(ps->clientNum, ANIM_COND_WEAPONCLASS, weaponDef->weapClass);
 
     if ((ps->eFlags & 0x40000) != 0)
-        BG_SetConditionValue(ps->clientNum, 7u, 1u);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_ADS);
     else
-        BG_SetConditionValue(ps->clientNum, 7u, 0);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_HIP);
 
     if ((ps->eFlags & 0x300) != 0)
-        BG_SetConditionValue(ps->clientNum, 2u, 1u);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_MOUNTED, 1u);
     else
-        BG_SetConditionValue(ps->clientNum, 2u, 0);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_MOUNTED, 0);
 
-    BG_SetConditionValue(ps->clientNum, 4u, ps->viewangles[0] > 0.0);
+    BG_SetConditionValue(ps->clientNum, ANIM_COND_UNDERHAND, ps->viewangles[0] > 0.0);
 
     if ((pmove->cmd.buttons & BUTTON_ATTACK) != 0)
-        BG_SetConditionValue(ps->clientNum, 6u, 1u);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_FIRING, 1u);
     else
-        BG_SetConditionValue(ps->clientNum, 6u, 0);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_FIRING, 0);
 
     if (ps->pm_type == PM_LASTSTAND)
-        BG_SetConditionValue(ps->clientNum, 9u, 1u);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_PERK, ANIM_PERK_LASTSTAND);
     else
-        BG_SetConditionValue(ps->clientNum, 9u, 0);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_PERK, ANIM_PERK_UNUSED);
 }
 
 bool __cdecl BG_IsCrouchingAnim(const clientInfo_t *ci, int32_t animNum)
@@ -1844,7 +1844,7 @@ void __cdecl BG_PlayerAngles(const entityState_s *es, clientInfo_t *ci)
         ci->torso.pitching = 1;
         ci->legs.yawing = 1;
     }
-    else if (BG_GetConditionValue(ci, 6u))
+    else if (BG_GetConditionValue(ci, ANIM_COND_FIRING))
     {
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
@@ -1858,7 +1858,7 @@ LABEL_15:
         BG_SwingAngles(vHeadAngles_4, 0.0, 90.0, bg_swingSpeed->current.value, &ci->torso.yawAngle, &ci->torso.yawing);
         goto LABEL_28;
     }
-    if ((BG_GetConditionValue(ci, 3u) & 0xC0000) != 0)
+    if ((BG_GetConditionValue(ci, ANIM_COND_MOVETYPE) & 0xC0000) != 0)
     {
         BG_SwingAngles(vLegsAngles_4, 0.0, 0.0, bg_swingSpeed->current.value, &ci->torso.yawAngle, &ci->torso.yawing);
     }
@@ -1935,7 +1935,7 @@ LABEL_38:
         ci->torso.yawAngle = vHeadAngles_4;
         ci->legs.yawAngle = vHeadAngles_4;
     }
-    else if ((BG_GetConditionValue(ci, 3u) & 0xC0000) != 0)
+    else if ((BG_GetConditionValue(ci, ANIM_COND_MOVETYPE) & 0xC0000) != 0)
     {
         ci->torso.yawAngle = vHeadAngles_4 + moveDir;
         ci->legs.yawAngle = vHeadAngles_4 + moveDir;
@@ -1943,7 +1943,7 @@ LABEL_38:
     MAX_PITCH_FRACTION = 2.0f;
     if ((es->lerp.eFlags & 0x20000) != 0
         || (es->lerp.eFlags & 0x300) != 0
-        || (BG_GetConditionValue(ci, 3u) & 0xC0000) != 0
+        || (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE) & 0xC0000) != 0
         || es->lerp.eFlags == 0x8000)
     {
         BG_SwingAngles(0.0f, 0.0f, 45.0f, 0.15000001f, &ci->torso.pitchAngle, &ci->torso.pitching);
@@ -2058,37 +2058,37 @@ void __cdecl BG_AnimPlayerConditions(const entityState_s *es, clientInfo_t *ci)
     ret = BG_GetConditionBit(ci, ANIM_COND_MOVETYPE);
     iassert(ret < NUM_ANIM_MOVETYPES);
 
-    BG_SetConditionBit(es->clientNum, 0, weaponDef->playerAnimType);
-    BG_SetConditionBit(es->clientNum, 1, weaponDef->weapClass);
+    BG_SetConditionBit(es->clientNum, ANIM_COND_PLAYERANIMTYPE, weaponDef->playerAnimType);
+    BG_SetConditionBit(es->clientNum, ANIM_COND_WEAPONCLASS, weaponDef->weapClass);
 
     if ((es->lerp.eFlags & 0x40000) != 0)
-        BG_SetConditionValue(es->clientNum, 7u, 1u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_ADS);
     else
-        BG_SetConditionValue(es->clientNum, 7u, 0);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_HIP);
 
     if ((es->lerp.eFlags & 0x300) != 0)
-        BG_SetConditionValue(es->clientNum, 2u, 1u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_MOUNTED, 1u);
     else
-        BG_SetConditionValue(es->clientNum, 2u, 0);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_MOUNTED, 0);
 
-    BG_SetConditionValue(es->clientNum, 4u, ci->playerAngles[0] > 0.0);
+    BG_SetConditionValue(es->clientNum, ANIM_COND_UNDERHAND, ci->playerAngles[0] > 0.0);
 
     if ((es->lerp.eFlags & 4) != 0)
-        BG_SetConditionValue(es->clientNum, 5u, 1u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_CROUCHING, 1u);
     else
-        BG_SetConditionValue(es->clientNum, 5u, 0);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_CROUCHING, 0);
 
     if ((es->lerp.eFlags & 0x40) != 0)
-        BG_SetConditionValue(es->clientNum, 6u, 1u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_FIRING, 1u);
     else
-        BG_SetConditionValue(es->clientNum, 6u, 0);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_FIRING, 0);
 
     uint32_t legsAnim = es->legsAnim & 0xFFFFFDFF; // [esp+28h] [ebp-4h]
 
     if (bgs->animScriptData.animations[legsAnim].movetype
-        && BG_GetConditionValue(ci, 3u) != bgs->animScriptData.animations[legsAnim].movetype)
+        && BG_GetConditionValue(ci, ANIM_COND_MOVETYPE) != bgs->animScriptData.animations[legsAnim].movetype)
     {
-        BG_SetConditionValue(es->clientNum, 3u, bgs->animScriptData.animations[legsAnim].movetype);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_MOVETYPE, bgs->animScriptData.animations[legsAnim].movetype);
         uint32_t ret = BG_GetConditionBit(ci, ANIM_COND_MOVETYPE);
         iassert(ret >= ANIM_MT_UNUSED);
 
@@ -2097,15 +2097,15 @@ void __cdecl BG_AnimPlayerConditions(const entityState_s *es, clientInfo_t *ci)
     }
     if ((bgs->animScriptData.animations[legsAnim].flags & 0x10) != 0)
     {
-        BG_SetConditionValue(es->clientNum, 8u, 1u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_STRAFING, ANIM_STRAFE_LEFT);
     }
     else if ((bgs->animScriptData.animations[legsAnim].flags & 0x20) != 0)
     {
-        BG_SetConditionValue(es->clientNum, 8u, 2u);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_STRAFING, ANIM_STRAFE_RIGHT);
     }
     else
     {
-        BG_SetConditionValue(es->clientNum, 8u, 0);
+        BG_SetConditionValue(es->clientNum, ANIM_COND_STRAFING, ANIM_STRAFE_NOT);
     }
 }
 
@@ -2266,7 +2266,7 @@ void BG_FinalizePlayerAnims()
                         if (pCurrAnim->moveSpeed <= 1.0)
                         {
                             v7 = Vec3Length(vDelta);
-                            Com_Printf(19, "Anim '%s' moves %f units over %fms\n", pCurrAnim->name, v7, duration);
+                            Com_Printf(CON_CHANNEL_ANIM, "Anim '%s' moves %f units over %fms\n", pCurrAnim->name, v7, duration);
                         }
                         else
                         {
@@ -2312,7 +2312,7 @@ void BG_FinalizePlayerAnims()
                             moveSpeed = pCurrAnim->moveSpeed;
                             v6 = Vec3Length(vDelta);
                             Com_Printf(
-                                19,
+                                CON_CHANNEL_ANIM,
                                 "Anim '%s' moves %f units over %fms (%f units/s), will play back at %.1f%% speed when player moves at ful"
                                 "l %s speed (%.0f units/sec)\n",
                                 pCurrAnim->name,
@@ -2395,20 +2395,20 @@ void __cdecl BG_SetupAnimNoteTypes(animScriptData_t *scriptData)
     iassert(bgs);
 
     for (animIndex = 0; animIndex < scriptData->numAnimations; ++animIndex)
-        scriptData->animations[animIndex].noteType = 0;
+        scriptData->animations[animIndex].noteType = ANIM_NOTE_NONE;
 
     if (!bgs->anim_user)
     {
-        script = &scriptData->scriptEvents[10];
+        script = &scriptData->scriptEvents[ANIM_ET_RELOAD];
         for (itemIndex = 0; itemIndex < script->numItems; ++itemIndex)
         {
             scriptItem = script->items[itemIndex];
             for (cmdIndex = 0; cmdIndex < scriptItem->numCommands; ++cmdIndex)
             {
                 if (scriptItem->commands[cmdIndex].bodyPart[0])
-                    scriptData->animations[scriptItem->commands[cmdIndex].animIndex[0]].noteType = 1;
+                    scriptData->animations[scriptItem->commands[cmdIndex].animIndex[0]].noteType = ANIM_NOTE_RELOAD;
                 if (scriptItem->commands[cmdIndex].bodyPart[1])
-                    scriptData->animations[scriptItem->commands[cmdIndex].animIndex[1]].noteType = 1;
+                    scriptData->animations[scriptItem->commands[cmdIndex].animIndex[1]].noteType = ANIM_NOTE_RELOAD;
             }
         }
     }
@@ -2449,16 +2449,7 @@ void __cdecl BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pL
     BG_InitWeaponStrings();
     memset(defineStr, 0, sizeof(defineStr));
     memset(defineStrings, 0, sizeof(defineStrings));
-    numDefines[0] = 0;
-    numDefines[1] = 0;
-    numDefines[2] = 0;
-    numDefines[3] = 0;
-    numDefines[4] = 0;
-    numDefines[5] = 0;
-    numDefines[6] = 0;
-    numDefines[7] = 0;
-    numDefines[8] = 0;
-    numDefines[9] = 0;
+    memset(numDefines, 0, sizeof(numDefines));
     defineStringsOffset = 0;
     for (i = 0; i < 3; ++i)
         indexes[i] = -1;

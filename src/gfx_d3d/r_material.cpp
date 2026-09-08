@@ -527,7 +527,7 @@ Material *__cdecl Material_MakeDefault(char *name)
             MyAssertHandler(".\\r_material.cpp", 1162, 0, "%s", "!strcmp( name, MATERIAL_DEFAULT_NAME )");
         Com_Error(ERR_FATAL, "couldn't load material '$default'");
     }
-    Com_PrintWarning(8, "WARNING: Could not find material '%s'\n", name);
+    Com_PrintWarning(CON_CHANNEL_GFX, "WARNING: Could not find material '%s'\n", name);
     return Material_Duplicate(rgp.defaultMaterial, name);
 }
 
@@ -612,7 +612,7 @@ void __cdecl R_MaterialList_f()
     float v7; // [esp+4154h] [ebp-4h]
 
     v3 = 0;
-    Com_Printf(8, "-----------------------\n");
+    Com_Printf(CON_CHANNEL_GFX, "-----------------------\n");
     inData = 0;
     DB_EnumXAssets(ASSET_TYPE_MATERIAL, (void(__cdecl *)(XAssetHeader, void*))R_GetMaterialList, &inData, 0);
     // std::_Sort<ShadowCandidate *, int, bool(__cdecl *)(ShadowCandidate const &, ShadowCandidate const &)>(
@@ -621,7 +621,7 @@ void __cdecl R_MaterialList_f()
     //     (int)(8 * inData) >> 3,
     //     R_MaterialCompare);
     std::sort(&v6[0], &v6[inData], R_MaterialCompare);
-    Com_Printf(8, "geo KB   name\n");
+    Com_Printf(CON_CHANNEL_GFX, "geo KB   name\n");
     for (i = 0; i < inData; ++i)
     {
         v4 = &v6[i];
@@ -633,13 +633,13 @@ void __cdecl R_MaterialList_f()
             fmt = "%6.0f";
         else
             fmt = "%6.1f";
-        Com_Printf(8, fmt, v7);
-        Com_Printf(8, "   %s\n", material->info.name);
+        Com_Printf(CON_CHANNEL_GFX, fmt, v7);
+        Com_Printf(CON_CHANNEL_GFX, "   %s\n", material->info.name);
     }
-    Com_Printf(8, "-----------------------\n");
-    Com_Printf(8, "current total  %5.1f MB\n", (double)v3 / 1048576.0);
-    Com_Printf(8, "%i total geometry materials\n", inData);
-    Com_Printf(8, "Related commands: meminfo, imagelist, gfx_world, gfx_model, cg_drawfps, com_statmon, tempmeminfo\n");
+    Com_Printf(CON_CHANNEL_GFX, "-----------------------\n");
+    Com_Printf(CON_CHANNEL_GFX, "current total  %5.1f MB\n", (double)v3 / 1048576.0);
+    Com_Printf(CON_CHANNEL_GFX, "%i total geometry materials\n", inData);
+    Com_Printf(CON_CHANNEL_GFX, "Related commands: meminfo, imagelist, gfx_world, gfx_model, cg_drawfps, com_statmon, tempmeminfo\n");
 }
 
 void __cdecl R_GetMaterialList(XAssetHeader header, char *data)
@@ -710,7 +710,7 @@ char __cdecl Material_GetConstantValue(Material *material, const char *name, flo
 // (2) the relevant GfxStateBits entry has the cull/blend pattern (loadBits[0] & 0x7000F00)
 // == 0x800 and (loadBits[1] & 1), and (3) its unlit/depth technique [1] matches the
 // shadow-caster reference material's technique [1].  The state-bits entry index uses
-// stateBitsEntry[4] only when technique [5] is present (else 0).  surfaceFlags is read
+// stateBitsEntry[TECHNIQUE_UNLIT] only when TECHNIQUE_EMISSIVE is present (else 0).  surfaceFlags is read
 // from the KISAK_RADIANT trailing Material field (CoD4 stores it in the 56B MaterialInfo
 // at info+0x2C; kisak's 24B MaterialInfo lacks it — see r_material.h / Material_LoadRaw).
 // Only consumer is MaterialDef_10_LayeredMatHandle (radiant/materialdef.cpp).
@@ -720,14 +720,14 @@ bool __cdecl Material_CastsStencilShadow(Material *handle)
     if ((m->surfaceFlags & SURF_NOCASTSHADOW) != 0)
         return false;
     const MaterialTechniqueSet *techniqueSet = m->techniqueSet;
-    int idx = techniqueSet->techniques[5] ? (uint8_t)m->stateBitsEntry[4] : 0;
+    int idx = techniqueSet->techniques[TECHNIQUE_EMISSIVE] ? (uint8_t)m->stateBitsEntry[TECHNIQUE_UNLIT] : 0;
     const GfxStateBits *sb = &m->stateBitsTable[idx];
     if ((sb->loadBits[0] & 0x7000F00) != 0x800)
         return false;
     if ((sb->loadBits[1] & 1) == 0)
         return false;
-    return techniqueSet->techniques[1]
-        == rgp.shadowCasterMaterial->techniqueSet->techniques[1];
+    return techniqueSet->techniques[TECHNIQUE_BUILD_FLOAT_Z]
+        == rgp.shadowCasterMaterial->techniqueSet->techniques[TECHNIQUE_BUILD_FLOAT_Z];
 }
 #endif // KISAK_RADIANT
 
@@ -800,7 +800,7 @@ void __cdecl Material_ReleaseTechniqueSetResources(MaterialTechniqueSet *techniq
     int techType; // [esp+14h] [ebp-8h]
     int passIndex; // [esp+18h] [ebp-4h]
 
-    for (techType = 0; techType < 34; ++techType)
+    for (techType = TECHNIQUE_DEPTH_PREPASS; techType < TECHNIQUE_COUNT; ++techType)
     {
         technique = techniqueSet->techniques[techType];
         if (technique)
@@ -833,7 +833,7 @@ void __cdecl Material_ReloadTechniqueSetResources(MaterialTechniqueSet *techniqu
     int techType; // [esp+4h] [ebp-8h]
     int passIndex; // [esp+8h] [ebp-4h]
 
-    for (techType = 0; techType < 34; ++techType)
+    for (techType = TECHNIQUE_DEPTH_PREPASS; techType < TECHNIQUE_COUNT; ++techType)
     {
         technique = techniqueSet->techniques[techType];
         if (technique)
@@ -881,7 +881,7 @@ void __cdecl Material_Init()
         Material_PreLoadAllShaderText();
     }
     Material_LoadBuiltIn(s_builtInMaterials, 50);
-    Material_Register("statmon_warning_tris", 1);
+    Material_Register("statmon_warning_tris", IMAGE_TRACK_DEBUG);
 }
 
 void __cdecl Material_Shutdown()
@@ -899,7 +899,7 @@ void __cdecl Material_LoadBuiltIn(const BuiltInMaterialTable *mtlTable, int mtlT
     for (builtInMtlIndex = 0; builtInMtlIndex < mtlTableCount; ++builtInMtlIndex)
     {
         iassert(!*mtlTable[builtInMtlIndex].material);
-        *mtlTable[builtInMtlIndex].material = Material_Register((char *)mtlTable[builtInMtlIndex].name, 0);
+        *mtlTable[builtInMtlIndex].material = Material_Register((char *)mtlTable[builtInMtlIndex].name, IMAGE_TRACK_MISC);
         if (!*mtlTable[builtInMtlIndex].material)
             Com_Error(ERR_FATAL, "Could not find material '%s'", mtlTable[builtInMtlIndex].name);
     }
@@ -934,7 +934,7 @@ void __cdecl Material_PreventOverrideTechniqueGeneration()
 void __cdecl Material_UpdatePicmipForTexdef(const MaterialTextureDef *texdef)
 {
     iassert( texdef );
-    if (texdef->semantic != 11)
+    if (texdef->semantic != TS_WATER_MAP)
     {
         if (texdef->u.image)
             Image_UpdatePicmip(texdef->u.image);
@@ -989,7 +989,7 @@ void __cdecl Material_ReloadTextures(const Material *material)
         for (textureIter = 0; textureIter != textureCount; ++textureIter)
         {
             texture = &material->textureTable[textureIter];
-            if (texture->semantic != 11)
+            if (texture->semantic != TS_WATER_MAP)
             {
                 image = texture->u.image;
                 if (image > maxConvert && (!lastConverted || image < lastConverted))
@@ -1022,12 +1022,12 @@ void __cdecl R_Cmd_ReloadMaterialTextures()
         else
         {
             v0 = va("ReloadMaterialTextures: Material '%s' is not currently loaded.\n", name);
-            Com_Printf(8, v0);
+            Com_Printf(CON_CHANNEL_GFX, v0);
         }
     }
     else
     {
-        Com_Printf(8, "Usage: reloadmaterialtextures <materialname>\n");
+        Com_Printf(CON_CHANNEL_GFX, "Usage: reloadmaterialtextures <materialname>\n");
     }
 }
 

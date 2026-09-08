@@ -137,7 +137,7 @@ uint32_t __cdecl RB_UploadMaterialTechnique(const MaterialTechnique *tech, uint3
         || !strncmp(tech->name, "effect_", 7u))
     {
         vertDeclType = VERTDECL_PACKED;
-        if (techType >= 0xE && techType < 0x15)
+        if (techType >= TECHNIQUE_LIT_INSTANCED && techType < TECHNIQUE_LIT_END)
             vertDeclType = VERTDECL_STATICMODELCACHE;
     }
     else
@@ -169,7 +169,7 @@ void __cdecl RB_UploadShaderStep()
         while (mtlUploadGlob.get != mtlUploadGlob.put && !uploadCount)
         {
             techSet = mtlUploadGlob.techSet[mtlUploadGlob.get % 0x400];
-            if (mtlUploadGlob.techTypeIter)
+            if (mtlUploadGlob.techTypeIter != TECHNIQUE_DEPTH_PREPASS)
             {
                 while (1)
                 {
@@ -188,12 +188,12 @@ void __cdecl RB_UploadShaderStep()
                             }
                         }
                     }
-                    if (++mtlUploadGlob.techTypeIter == 30)
+                    if (++mtlUploadGlob.techTypeIter == TECHNIQUE_SHADOWCOOKIE_CASTER)
                         break;
                     if (uploadCount)
                         return;
                 }
-                mtlUploadGlob.techTypeIter = 0;
+                mtlUploadGlob.techTypeIter = TECHNIQUE_DEPTH_PREPASS;
             }
             else if (!techSet->hasBeenUploaded && !Material_WouldTechniqueSetBeOverridden(techSet))
             {

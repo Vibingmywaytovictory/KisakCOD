@@ -1296,7 +1296,7 @@ void __cdecl Con_Linefeed(int32_t localClientNum, uint32_t channel, int32_t flag
 
 void __cdecl CL_ConsoleFixPosition()
 {
-    CL_ConsolePrint(0, 0, "\n", 0, 0, 0);
+    CL_ConsolePrint(0, CON_CHANNEL_DONT_FILTER, "\n", 0, 0, 0);
     con.displayLineOffset = con.consoleWindow.activeLineCount - 1;
 }
 
@@ -1384,7 +1384,7 @@ void __cdecl CL_DeathMessagePrint(
         deathMsgLenh = deathMsgLeng + 1;
         bcassert(deathMsgLenh, ARRAY_COUNT(deathMsg)); // 0x400
         deathMsg[deathMsgLenh] = 0;
-        CL_ConsolePrint(localClientNum, 5, deathMsg, 0, con.visiblePixelWidth, 0);
+        CL_ConsolePrint(localClientNum, CON_CHANNEL_OBITUARY, deathMsg, 0, con.visiblePixelWidth, 0);
     }
 }
 
@@ -2666,7 +2666,7 @@ void __cdecl ConDrawInput_DetailedDvarMatch(char *str)
         ConDrawInput_Text(dvarInfo, con_inputDvarInfoColor);
         conDrawInputGlob.y = conDrawInputGlob.y + conDrawInputGlob.fontHeight;
         conDrawInputGlob.x = conDrawInputGlob.leftX;
-        if (dvar->type == 6 && Cmd_Argc() == 2)
+        if (dvar->type == DVAR_TYPE_ENUM && Cmd_Argc() == 2)
             ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
     }
 }

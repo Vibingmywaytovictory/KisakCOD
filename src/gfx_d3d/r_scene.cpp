@@ -274,7 +274,7 @@ void __cdecl R_AddOmniLightToScene(const float *org, float radius, float r, floa
                 dst = &scene.addedLight[scene.addedLightCount++];
                 memset(&dst->type, 0, sizeof(GfxLight));
                 dst->def = rgp.dlightDef;
-                dst->type = 3;
+                dst->type = GFX_LIGHT_TYPE_OMNI;
                 dst->origin[0] = *org;
                 dst->origin[1] = org[1];
                 dst->origin[2] = org[2];
@@ -332,7 +332,7 @@ void __cdecl R_AddSpotLightToScene(const float *org, const float *dir, float rad
                 spotLightOffset = r_spotLightStartRadius->current.value / v8;
                 memset(&dst->type, 0, sizeof(GfxLight));
                 dst->def = rgp.dlightDef;
-                dst->type = 2;
+                dst->type = GFX_LIGHT_TYPE_SPOT;
                 dst->origin[0] = *org;
                 dst->origin[1] = org[1];
                 dst->origin[2] = org[2];
@@ -414,7 +414,7 @@ void __cdecl R_AddBModelSurfacesCamera(
             0,
             "gfxDrawMethod.emissiveTechType doesn't index TECHNIQUE_COUNT\n\t%i not in [0, %i)",
             gfxDrawMethod.emissiveTechType,
-            34);
+            TECHNIQUE_COUNT);
     if (r_drawDecals->current.enabled)
         surfaceCount = bmodel->surfaceCount;
     else
@@ -710,12 +710,12 @@ GfxDrawSurf *__cdecl R_AddXModelSurfaces(
                 }
                 if (skinnedCachedOffset == -2)
                 {
-                    surfType = 7;
+                    surfType = SF_XMODEL_RIGID;
                 }
                 else
                 {
                     iassert(skinnedCachedOffset == -1);
-                    surfType = 8;
+                    surfType = SF_XMODEL_RIGID_SKINNED;
                 }
 
                 bcassert(surfId, (1 << MTL_SORT_OBJECT_ID_BITS));
@@ -954,7 +954,7 @@ GfxDrawSurf *__cdecl R_AddDObjSurfaces(
                 continue;
             if (*(uint32_t *)modelSurf == -2)
             {
-                surfType = 7;
+                surfType = SF_XMODEL_RIGID;
                 surfSize = 56;
             }
             else
@@ -968,7 +968,7 @@ GfxDrawSurf *__cdecl R_AddDObjSurfaces(
                     modelSurf += surfSize;
                     goto LABEL_18;
                 }
-                surfType = 9;
+                surfType = SF_XMODEL_SKINNED;
                 surfSize = 24;
             }
             iassert(*material);
@@ -1822,7 +1822,7 @@ void __cdecl R_SetDepthOfField(GfxViewInfo *viewInfo, const GfxSceneParms *scene
         viewInfo->needsFloatZ = 1;
         if (com_statmon->current.enabled)
         {
-            font = R_RegisterFont("fonts/consoleFont", 1);
+            font = R_RegisterFont("fonts/consoleFont", IMAGE_TRACK_DEBUG);
             R_AddCmdDrawText((char*)"DOF", 0x7FFFFFFF, font, 0.0, 320.0, 1.5, 2.0, 0.0, colorRedFaded, 0);
         }
     }
@@ -1941,7 +1941,7 @@ void __cdecl R_SetGlowInfo(GfxViewInfo *viewInfo, const GfxSceneParms *sceneParm
     }
     if (R_UsingGlow(viewInfo) && com_statmon->current.enabled)
     {
-        font = R_RegisterFont("fonts/consoleFont", 1);
+        font = R_RegisterFont("fonts/consoleFont", IMAGE_TRACK_DEBUG);
         R_AddCmdDrawText((char*)"GLOW", 0x7FFFFFFF, font, 0.0, 340.0, 1.5, 2.0, 0.0, colorRedFaded, 0);
     }
 }
@@ -2166,7 +2166,7 @@ void R_DrawCineWarning()
     if (com_statmon->current.enabled && R_Cinematic_IsStarted())
     {
         msg = "CINE";
-        font = R_RegisterFont("fonts/consoleFont", 1);
+        font = R_RegisterFont("fonts/consoleFont", IMAGE_TRACK_DEBUG);
         if (R_Cinematic_IsUnderrun())
             msg = "CINE UNDERRUN!";
         R_AddCmdDrawText((char*)msg, 0x7FFFFFFF, font, 0.0, 360.0, 1.5, 2.0, 0.0, colorRedFaded, 0);

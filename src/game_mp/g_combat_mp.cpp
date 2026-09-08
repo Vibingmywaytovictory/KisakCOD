@@ -247,11 +247,11 @@ void __cdecl DeathGrenadeDrop(gentity_s *self, int32_t meansOfDeath)
                 self->client->ps.weaponmodels[grenadeWeaponIndexa],
                 1,
                 weapDef->fuseTime);
-            BG_SetConditionValue(self->client->ps.clientNum, 9u, 2u);
+            BG_SetConditionValue(self->client->ps.clientNum, ANIM_COND_PERK, ANIM_PERK_GRENADEDEATH);
         }
         else
         {
-            Com_PrintWarning(14, "Unknown perk_grenadeDeath grenade: %s\n", perk_grenadeDeath->current.string);
+            Com_PrintWarning(CON_CHANNEL_CLIENT, "Unknown perk_grenadeDeath grenade: %s\n", perk_grenadeDeath->current.string);
         }
     }
 }
@@ -394,7 +394,7 @@ void __cdecl G_Damage(
                 if ((targ->flags & 2) != 0 && targ->health - damage <= 0)
                     damage = targ->health - 1;
                 if (g_debugDamage->current.enabled)
-                    Com_Printf(15, "target:%i health:%i damage:%i\n", targ->s.number, targ->health, damage);
+                    Com_Printf(CON_CHANNEL_SERVER, "target:%i health:%i damage:%i\n", targ->s.number, targ->health, damage);
                 targ->health -= damage;
                 DamageNotify(scr_const.damage, targ, attacker, dir, point, damage, mod, dFlags, modelIndex, partName);
                 if (targ->health > 0)
@@ -805,7 +805,7 @@ void __cdecl AddScrTeamName(team_t team)
         Scr_AddConstString(scr_const.spectator);
         break;
     default:
-        Com_PrintWarning(15, "AddScrTeamName(): Unhandled team name %i.\n", team);
+        Com_PrintWarning(CON_CHANNEL_SERVER, "AddScrTeamName(): Unhandled team name %i.\n", team);
         Scr_AddUndefined();
         break;
     }

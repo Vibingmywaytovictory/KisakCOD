@@ -34,7 +34,7 @@ sentient_s *__cdecl Sentient_Alloc()
         }
     }
 
-    Com_DPrintf(15, "Sentient allocation failed\n");
+    Com_DPrintf(CON_CHANNEL_SERVER, "Sentient allocation failed\n");
     return 0;
 }
 
@@ -439,7 +439,7 @@ sentient_s *__cdecl Sentient_NextSentient(sentient_s *pPrevSentient, int iTeamFl
     v5 = pPrevSentient - sentients + 1;
     if (v5 >= 33)
         return 0;
-    for (i = (int)&sentients[v5].eTeam; !*(_BYTE *)(i + 106) || ((1 << *(unsigned int *)i) & iTeamFlags) == 0; i += 116)
+    while (!sentients[v5].inuse || ((1 << sentients[v5].eTeam) & iTeamFlags) == 0)
     {
         if (++v5 >= 33)
             return 0;
