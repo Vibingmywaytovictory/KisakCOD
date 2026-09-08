@@ -343,15 +343,7 @@ void __cdecl Con_Init()
 {
     int32_t i; // [esp+0h] [ebp-4h]
 
-    // The trailing comment here already said "just enable console by default"
-    // and the value contradicted it. The gate in CL_KeyEvent reads
-    //     if (!con_restricted->current.enabled || (keyCatchers & 1) != 0)
-    // so with this ON the console key only works while the console is already
-    // open -- which means it can never be opened at all, and the scancode fix
-    // above would still be inert. Defaulted off so the key does what the comment
-    // always said it did. DVAR_ARCHIVE, so a config_mp.cfg that already saved
-    // "monkeytoy 1" still wins until it is removed or +set monkeytoy 0 is used.
-    con_restricted = Dvar_RegisterBool("monkeytoy", 0, DVAR_ARCHIVE, "Restrict console access");
+    con_restricted = Dvar_RegisterBool("monkeytoy", 1, DVAR_ARCHIVE, "Restrict console access"); // KISAK: just enable console by default
     con_matchPrefixOnly = Dvar_RegisterBool(
         "con_matchPrefixOnly",
         1,
@@ -1565,7 +1557,7 @@ const char *__cdecl Con_TokenizeInput()
     cmd = Cmd_Argv(0);
     if (*cmd == 92 || *cmd == 47)
         ++cmd;
-    while (isspace((unsigned char)*cmd))
+    while (isspace(*cmd))
         ++cmd;
     return cmd;
 }
@@ -1574,11 +1566,11 @@ char __cdecl Con_AnySpaceAfterCommand()
 {
     int32_t charIndex; // [esp+0h] [ebp-4h]
 
-    for (charIndex = 0; isspace((unsigned char)g_consoleField.buffer[charIndex]); ++charIndex)
+    for (charIndex = 0; isspace(g_consoleField.buffer[charIndex]); ++charIndex)
         ;
     while (g_consoleField.buffer[charIndex])
     {
-        if (isspace((unsigned char)g_consoleField.buffer[charIndex]))
+        if (isspace(g_consoleField.buffer[charIndex]))
             return 1;
         ++charIndex;
     }
@@ -1597,21 +1589,21 @@ bool __cdecl Con_IsAutoCompleteMatch(const char *query, const char *matchToText,
     if (!con_ignoreMatchPrefixOnly && con_matchPrefixOnly->current.enabled)
         return I_strnicmp(query, matchToText, matchTextLen) == 0;
     matchTextPos = 0;
-    matchLetter = tolower((unsigned char)*matchToText);
+    matchLetter = tolower(*matchToText);
     for (queryPos = query; *queryPos; ++queryPos)
     {
-        if (tolower((unsigned char)*queryPos) == matchLetter)
+        if (tolower(*queryPos) == matchLetter)
         {
             if (++matchTextPos == matchTextLen)
                 return 1;
-            matchLetter = tolower((unsigned char)matchToText[matchTextPos]);
+            matchLetter = tolower(matchToText[matchTextPos]);
         }
         else if (con_matchPrefixOnly->current.enabled)
         {
             if (matchTextPos)
             {
                 matchTextPos = 0;
-                matchLetter = tolower((unsigned char)*matchToText);
+                matchLetter = tolower(*matchToText);
             }
         }
     }
@@ -2752,11 +2744,11 @@ int32_t __cdecl ConDrawInput_TextFieldFirstArgChar()
 {
     int32_t charIndex; // [esp+0h] [ebp-4h]
 
-    for (charIndex = 0; isspace((unsigned char)g_consoleField.buffer[charIndex]); ++charIndex)
+    for (charIndex = 0; isspace(g_consoleField.buffer[charIndex]); ++charIndex)
         ;
-    while (!isspace((unsigned char)g_consoleField.buffer[charIndex]))
+    while (!isspace(g_consoleField.buffer[charIndex]))
         ++charIndex;
-    while (isspace((unsigned char)g_consoleField.buffer[charIndex]))
+    while (isspace(g_consoleField.buffer[charIndex]))
         ++charIndex;
     return charIndex;
 }
@@ -2885,13 +2877,13 @@ int32_t __cdecl Con_GetAutoCompleteColorCodedStringDiscontiguous(
     wasMatching = 0;
     matchTextPos = 0;
     colorCodedPos = 0;
-    matchLetter = tolower((unsigned char)*matchToText);
+    matchLetter = tolower(*matchToText);
     for (queryPos = query; *queryPos; ++queryPos)
     {
-        v4 = tolower((unsigned char)*queryPos);
+        v4 = tolower(*queryPos);
         isMatching = v4 == matchLetter;
         if (v4 == matchLetter)
-            matchLetter = tolower((unsigned char)matchToText[++matchTextPos]);
+            matchLetter = tolower(matchToText[++matchTextPos]);
         if (isMatching != wasMatching)
         {
             wasMatching = isMatching;

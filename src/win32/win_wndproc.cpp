@@ -221,18 +221,7 @@ static unsigned char MapKey(int key, uint32_t wParam)
 	uint32_t result;
 	int i;
 
-	// The console key by PHYSICAL POSITION, not by what it prints. Scancode 0x29 is
-	// the key left of '1' on every standard PC layout, and that is the console key
-	// whether the layout puts grave, section, caron or one-half there -- including
-	// layouts where it is a DEAD key, which never yields a usable character but
-	// still delivers WM_KEYDOWN carrying this scancode.
-	//
-	// The check was already here and simply read the wrong byte. The scancode is in
-	// bits 16-23 of lParam; the shift was 8, which lands on the high byte of the
-	// 16-bit repeat count and is therefore always zero. It never matched on ANY
-	// layout, US included. Defect class 5: byte arithmetic transcribed with the
-	// wrong shift.
-	if (((key >> 16) & 0xFF) == 0x29)
+	if (((key >> 8) & 0xFF)/*BYTE2*/ == ')')
 		return '~';
 
 	result = 0;
