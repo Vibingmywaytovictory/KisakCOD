@@ -135,8 +135,8 @@ void __cdecl CG_SetConfigValues(int32_t localClientNum)
 
     CL_ParseMapCenter(localClientNum);
     ConfigString = CL_GetConfigString(localClientNum, 4u);
-    cgameGlob->teamScores[1] = atoi(ConfigString);
-    cgameGlob->teamScores[2] = atoi(CL_GetConfigString(localClientNum, 5));
+    cgameGlob->teamScores[TEAM_AXIS] = atoi(ConfigString);
+    cgameGlob->teamScores[TEAM_ALLIES] = atoi(CL_GetConfigString(localClientNum, 5));
     if (localClientNum)
         MyAssertHandler(
             "c:\\trees\\cod3\\src\\cgame_mp\\cg_local_mp.h",
@@ -150,11 +150,11 @@ void __cdecl CG_SetConfigValues(int32_t localClientNum)
         CG_PrecacheScriptMenu(localClientNum, i);
     for (ia = CS_STATUS_ICONS; ia <= CS_STATUS_ICONS_LAST; ++ia)
     {
-        Material_RegisterHandle(CL_GetConfigString(localClientNum, ia), 7);
+        Material_RegisterHandle(CL_GetConfigString(localClientNum, ia), IMAGE_TRACK_HUD);
     }
     for (ib = CS_HEAD_ICONS; ib <= CS_HEAD_ICONS_LAST; ++ib)
     {
-        Material_RegisterHandle(CL_GetConfigString(localClientNum, ib), 7);
+        Material_RegisterHandle(CL_GetConfigString(localClientNum, ib), IMAGE_TRACK_HUD);
     }
     for (ic = CS_SERVER_MATERIALS + 1; ic <= CS_SERVER_MATERIALS_LAST; ++ic)
         CG_RegisterServerMaterial(localClientNum, ic);
@@ -204,7 +204,7 @@ void __cdecl CG_RegisterServerMaterial(int32_t localClientNum, int32_t configStr
             configStringIndex);
     materialName = CL_GetConfigString(localClientNum, configStringIndex);
     if (*materialName)
-        Material_RegisterHandle(materialName, 7);
+        Material_RegisterHandle(materialName, IMAGE_TRACK_HUD);
 }
 
 void __cdecl CG_MapRestart(int32_t localClientNum, int32_t savepersist)
@@ -216,7 +216,7 @@ void __cdecl CG_MapRestart(int32_t localClientNum, int32_t savepersist)
     cgs = CG_GetLocalClientStaticGlobals(localClientNum);
 
     if (cg_showmiss->current.integer)
-        Com_Printf(14, "CG_MapRestart\n");
+        Com_Printf(CON_CHANNEL_CLIENT, "CG_MapRestart\n");
 
     CG_ClearCenterPrint(localClientNum);
     cgameGlob->cursorHintFade = 0;
@@ -252,10 +252,10 @@ void __cdecl CG_MapRestart(int32_t localClientNum, int32_t savepersist)
         CG_CloseScriptMenu(localClientNum, 0);
         UI_CloseAllMenus(localClientNum);
         memset((uint8_t *)cgameGlob->scores, 0, sizeof(cgameGlob->scores));
-        cgameGlob->teamScores[0] = 0;
-        cgameGlob->teamScores[1] = 0;
-        cgameGlob->teamScores[2] = 0;
-        cgameGlob->teamScores[3] = 0;
+        cgameGlob->teamScores[TEAM_FREE] = 0;
+        cgameGlob->teamScores[TEAM_AXIS] = 0;
+        cgameGlob->teamScores[TEAM_ALLIES] = 0;
+        cgameGlob->teamScores[TEAM_SPECTATOR] = 0;
     }
     CG_ScoresUp(localClientNum);
     cgameGlob->objectiveText[0] = 0;
@@ -551,7 +551,7 @@ void __cdecl CG_DeployServerCommand(int32_t localClientNum)
             I_strncpyz(text, (char *)s, 150);
             CG_RemoveChatEscapeChar(text);
             CG_AddToTeamChat(localClientNum, text);
-            Com_Printf(14, "%s\n", text);
+            Com_Printf(CON_CHANNEL_CLIENT, "%s\n", text);
         }
         break;
     case 0x69:
@@ -560,7 +560,7 @@ void __cdecl CG_DeployServerCommand(int32_t localClientNum)
         I_strncpyz(text, (char *)s, 150);
         CG_RemoveChatEscapeChar(text);
         CG_AddToTeamChat(localClientNum, text);
-        Com_Printf(14, "%s\n", text);
+        Com_Printf(CON_CHANNEL_CLIENT, "%s\n", text);
         break;
     case 0x6A:
         v8 = Cmd_Argv(1);
@@ -669,17 +669,17 @@ void __cdecl CG_DeployServerCommand(int32_t localClientNum)
         break;
     default:
         v40 = Cmd_Argv(0);
-        Com_Printf(14, "Unknown client game command: %s\n", v40);
+        Com_Printf(CON_CHANNEL_CLIENT, "Unknown client game command: %s\n", v40);
         argc = Cmd_Argc();
         if (argc > 1)
         {
-            Com_Printf(14, "Arguments(%i):", argc - 1);
+            Com_Printf(CON_CHANNEL_CLIENT, "Arguments(%i):", argc - 1);
             for (i = 1; i < argc; ++i)
             {
                 v41 = Cmd_Argv(i);
-                Com_Printf(14, " %s", v41);
+                Com_Printf(CON_CHANNEL_CLIENT, " %s", v41);
             }
-            Com_Printf(14, "\n");
+            Com_Printf(CON_CHANNEL_CLIENT, "\n");
         }
         break;
     }
@@ -714,25 +714,25 @@ void __cdecl CG_ParseScores(int32_t localClientNum)
     cgameGlob->numScores = atoi(v1);
     if (cgameGlob->numScores > 64)
         cgameGlob->numScores = 64;
-    cgameGlob->teamScores[0] = 0;
-    cgameGlob->teamScores[1] = 0;
-    cgameGlob->teamScores[2] = 0;
-    cgameGlob->teamScores[3] = 0;
+    cgameGlob->teamScores[TEAM_FREE] = 0;
+    cgameGlob->teamScores[TEAM_AXIS] = 0;
+    cgameGlob->teamScores[TEAM_ALLIES] = 0;
+    cgameGlob->teamScores[TEAM_SPECTATOR] = 0;
     v2 = Cmd_Argv(2);
-    cgameGlob->teamScores[1] = atoi(v2);
+    cgameGlob->teamScores[TEAM_AXIS] = atoi(v2);
     v3 = Cmd_Argv(3);
-    cgameGlob->teamScores[2] = atoi(v3);
+    cgameGlob->teamScores[TEAM_ALLIES] = atoi(v3);
     v4 = Cmd_Argv(4);
     cgameGlob->scoreLimit = atoi(v4);
     memset((uint8_t *)cgameGlob->scores, 0, sizeof(cgameGlob->scores));
-    cgameGlob->teamPings[0] = 0;
-    cgameGlob->teamPings[1] = 0;
-    cgameGlob->teamPings[2] = 0;
-    cgameGlob->teamPings[3] = 0;
-    cgameGlob->teamPlayers[0] = 0;
-    cgameGlob->teamPlayers[1] = 0;
-    cgameGlob->teamPlayers[2] = 0;
-    cgameGlob->teamPlayers[3] = 0;
+    cgameGlob->teamPings[TEAM_FREE] = 0;
+    cgameGlob->teamPings[TEAM_AXIS] = 0;
+    cgameGlob->teamPings[TEAM_ALLIES] = 0;
+    cgameGlob->teamPings[TEAM_SPECTATOR] = 0;
+    cgameGlob->teamPlayers[TEAM_FREE] = 0;
+    cgameGlob->teamPlayers[TEAM_AXIS] = 0;
+    cgameGlob->teamPlayers[TEAM_ALLIES] = 0;
+    cgameGlob->teamPlayers[TEAM_SPECTATOR] = 0;
     for (i = 0; i < cgameGlob->numScores; ++i)
     {
         v5 = Cmd_Argv(7 * i + 5);
@@ -753,11 +753,11 @@ void __cdecl CG_ParseScores(int32_t localClientNum)
         cgameGlob->scores[i].assists = atoi(v11);
         clientNum = cgameGlob->scores[i].client;
         if (!cgameGlob->bgs.clientinfo[clientNum].infoValid)
-            Com_PrintError(14, "Invalid score client %i, bad scoreboard message\n", cgameGlob->scores[i].client);
+            Com_PrintError(CON_CHANNEL_CLIENT, "Invalid score client %i, bad scoreboard message\n", cgameGlob->scores[i].client);
         if (statusIconIndex > 0 && statusIconIndex <= CS_COUNT_STATUS_ICONS)
         {
             pszIcon = CL_GetConfigString(localClientNum, statusIconIndex + CS_STATUS_ICONS - 1);
-            cgameGlob->scores[i].hStatusIcon = Material_RegisterHandle(pszIcon, 7);
+            cgameGlob->scores[i].hStatusIcon = Material_RegisterHandle(pszIcon, IMAGE_TRACK_HUD);
         }
         cgameGlob->scores[i].rank = cgameGlob->bgs.clientinfo[clientNum].rank;
         CL_GetRankIcon(
@@ -839,7 +839,7 @@ void __cdecl CG_SortSingleClientScore(cg_s *cgameGlob, int32_t scoreIndex)
 
 bool __cdecl CG_ClientScoreIsBetter(score_t *scoreA, score_t *scoreB)
 {
-    if (scoreA->team != scoreB->team && (scoreA->team == 3 || scoreB->team == 3))
+    if (scoreA->team != scoreB->team && (scoreA->team == TEAM_SPECTATOR || scoreB->team == TEAM_SPECTATOR))
         return 0;
     if (scoreA->score > scoreB->score)
         return 1;
@@ -884,10 +884,10 @@ void __cdecl CG_ConfigStringModified(int32_t localClientNum)
                 switch (num)
                 {
                 case 4:
-                    cgameGlob->teamScores[1] = atoi(str);
+                    cgameGlob->teamScores[TEAM_AXIS] = atoi(str);
                     break;
                 case 5:
-                    cgameGlob->teamScores[2] = atoi(str);
+                    cgameGlob->teamScores[TEAM_ALLIES] = atoi(str);
                     break;
                 case 13:
                     LocalClientGlobals = CL_GetLocalClientGlobals(localClientNum);
@@ -922,7 +922,7 @@ void __cdecl CG_ConfigStringModified(int32_t localClientNum)
                             {
                                 if (num >= CS_STATUS_ICONS && num <= CS_HEAD_ICONS_LAST)
                                 {
-                                    Material_RegisterHandle(CL_GetConfigString(localClientNum, num), 7);
+                                    Material_RegisterHandle(CL_GetConfigString(localClientNum, num), IMAGE_TRACK_HUD);
                                 }
                                 else if (num < CS_SERVER_MATERIALS || num > CS_SERVER_MATERIALS_LAST)
                                 {
@@ -1094,14 +1094,14 @@ void __cdecl CG_OpenScriptMenu(int32_t localClientNum)
     menuIndex = atoi(Cmd_Argv(1));
     if (menuIndex >= CS_COUNT_SCRIPT_MENUS)
     {
-        Com_Printf(14, "Server tried to open a bad script menu index: %i\n", menuIndex);
+        Com_Printf(CON_CHANNEL_CLIENT, "Server tried to open a bad script menu index: %i\n", menuIndex);
         Cbuf_AddText(localClientNum, va("cmd mr %i bad\n", menuIndex));
         return;
     }
     menuName = CL_GetConfigString(localClientNum, menuIndex + CS_SCRIPT_MENUS);
     if (!*menuName)
     {
-        Com_Printf(14, "Server tried to open a non-loaded script menu index: %i\n", menuIndex);
+        Com_Printf(CON_CHANNEL_CLIENT, "Server tried to open a non-loaded script menu index: %i\n", menuIndex);
         Cbuf_AddText(localClientNum, va("cmd mr %i bad\n", menuIndex));
         return;
     }
@@ -1156,7 +1156,7 @@ void __cdecl CG_RemoveChatEscapeChar(char *text)
 
 void __cdecl CG_SetTeamScore(int32_t localClientNum, uint32_t team, int32_t score)
 {
-    iassert(team >= 0 && team < TEAM_NUM_TEAMS);
+    iassert(team >= TEAM_FREE && team < TEAM_NUM_TEAMS);
     CG_GetLocalClientGlobals(localClientNum)->teamScores[team] = score;
 }
 
@@ -1190,7 +1190,7 @@ void CG_ReverbCmd()
     }
     else
     {
-        Com_PrintError(14, "ERROR: CG_ReverbCmd called with %i args (should be 6)\n", argc);
+        Com_PrintError(CON_CHANNEL_CLIENT, "ERROR: CG_ReverbCmd called with %i args (should be 6)\n", argc);
     }
 }
 
@@ -1218,7 +1218,7 @@ void CG_DeactivateReverbCmd()
     }
     else
     {
-        Com_PrintError(14, "ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", argc);
+        Com_PrintError(CON_CHANNEL_CLIENT, "ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", argc);
     }
 }
 
@@ -1244,7 +1244,7 @@ void __cdecl CG_SetChannelVolCmd(int32_t localClientNum)
         
         if (shockIndex >= 16)
         {
-            Com_PrintError(14, "CG_SetChannelVolCmd: bad shellshock index %u\n", shockIndex);
+            Com_PrintError(CON_CHANNEL_CLIENT, "CG_SetChannelVolCmd: bad shellshock index %u\n", shockIndex);
             return;
         }
         
@@ -1267,7 +1267,7 @@ void __cdecl CG_SetChannelVolCmd(int32_t localClientNum)
     }
     else
     {
-        Com_PrintError(9, "ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", argc);
+        Com_PrintError(CON_CHANNEL_SOUND, "ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", argc);
     }
 }
 
@@ -1295,7 +1295,7 @@ void CG_DeactivateChannelVolCmd()
     }
     else
     {
-        Com_PrintError(9, "ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", argc);
+        Com_PrintError(CON_CHANNEL_SOUND, "ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", argc);
     }
 }
 
@@ -1317,13 +1317,13 @@ char __cdecl LocalSound(int32_t localClientNum)
         }
         else
         {
-            Com_PrintError(9, "ERROR: LocalSound() called with index %i (should be in range[1,%i])\n", index, 256);
+            Com_PrintError(CON_CHANNEL_SOUND, "ERROR: LocalSound() called with index %i (should be in range[1,%i])\n", index, 256);
             return 0;
         }
     }
     else
     {
-        Com_PrintError(9, "ERROR: LocalSound() called with %i args (should be 2)\n", argc);
+        Com_PrintError(CON_CHANNEL_SOUND, "ERROR: LocalSound() called with %i args (should be 2)\n", argc);
         return 0;
     }
 }
@@ -1343,12 +1343,12 @@ void __cdecl LocalSoundStop(int32_t localClientNum)
         }
         else
         {
-            Com_PrintError(9, "ERROR: LocalSoundStop() called with index %i (should be in range[1,%i])\n", index, 256);
+            Com_PrintError(CON_CHANNEL_SOUND, "ERROR: LocalSoundStop() called with index %i (should be in range[1,%i])\n", index, 256);
         }
     }
     else
     {
-        Com_PrintError(9, "ERROR: LocalSoundStop(), should be called with 2 arguments.\n");
+        Com_PrintError(CON_CHANNEL_SOUND, "ERROR: LocalSoundStop(), should be called with 2 arguments.\n");
     }
 }
 

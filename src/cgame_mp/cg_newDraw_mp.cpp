@@ -221,7 +221,7 @@ Material *__cdecl CG_ObjectiveIcon(int32_t localClientNum, int32_t icon, int32_t
             "%s",
             "type >= 0 && static_cast<uint32_t>( type ) < ARRAY_COUNT( cgMedia.objectiveMaterials )");
     if (icon && CG_ServerMaterialName(localClientNum, icon, shaderName, 0x40u))
-        return Material_RegisterHandle(shaderName, 7);
+        return Material_RegisterHandle(shaderName, IMAGE_TRACK_HUD);
     else
         return cgMedia.objectiveMaterials[type];
 }
@@ -1797,7 +1797,7 @@ void __cdecl CG_DrawCursorhint(
         color[3] = CG_FadeAlpha(cgameGlob->time, cgameGlob->cursorHintTime, cgameGlob->cursorHintFade, 100) * color[3];
         if (color[3] == 0.0)
         {
-            cgameGlob->cursorHintIcon = 0;
+            cgameGlob->cursorHintIcon = HINT_NONE;
         }
         else
         {
@@ -1832,7 +1832,7 @@ void __cdecl CG_DrawCursorhint(
                 halfscale = 0.0;
                 scale = 0.0;
             }
-            if (cgameGlob->cursorHintIcon == 1)
+            if (cgameGlob->cursorHintIcon == HINT_NOICON)
             {
                 if (cgameGlob->cursorHintString >= 0)
                 {
@@ -1867,11 +1867,11 @@ void __cdecl CG_DrawCursorhint(
                 hintIcon = cgMedia.hintMaterials[cgameGlob->cursorHintIcon];
                 if (hintIcon)
                 {
-                    if (cgameGlob->cursorHintIcon < 5 || cgameGlob->cursorHintIcon > 132)
+                    if (cgameGlob->cursorHintIcon < FIRST_WEAPON_HINT || cgameGlob->cursorHintIcon > LAST_WEAPON_HINT)
                     {
                         if (cgameGlob->cursorHintString < 0)
                         {
-                            if (cgameGlob->cursorHintIcon == 3)
+                            if (cgameGlob->cursorHintIcon == HINT_HEALTH)
                             {
                                 UI_GetKeyBindingLocalizedString(localClientNum, "+activate", binding);
                                 v7 = UI_SafeTranslateString("PLATFORM_PICKUPHEALTH");
@@ -1885,7 +1885,7 @@ void __cdecl CG_DrawCursorhint(
                     }
                     else
                     {
-                        weaponIndex = cgameGlob->cursorHintIcon - 4;
+                        weaponIndex = cgameGlob->cursorHintIcon - WEAPON_HINT_OFFSET;
                         weapDef = BG_GetWeaponDef(weaponIndex);
                         if (weapDef->hudIcon)
                         {
@@ -2037,7 +2037,7 @@ char *__cdecl CG_GetWeaponUseString(int32_t localClientNum, const char **seconda
 
     iassert((cgameGlob->cursorHintIcon >= FIRST_WEAPON_HINT) && (cgameGlob->cursorHintIcon <= LAST_WEAPON_HINT));
 
-    weaponIndex = cgameGlob->cursorHintIcon - 4;
+    weaponIndex = cgameGlob->cursorHintIcon - WEAPON_HINT_OFFSET;
     ps = &cgameGlob->predictedPlayerState;
     weapDef = BG_GetWeaponDef(weaponIndex);
     if (localClientNum)
@@ -2336,11 +2336,11 @@ void __cdecl CG_DrawTalkerNum(
                     if (cgameGlob->nextSnap->ps.pm_type != PM_INTERMISSION && isEnemy && (cgameGlob->nextSnap->ps.perks & 0x200) != 0)
                     {
                         CG_RelativeTeamColor(client, "g_TeamColor", textColor, localClientNum);
-                        material = Material_RegisterHandle((const char*)perk_parabolicIcon->current.integer, 7);
+                        material = Material_RegisterHandle((const char*)perk_parabolicIcon->current.integer, IMAGE_TRACK_HUD);
                     }
                     else
                     {
-                        material = Material_RegisterHandle("voice_on", 7);
+                        material = Material_RegisterHandle("voice_on", IMAGE_TRACK_HUD);
                     }
                     textHeight = UI_TextHeight(font, textScale);
                     UI_DrawHandlePic(
@@ -2371,7 +2371,7 @@ void __cdecl CG_DrawTalkerNum(
             }
             else
             {
-                Com_PrintWarning(13, "client %i has invalid info but they are talking\n", client);
+                Com_PrintWarning(CON_CHANNEL_UI, "client %i has invalid info but they are talking\n", client);
             }
         }
     }

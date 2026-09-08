@@ -7,6 +7,7 @@
 #include "cg_public_mp.h"
 #include <client_mp/client_mp.h>
 #include <database/database.h>
+#include <ui/keycodes.h>
 #include <ui_mp/ui_mp.h>
 #include <stringed/stringed_hooks.h>
 #include <client/client.h>
@@ -121,7 +122,7 @@ char __cdecl CG_DrawScoreboard_GetTeamColorIndex(int32_t team, int32_t localClie
 
     bcassert(cgameGlob->clientNum, MAX_CLIENTS);
 
-    if (team != 2 && team != 1)
+    if (team != TEAM_ALLIES && team != TEAM_AXIS)
         return 55;
 
     if (cgameGlob->bgs.clientinfo[cgameGlob->clientNum].team != TEAM_ALLIES
@@ -339,27 +340,27 @@ void __cdecl CG_DrawScoreboard_ScoresList(int32_t localClientNum, float alpha)
         }
         color[4] = y;
         drawLine = 1;
-        if (cgameGlob->teamPlayers[1] || cgameGlob->teamPlayers[2])
+        if (cgameGlob->teamPlayers[TEAM_AXIS] || cgameGlob->teamPlayers[TEAM_ALLIES])
         {
             team = cgameGlob->bgs.clientinfo[cgameGlob->clientNum].team;
             if (team != TEAM_AXIS && team != TEAM_ALLIES)
                 team = TEAM_ALLIES;
             ya = CG_DrawTeamOfClientScore(localClientNum, color, y, team, listWidth, &drawLine);
             if (team == TEAM_AXIS)
-                teama = 2;
+                teama = TEAM_ALLIES;
             else
-                teama = 1;
+                teama = TEAM_AXIS;
             yd = ya + 4.0;
             ye = CG_DrawTeamOfClientScore(localClientNum, color, yd, teama, listWidth, &drawLine);
             y = ye + 4.0;
         }
-        if (cgameGlob->teamPlayers[0])
+        if (cgameGlob->teamPlayers[TEAM_FREE])
         {
-            yf = CG_DrawTeamOfClientScore(localClientNum, color, y, 0, listWidth, &drawLine);
+            yf = CG_DrawTeamOfClientScore(localClientNum, color, y, TEAM_FREE, listWidth, &drawLine);
             y = yf + 4.0;
         }
-        if (cgameGlob->teamPlayers[3])
-            CG_DrawTeamOfClientScore(localClientNum, color, y, 3, listWidth, &drawLine);
+        if (cgameGlob->teamPlayers[TEAM_SPECTATOR])
+            CG_DrawTeamOfClientScore(localClientNum, color, y, TEAM_SPECTATOR, listWidth, &drawLine);
         cgameGlob->scoresBottom = drawLine - 1;
         CG_DrawScrollbar(localClientNum, color, scrollbarTop);
     }
@@ -432,13 +433,13 @@ int32_t __cdecl CG_ScoreboardTotalLines(int32_t localClientNum)
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
 
     total = cgameGlob->numScores;
-    if (cgameGlob->teamPlayers[0])
+    if (cgameGlob->teamPlayers[TEAM_FREE])
         ++total;
-    if (cgameGlob->teamPlayers[1])
+    if (cgameGlob->teamPlayers[TEAM_AXIS])
         ++total;
-    if (cgameGlob->teamPlayers[2])
+    if (cgameGlob->teamPlayers[TEAM_ALLIES])
         ++total;
-    if (cgameGlob->teamPlayers[3])
+    if (cgameGlob->teamPlayers[TEAM_SPECTATOR])
         ++total;
     return total;
 }
@@ -572,16 +573,16 @@ double __cdecl CG_DrawScoreboard_ListBanner(
     scrPlace = &scrPlaceView[localClientNum];
     v17 = CG_BannerScoreboardScaleMultiplier() * 0.3499999940395355;
     bannerFont = UI_GetFontHandle(scrPlace, cg_scoreboardFont->current.integer, v17);
-    if (team)
+    if (team != TEAM_FREE)
     {
-        if (team == 1)
+        if (team == TEAM_AXIS)
         {
             shaderName = (char *)Dvar_GetString("g_TeamIcon_Axis");
             teamName = Dvar_GetString("g_TeamName_Axis");
             v8 = SEH_LocalizeTextMessage(teamName, "scoreboard team name", LOCMSG_SAFE);
             displayString = va("%s", v8);
         }
-        else if (team == 2)
+        else if (team == TEAM_ALLIES)
         {
             shaderName = (char *)Dvar_GetString("g_TeamIcon_Allies");
             teamNamea = Dvar_GetString("g_TeamName_Allies");
@@ -590,7 +591,7 @@ double __cdecl CG_DrawScoreboard_ListBanner(
         }
         else
         {
-            if (team != 3)
+            if (team != TEAM_SPECTATOR)
                 MyAssertHandler(
                     ".\\cgame_mp\\cg_scoreboard_mp.cpp",
                     666,
@@ -609,7 +610,7 @@ double __cdecl CG_DrawScoreboard_ListBanner(
         displayString = (char *)"";
     }
     x = CG_BackdropLeft(localClientNum) + 3.0 + 2.0 + 4.0;
-    material = Material_RegisterHandle(shaderName, 7);
+    material = Material_RegisterHandle(shaderName, IMAGE_TRACK_HUD);
     if (!Material_IsDefault(material))
     {
         v16 = CG_BackdropLeft(localClientNum) + 3.0 + 2.0 + 4.0;
@@ -703,7 +704,7 @@ double __cdecl CG_DrawClientScore(
     x = CG_BackdropLeft(localClientNum) + 3.0 + 2.0 + 4.0;
     integer = (double)cg_scoreboardItemHeight->current.integer;
     h = CG_BannerScoreboardScaleMultiplier() * integer;
-    material = Material_RegisterHandle("white", 7);
+    material = Material_RegisterHandle("white", IMAGE_TRACK_HUD);
     backColor[0] = *color;
     backColor[1] = color[1];
     backColor[2] = color[2];
@@ -734,7 +735,7 @@ double __cdecl CG_DrawClientScore(
             DrawListString(localClientNum, (char *)string, x, y, w, info[i].iAlignment, listFont, v23, 3, textColor);
             break;
         case LCT_SCORE:
-            if (score->team != 3)
+            if (score->team != TEAM_SPECTATOR)
             {
                 string = va("%i", score->score);
                 v22 = CG_BannerScoreboardScaleMultiplier() * 0.3499999940395355;
@@ -742,7 +743,7 @@ double __cdecl CG_DrawClientScore(
             }
             break;
         case LCT_DEATHS:
-            if (score->team != 3)
+            if (score->team != TEAM_SPECTATOR)
             {
                 string = va("%i", score->deaths);
                 v21 = CG_BannerScoreboardScaleMultiplier() * 0.3499999940395355;
@@ -776,11 +777,11 @@ double __cdecl CG_DrawClientScore(
         case LCT_TALKING_ICON:
             if (CL_IsPlayerMuted(localClientNum, score->client))
             {
-                material = Material_RegisterHandle("voice_off", 7);
+                material = Material_RegisterHandle("voice_off", IMAGE_TRACK_HUD);
             }
             else if (CL_IsPlayerTalking(localClientNum, score->client))
             {
-                material = Material_RegisterHandle("voice_on", 7);
+                material = Material_RegisterHandle("voice_on", IMAGE_TRACK_HUD);
             }
             else
             {
@@ -801,7 +802,7 @@ double __cdecl CG_DrawClientScore(
             }
             break;
         case LCT_KILLS:
-            if (score->team != 3)
+            if (score->team != TEAM_SPECTATOR)
             {
                 string = va("%i", score->kills);
                 v20 = CG_BannerScoreboardScaleMultiplier() * 0.3499999940395355;
@@ -838,7 +839,7 @@ double __cdecl CG_DrawClientScore(
             }
             break;
         case LCT_ASSISTS:
-            if (score->team != 3)
+            if (score->team != TEAM_SPECTATOR)
             {
                 string = va("%i", score->assists);
                 v19 = CG_BannerScoreboardScaleMultiplier() * 0.3499999940395355;
@@ -948,7 +949,7 @@ void __cdecl CG_DrawClientPing(int32_t localClientNum, int32_t ping, float x, fl
     float xa; // [esp+A4h] [ebp+10h]
 
     scrPlace = &scrPlaceView[localClientNum];
-    materiala = Material_RegisterHandle("white", 7);
+    materiala = Material_RegisterHandle("white", IMAGE_TRACK_HUD);
     Dvar_GetUnpackedColorByName("cg_ScoresPing_BgColor", color);
     v9 = maxWidth + 2.0;
     v8 = x + 8.0 - 1.0;
@@ -957,7 +958,7 @@ void __cdecl CG_DrawClientPing(int32_t localClientNum, int32_t ping, float x, fl
     interval = Dvar_GetInt("cg_ScoresPing_Interval");
     if (interval <= 0)
         MyAssertHandler(".\\cgame_mp\\cg_scoreboard_mp.cpp", 757, 0, "%s\n\t(interval) = %i", "(interval > 0)", interval);
-    material = Material_RegisterHandle("white", 7);
+    material = Material_RegisterHandle("white", IMAGE_TRACK_HUD);
     if (maxBars - ping / interval < 1)
         v7 = 1;
     else
@@ -1019,7 +1020,7 @@ void __cdecl CG_DrawScrollbar(int32_t localClientNum, const float *color, float 
         barColor[0] = *color;
         barColor[1] = color[1];
         barColor[2] = color[2];
-        material = Material_RegisterHandle("black", 7);
+        material = Material_RegisterHandle("black", IMAGE_TRACK_HUD);
         barColor[3] = color[3] * 0.5;
         value = cg_scoreboardWidth->current.value;
         x = CG_BackdropLeft(localClientNum)
@@ -1043,13 +1044,13 @@ void __cdecl CG_DrawScrollbar(int32_t localClientNum, const float *color, float 
             y = (double)(cgameGlob->scoresTop - 1) / (double)totalLines * h + y;
             h = (double)(cgameGlob->scoresBottom - cgameGlob->scoresTop + 1) / (double)totalLines * h;
         }
-        materiala = Material_RegisterHandle("white", 7);
+        materiala = Material_RegisterHandle("white", IMAGE_TRACK_HUD);
         barColor[3] = color[3] * 0.25;
         UI_DrawHandlePic(scrPlace, x, y, w, h, 1, 0, barColor, materiala);
         barColor[3] = color[3];
         if (cgameGlob->scoresTop > 1)
         {
-            materialb = Material_RegisterHandle("hudscoreboardscroll_uparrow", 7);
+            materialb = Material_RegisterHandle("hudscoreboardscroll_uparrow", IMAGE_TRACK_HUD);
             v5 = cg_scoreboardWidth->current.value;
             x = CG_BackdropLeft(localClientNum)
                 + 3.0
@@ -1065,7 +1066,7 @@ void __cdecl CG_DrawScrollbar(int32_t localClientNum, const float *color, float 
             w = 16.0;
             h = 16.0;
             UI_DrawHandlePic(scrPlace, x, top, 16.0, 16.0, 1, 0, barColor, materialb);
-            materialc = Material_RegisterHandle("hudscoreboardscroll_upkey", 7);
+            materialc = Material_RegisterHandle("hudscoreboardscroll_upkey", IMAGE_TRACK_HUD);
             x = x - 0.0;
             y = y + 18.0;
             w = 16.0;
@@ -1074,7 +1075,7 @@ void __cdecl CG_DrawScrollbar(int32_t localClientNum, const float *color, float 
         }
         if (cgameGlob->scoresOffBottom)
         {
-            materiald = Material_RegisterHandle("hudscoreboardscroll_downarrow", 7);
+            materiald = Material_RegisterHandle("hudscoreboardscroll_downarrow", IMAGE_TRACK_HUD);
             v4 = cg_scoreboardWidth->current.value;
             x = CG_BackdropLeft(localClientNum)
                 + 3.0
@@ -1091,7 +1092,7 @@ void __cdecl CG_DrawScrollbar(int32_t localClientNum, const float *color, float 
             w = 16.0;
             h = 16.0;
             UI_DrawHandlePic(scrPlace, x, y, 16.0, 16.0, 1, 0, barColor, materiald);
-            materiale = Material_RegisterHandle("hudscoreboardscroll_downkey", 7);
+            materiale = Material_RegisterHandle("hudscoreboardscroll_downkey", IMAGE_TRACK_HUD);
             x = x - 0.0;
             y = y - 18.0;
             w = 16.0;
@@ -1301,18 +1302,18 @@ void __cdecl CG_RegisterScoreboardDvars()
 
 void __cdecl CG_RegisterScoreboardGraphics()
 {
-    Material_RegisterHandle("white", 7);
-    Material_RegisterHandle("white", 7);
-    Material_RegisterHandle("black", 7);
-    Material_RegisterHandle("white", 7);
-    Material_RegisterHandle("white", 7);
-    Material_RegisterHandle("black", 7);
-    Material_RegisterHandle("hudscoreboardscroll_uparrow", 7);
-    Material_RegisterHandle("hudscoreboardscroll_upkey", 7);
-    Material_RegisterHandle("hudscoreboardscroll_downarrow", 7);
-    Material_RegisterHandle("hudscoreboardscroll_downkey", 7);
-    Material_RegisterHandle("voice_on", 7);
-    Material_RegisterHandle("voice_off", 7);
+    Material_RegisterHandle("white", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("white", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("black", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("white", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("white", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("black", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("hudscoreboardscroll_uparrow", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("hudscoreboardscroll_upkey", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("hudscoreboardscroll_downarrow", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("hudscoreboardscroll_downkey", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("voice_on", IMAGE_TRACK_HUD);
+    Material_RegisterHandle("voice_off", IMAGE_TRACK_HUD);
 }
 
 bool __cdecl Scoreboard_HandleInput(int32_t localClientNum, int32_t key)
@@ -1323,15 +1324,15 @@ bool __cdecl Scoreboard_HandleInput(int32_t localClientNum, int32_t key)
     
     switch (key)
     {
-    case 163:
-    case 190:
-    case 205:
+    case K_PGDN:
+    case K_KP_PGDN:
+    case K_MWHEELDOWN:
         CG_ScrollScoreboardDown(cgameGlob);
         result = 1;
         break;
-    case 164:
-    case 184:
-    case 206:
+    case K_PGUP:
+    case K_KP_PGUP:
+    case K_MWHEELUP:
         CG_ScrollScoreboardUp(cgameGlob);
         result = 1;
         break;

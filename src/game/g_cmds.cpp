@@ -719,7 +719,7 @@ void __cdecl Cmd_SetViewpos_f(gentity_s *ent)
         angles[1] = atof(buffer);
     }
 
-    Com_Printf(15, "Cmd_SetViewpos_f: origin=(%g %g %g) angles=(pitch=%g yaw=%g roll=%g)\n", origin[0], origin[1], origin[2], angles[0], angles[1], angles[2]);
+    Com_Printf(CON_CHANNEL_SERVER, "Cmd_SetViewpos_f: origin=(%g %g %g) angles=(pitch=%g yaw=%g roll=%g)\n", origin[0], origin[1], origin[2], angles[0], angles[1], angles[2]);
     TeleportPlayer(ent, origin, angles);
 }
 
@@ -879,7 +879,7 @@ void Cmd_VisionSetNaked_f()
     {
         if (v1 != 3)
         {
-            Com_Printf(0, "USAGE: visionSetNaked <name> <duration>\n");
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "USAGE: visionSetNaked <name> <duration>\n");
             return;
         }
         v2 = SV_Cmd_Argv(2);
@@ -903,7 +903,7 @@ void Cmd_VisionSetNaked_f()
     if (sv_cmd_args.argc[nesting] <= 1)
         v5 = "";
     else
-        v5 = (const char *)*((unsigned int *)sv_cmd_args.argv[nesting] + 1);
+        v5 = sv_cmd_args.argv[nesting][1];
     SV_SetConfigstring(CS_VISIONSET_NAKED, va("\"%s\" %i", v5, v7));
 }
 
@@ -935,7 +935,7 @@ void Cmd_VisionSetNight_f()
     {
         if (v1 != 3)
         {
-            Com_Printf(0, "USAGE: visionSetNight <name> <duration>\n");
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "USAGE: visionSetNight <name> <duration>\n");
             return;
         }
         v2 = SV_Cmd_Argv(2);
@@ -959,7 +959,7 @@ void Cmd_VisionSetNight_f()
     if (sv_cmd_args.argc[nesting] <= 1)
         v5 = "";
     else
-        v5 = (const char *)*((unsigned int *)sv_cmd_args.argv[nesting] + 1);
+        v5 = sv_cmd_args.argv[nesting][1];
     SV_SetConfigstring(CS_VISIONSET_NIGHT, va("\"%s\" %i", v5, v7));
 }
 

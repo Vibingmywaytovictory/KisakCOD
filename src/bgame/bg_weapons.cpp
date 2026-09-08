@@ -296,7 +296,7 @@ void __cdecl BG_SetupSharedAmmoIndexes(uint32_t weapIndex)
     weapDef->iSharedAmmoCapIndex = -1;
     if (*weapDef->szSharedAmmoCapName)
     {
-        Com_DPrintf(17, "%s: %s\n", weapDef->szInternalName, weapDef->szSharedAmmoCapName);
+        Com_DPrintf(CON_CHANNEL_PLAYERWEAP, "%s: %s\n", weapDef->szInternalName, weapDef->szSharedAmmoCapName);
         for (index = 0; ; ++index)
         {
             if (index >= bg_numSharedAmmoCaps)
@@ -441,7 +441,7 @@ uint32_t __cdecl BG_GetWeaponIndexForName(const char *name, void(__cdecl *regWea
     }
     else
     {
-        Com_DPrintf(17, "Couldn't find weapon \"%s\"\n", name);
+        Com_DPrintf(CON_CHANNEL_PLAYERWEAP, "Couldn't find weapon \"%s\"\n", name);
         return 0;
     }
 }
@@ -781,7 +781,7 @@ void __cdecl BG_GetSpreadForWeapon(
     float frac; // [esp+4h] [ebp-4h]
     float fraca; // [esp+4h] [ebp-4h]
 
-    if (ps->spreadOverrideState == 2)
+    if (ps->spreadOverrideState == PSOS_ENABLED)
     {
         *minSpread = (float)ps->spreadOverride;
         *maxSpread = (float)ps->spreadOverride;
@@ -802,7 +802,7 @@ void __cdecl BG_GetSpreadForWeapon(
         }
         *maxSpread = v4;
     }
-    if (ps->spreadOverrideState == 1)
+    if (ps->spreadOverrideState == PSOS_RESETTING)
         *maxSpread = (float)ps->spreadOverride;
 
 #ifdef KISAK_MP
@@ -857,9 +857,9 @@ void __cdecl PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml)
     }
 #ifdef KISAK_MP
     if ((ps->pm_flags & PMF_SIGHT_AIMING) != 0)
-        BG_SetConditionValue(ps->clientNum, 7u, 1u);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_ADS);
     else
-        BG_SetConditionValue(ps->clientNum, 7u, 0);
+        BG_SetConditionValue(ps->clientNum, ANIM_COND_WEAPON_POSITION, ANIM_WP_HIP);
 #endif
 }
 
@@ -1189,7 +1189,7 @@ void __cdecl PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
         {
             wpnScale = wpnScale * 0.5;
         }
-        if (ps->spreadOverrideState == 1)
+        if (ps->spreadOverrideState == PSOS_RESETTING)
         {
             decrease = wpnScale * pml->frametime / spreadOverrideScale;
             increase = 0.0;
@@ -1239,9 +1239,9 @@ void __cdecl PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
     else
         v2 = increase * 255.0 + ps->aimSpreadScale;
     ps->aimSpreadScale = v2;
-    if (ps->spreadOverrideState == 1 && ps->aimSpreadScale * spreadOverrideScale < 255.0)
+    if (ps->spreadOverrideState == PSOS_RESETTING && ps->aimSpreadScale * spreadOverrideScale < 255.0)
     {
-        ps->spreadOverrideState = 0;
+        ps->spreadOverrideState = PSOS_DISABLED;
         ps->aimSpreadScale = ps->aimSpreadScale * spreadOverrideScale;
     }
     if (ps->aimSpreadScale >= 0.0)
@@ -1309,7 +1309,7 @@ void __cdecl PM_Weapon_Idle(playerState_s *ps)
     ps->weapFlags &= ~2u;
     ps->pm_flags &= ~PMF_PRONEMOVE_OVERRIDDEN;
     if (G_IsServerGameSystem(ps->clientNum))
-        Com_Printf(19, "end weapon (idle)\n");
+        Com_Printf(CON_CHANNEL_ANIM, "end weapon (idle)\n");
     ps->weaponTime = 0;
     ps->weaponDelay = 0;
     ps->weaponstate = WEAPON_READY;
@@ -1383,7 +1383,7 @@ bool __cdecl ViewModelOverride(playerState_s *ps, pml_t *pml)
         break;
     default:
         Com_PrintWarning(
-            19,
+            CON_CHANNEL_ANIM,
             "Trying to force viewmodel to play an animation not supported by code: %u.\n",
             ps->forcedViewAnimWeaponState);
         ps->weapFlags &= ~0x400u;
@@ -1819,8 +1819,8 @@ void __cdecl PM_Weapon_FinishWeaponChange(pmove_t *pm, bool quick)
         PM_Weapon_BeginWeaponRaise(ps, anim, weapontime, aimspread, altswitch);
 #ifdef KISAK_MP
         iassert(weapDef);
-        BG_SetConditionBit(ps->clientNum, 0, weapDef[74]);
-        BG_SetConditionBit(ps->clientNum, 1, weapDef[76]);
+        BG_SetConditionBit(ps->clientNum, ANIM_COND_PLAYERANIMTYPE, weapDef[74]);
+        BG_SetConditionBit(ps->clientNum, ANIM_COND_WEAPONCLASS, weapDef[76]);
 #endif
         BG_TakeClipOnlyWeaponIfEmpty(ps, oldweapon);
     }
@@ -2409,7 +2409,7 @@ int __cdecl PM_Weapon_WeaponTimeAdjust(pmove_t *pm, pml_t *pml)
                 {
 #ifdef KISAK_MP 
                     if (G_IsServerGameSystem(ps->clientNum))
-                        Com_Printf(19, "end weapon (timeout)\n");
+                        Com_Printf(CON_CHANNEL_ANIM, "end weapon (timeout)\n");
 #endif
                     ps->weaponTime = 0;
                     ps->weaponShotCount = 0;
@@ -2432,7 +2432,7 @@ int __cdecl PM_Weapon_WeaponTimeAdjust(pmove_t *pm, pml_t *pml)
             {
 #ifdef KISAK_MP
                 if (G_IsServerGameSystem(ps->clientNum))
-                    Com_Printf(19, "end weapon (timeout)\n");
+                    Com_Printf(CON_CHANNEL_ANIM, "end weapon (timeout)\n");
 #endif
                 if (((pm->cmd.buttons & BUTTON_ATTACK) == 0 || (ps->weapFlags & 0x100) != 0) && !BurstFirePending(ps))
                     ps->weaponShotCount = 0;
@@ -2636,7 +2636,7 @@ void __cdecl PM_BeginWeaponChange(playerState_s *ps, uint32_t newweapon, bool qu
             LABEL_55:
 #ifdef KISAK_MP 
                 if (G_IsServerGameSystem(ps->clientNum))
-                    Com_Printf(19, "end weapon (begin weapon change)\n");
+                    Com_Printf(CON_CHANNEL_ANIM, "end weapon (begin weapon change)\n");
 #endif
                 ps->weaponTime = 0;
                 ps->weaponstate = (weaponstate_t)(quick + 3);
@@ -2826,7 +2826,7 @@ void __cdecl PM_Weapon_StartFiring(playerState_s *ps, int32_t delayedAction)
     ps->weaponTime = 0;
 #ifdef KISAK_MP
     if (G_IsServerGameSystem(ps->clientNum))
-        Com_Printf(19, "end weapon (start fire)\n");
+        Com_Printf(CON_CHANNEL_ANIM, "end weapon (start fire)\n");
 #endif
 LABEL_20:
     ps->weaponstate = WEAPON_FIRING;
@@ -3071,7 +3071,7 @@ void __cdecl PM_Weapon_OffHandHold(playerState_s *ps)
 
 #ifdef KISAK_MP
     if (G_IsServerGameSystem(ps->clientNum))
-        Com_Printf(19, "end weapon (offhand hold)\n");
+        Com_Printf(CON_CHANNEL_ANIM, "end weapon (offhand hold)\n");
 #endif
 }
 
@@ -3141,7 +3141,7 @@ void __cdecl PM_Weapon_OffHandEnd(playerState_s *ps)
         ps->weaponDelay = 1;
 #ifdef KISAK_MP
         if (G_IsServerGameSystem(ps->clientNum))
-            Com_Printf(19, "end weapon (offhand end)\n");
+            Com_Printf(CON_CHANNEL_ANIM, "end weapon (offhand end)\n");
 #endif
     }
     ps->throwBackGrenadeTimeLeft = 0;

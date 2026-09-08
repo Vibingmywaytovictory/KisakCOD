@@ -98,18 +98,18 @@ int __cdecl G_FindConfigstringIndex(char *name, int start, int max, int create, 
             }
             if (ic == max)
             {
-                Com_PrintWarning(14, "Warning: abandoning const config string model slot for string %s\n", name);
+                Com_PrintWarning(CON_CHANNEL_CLIENT, "Warning: abandoning const config string model slot for string %s\n", name);
                 for (ic = 1; ic < max && SV_GetConfigstringConst(ic + start) != scr_const._; ++ic)
                     ;
             }
             if (ic == max)
             {
-                Com_Printf(15, "G_FindConfigstringIndex: overflow...\n");
-                Com_Printf(15, "Dumping these %i Config Strings:\n", max);
+                Com_Printf(CON_CHANNEL_SERVER, "G_FindConfigstringIndex: overflow...\n");
+                Com_Printf(CON_CHANNEL_SERVER, "Dumping these %i Config Strings:\n", max);
                 for (ic = 1; ic < max; ++ic)
                 {
                     ConfigstringConst = SV_GetConfigstringConst(ic + start);
-                    Com_Printf(15, "%i: %s\n", ic, SL_ConvertToString(ConfigstringConst));
+                    Com_Printf(CON_CHANNEL_SERVER, "%i: %s\n", ic, SL_ConvertToString(ConfigstringConst));
                 }
                 v9 = va("G_FindConfigstringIndex: overflow (%d): %s", start, name);
                 Com_Error(ERR_DROP, v9);
@@ -162,7 +162,7 @@ LABEL_11:
     {
         configStringIndex = G_FindConfigstringIndex(string, CS_LOCALIZED_STRINGS, CS_COUNT_LOCALIZED_STRINGS, 1, origErrorMsg);
         if (configStringIndex)
-            Com_PrintWarning(24, "WARNING: %s \"%s\" not precached\n", origErrorMsg, string);
+            Com_PrintWarning(CON_CHANNEL_SCRIPT, "WARNING: %s \"%s\" not precached\n", origErrorMsg, string);
     }
     return configStringIndex;
 }
@@ -233,7 +233,7 @@ int __cdecl G_ModelIndex(const char *name)
             }
             if (i == MAX_MODELS)
             {
-                Com_PrintWarning(14, "Warning: abandoning const config string model slot for string %s\n", name);
+                Com_PrintWarning(CON_CHANNEL_CLIENT, "Warning: abandoning const config string model slot for string %s\n", name);
                 for (i = 1; i < MAX_MODELS && SV_GetConfigstringConst(i + CS_MODELS) != scr_const._; ++i)
                     ;
             }
@@ -527,7 +527,7 @@ int __cdecl G_EntLinkTo(gentity_s *ent, gentity_s *parent, uint32_t tagName)
 int __cdecl G_EntLinkToInternal(gentity_s *ent, gentity_s *parent, uint32_t tagName)
 {
     int pm_type; // [esp+0h] [ebp-10h]
-    char *tagInfo; // [esp+4h] [ebp-Ch]
+    tagInfo_s *tagInfo; // [esp+4h] [ebp-Ch]
     gentity_s *checkEnt; // [esp+8h] [ebp-8h]
     int index; // [esp+Ch] [ebp-4h]
 
@@ -559,19 +559,17 @@ int __cdecl G_EntLinkToInternal(gentity_s *ent, gentity_s *parent, uint32_t tagN
         if (!checkEnt->tagInfo)
             break;
     }
-    tagInfo = (char*)MT_Alloc(112, MT_TYPE_TAG_INFO);
-    *(uint32_t *)tagInfo = (uint32_t)parent;
-    *((_WORD *)tagInfo + 4) = 0;
 
+    tagInfo = (tagInfo_s *)MT_Alloc(sizeof(tagInfo_s), MT_TYPE_TAG_INFO);
+    memset(tagInfo, 0, sizeof(tagInfo_s));
+    tagInfo->parent = parent;
     iassert(!tagName || SL_IsLowercaseString(tagName));
-    
-    Scr_SetString((uint16_t *)tagInfo + 4, tagName);
-    *((uint32_t *)tagInfo + 1) = (uint32_t)parent->tagChildren;
-    *((uint32_t *)tagInfo + 3) = index;
-    memset((uint8_t *)tagInfo + 16, 0, 0x30u);
+    Scr_SetString(&tagInfo->name, tagName);
+    tagInfo->next = parent->tagChildren;
+    tagInfo->index = index;
     parent->tagChildren = ent;
-    ent->tagInfo = (tagInfo_s *)tagInfo;
-    memset((uint8_t *)tagInfo + 64, 0, 0x30u);
+    ent->tagInfo = tagInfo;
+
     if (ent->client)
     {
         pm_type = ent->client->ps.pm_type;
@@ -665,7 +663,7 @@ void __cdecl G_EntUnlink(gentity_s *ent)
             }
         }
         Scr_SetString(&tagInfo->name, 0);
-        MT_Free((byte*)tagInfo, 112);
+        MT_Free((byte *)tagInfo, sizeof(tagInfo_s));
     }
 }
 
@@ -1145,7 +1143,7 @@ void __cdecl G_PrintEntities()
         else
             v0 = (char *)"";
         Com_Printf(
-            15,
+            CON_CHANNEL_SERVER,
             "%4i: '%s', origin: %f %f %f\n",
             entityIndex,
             v0,

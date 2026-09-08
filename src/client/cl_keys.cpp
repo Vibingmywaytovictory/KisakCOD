@@ -4,6 +4,7 @@
 #include <qcommon/mem_track.h>
 #include <qcommon/qcommon.h>
 #include <qcommon/cmd.h>
+#include <ui/keycodes.h>
 #include <universal/com_memory.h>
 #include <cgame/cg_local.h>
 #include <stringed/stringed_hooks.h>
@@ -27,201 +28,201 @@
 
 keyname_t keynames[96] =
 {
-  { "TAB", 9 },
-  { "ENTER", 13 },
-  { "ESCAPE", 27 },
-  { "SPACE", 32 },
-  { "BACKSPACE", 127 },
-  { "UPARROW", 154 },
-  { "DOWNARROW", 155 },
-  { "LEFTARROW", 156 },
-  { "RIGHTARROW", 157 },
-  { "ALT", 158 },
-  { "CTRL", 159 },
-  { "SHIFT", 160 },
-  { "CAPSLOCK", 151 },
-  { "F1", 167 },
-  { "F2", 168 },
-  { "F3", 169 },
-  { "F4", 170 },
-  { "F5", 171 },
-  { "F6", 172 },
-  { "F7", 173 },
-  { "F8", 174 },
-  { "F9", 175 },
-  { "F10", 176 },
-  { "F11", 177 },
-  { "F12", 178 },
-  { "INS", 161 },
-  { "DEL", 162 },
-  { "PGDN", 163 },
-  { "PGUP", 164 },
-  { "HOME", 165 },
-  { "END", 166 },
-  { "MOUSE1", 200 },
-  { "MOUSE2", 201 },
-  { "MOUSE3", 202 },
-  { "MOUSE4", 203 },
-  { "MOUSE5", 204 },
-  { "MWHEELUP", 206 },
-  { "MWHEELDOWN", 205 },
-  { "AUX1", 207 },
-  { "AUX2", 208 },
-  { "AUX3", 209 },
-  { "AUX4", 210 },
-  { "AUX5", 211 },
-  { "AUX6", 212 },
-  { "AUX7", 213 },
-  { "AUX8", 214 },
-  { "AUX9", 215 },
-  { "AUX10", 216 },
-  { "AUX11", 217 },
-  { "AUX12", 218 },
-  { "AUX13", 219 },
-  { "AUX14", 220 },
-  { "AUX15", 221 },
-  { "AUX16", 222 },
-  { "KP_HOME", 182 },
-  { "KP_UPARROW", 183 },
-  { "KP_PGUP", 184 },
-  { "KP_LEFTARROW", 185 },
-  { "KP_5", 186 },
-  { "KP_RIGHTARROW", 187 },
-  { "KP_END", 188 },
-  { "KP_DOWNARROW", 189 },
-  { "KP_PGDN", 190 },
-  { "KP_ENTER", 191 },
-  { "KP_INS", 192 },
-  { "KP_DEL", 193 },
-  { "KP_SLASH", 194 },
-  { "KP_MINUS", 195 },
-  { "KP_PLUS", 196 },
-  { "KP_NUMLOCK", 197 },
-  { "KP_STAR", 198 },
-  { "KP_EQUALS", 199 },
-  { "PAUSE", 153 },
-  { "SEMICOLON", 59 },
-  { "COMMAND", 150 },
-  { "181", 128 },
-  { "191", 129 },
-  { "223", 130 },
-  { "224", 131 },
-  { "225", 132 },
-  { "228", 133 },
-  { "229", 134 },
-  { "230", 135 },
-  { "231", 136 },
-  { "232", 137 },
-  { "233", 138 },
-  { "236", 139 },
-  { "241", 140 },
-  { "242", 141 },
-  { "243", 142 },
-  { "246", 143 },
-  { "248", 144 },
-  { "249", 145 },
-  { "250", 146 },
-  { "252", 147 },
-  { NULL, 0 }
+  { "TAB", K_TAB },
+  { "ENTER", K_ENTER },
+  { "ESCAPE", K_ESCAPE },
+  { "SPACE", K_SPACE },
+  { "BACKSPACE", K_BACKSPACE },
+  { "UPARROW", K_UPARROW },
+  { "DOWNARROW", K_DOWNARROW },
+  { "LEFTARROW", K_LEFTARROW },
+  { "RIGHTARROW", K_RIGHTARROW },
+  { "ALT", K_ALT },
+  { "CTRL", K_CTRL },
+  { "SHIFT", K_SHIFT },
+  { "CAPSLOCK", K_CAPSLOCK },
+  { "F1", K_F1 },
+  { "F2", K_F2 },
+  { "F3", K_F3 },
+  { "F4", K_F4 },
+  { "F5", K_F5 },
+  { "F6", K_F6 },
+  { "F7", K_F7 },
+  { "F8", K_F8 },
+  { "F9", K_F9 },
+  { "F10", K_F10 },
+  { "F11", K_F11 },
+  { "F12", K_F12 },
+  { "INS", K_INS },
+  { "DEL", K_DEL },
+  { "PGDN", K_PGDN },
+  { "PGUP", K_PGUP },
+  { "HOME", K_HOME },
+  { "END", K_END },
+  { "MOUSE1", K_MOUSE1 },
+  { "MOUSE2", K_MOUSE2 },
+  { "MOUSE3", K_MOUSE3 },
+  { "MOUSE4", K_MOUSE4 },
+  { "MOUSE5", K_MOUSE5 },
+  { "MWHEELUP", K_MWHEELUP },
+  { "MWHEELDOWN", K_MWHEELDOWN },
+  { "AUX1", K_AUX1 },
+  { "AUX2", K_AUX2 },
+  { "AUX3", K_AUX3 },
+  { "AUX4", K_AUX4 },
+  { "AUX5", K_AUX5 },
+  { "AUX6", K_AUX6 },
+  { "AUX7", K_AUX7 },
+  { "AUX8", K_AUX8 },
+  { "AUX9", K_AUX9 },
+  { "AUX10", K_AUX10 },
+  { "AUX11", K_AUX11 },
+  { "AUX12", K_AUX12 },
+  { "AUX13", K_AUX13 },
+  { "AUX14", K_AUX14 },
+  { "AUX15", K_AUX15 },
+  { "AUX16", K_AUX16 },
+  { "KP_HOME", K_KP_HOME },
+  { "KP_UPARROW", K_KP_UPARROW },
+  { "KP_PGUP", K_KP_PGUP },
+  { "KP_LEFTARROW", K_KP_LEFTARROW },
+  { "KP_5", K_KP_5 },
+  { "KP_RIGHTARROW", K_KP_RIGHTARROW },
+  { "KP_END", K_KP_END },
+  { "KP_DOWNARROW", K_KP_DOWNARROW },
+  { "KP_PGDN", K_KP_PGDN },
+  { "KP_ENTER", K_KP_ENTER },
+  { "KP_INS", K_KP_INS },
+  { "KP_DEL", K_KP_DEL },
+  { "KP_SLASH", K_KP_SLASH },
+  { "KP_MINUS", K_KP_MINUS },
+  { "KP_PLUS", K_KP_PLUS },
+  { "KP_NUMLOCK", K_KP_NUMLOCK },
+  { "KP_STAR", K_KP_STAR },
+  { "KP_EQUALS", K_KP_EQUALS },
+  { "PAUSE", K_PAUSE },
+  { "SEMICOLON", ';' },
+  { "COMMAND", K_COMMAND },
+  { "181", K_ASCII_181 },
+  { "191", K_ASCII_191 },
+  { "223", K_ASCII_223 },
+  { "224", K_ASCII_224 },
+  { "225", K_ASCII_225 },
+  { "228", K_ASCII_228 },
+  { "229", K_ASCII_229 },
+  { "230", K_ASCII_230 },
+  { "231", K_ASCII_231 },
+  { "232", K_ASCII_232 },
+  { "233", K_ASCII_233 },
+  { "236", K_ASCII_236 },
+  { "241", K_ASCII_241 },
+  { "242", K_ASCII_242 },
+  { "243", K_ASCII_243 },
+  { "246", K_ASCII_246 },
+  { "248", K_ASCII_248 },
+  { "249", K_ASCII_249 },
+  { "250", K_ASCII_250 },
+  { "252", K_ASCII_252 },
+  { NULL, K_NONE }
 }; // idb
 keyname_t keynames_localized[96] =
 {
-  { "KEY_TAB", 9 },
-  { "KEY_ENTER", 13 },
-  { "KEY_ESCAPE", 27 },
-  { "KEY_SPACE", 32 },
-  { "KEY_BACKSPACE", 127 },
-  { "KEY_UPARROW", 154 },
-  { "KEY_DOWNARROW", 155 },
-  { "KEY_LEFTARROW", 156 },
-  { "KEY_RIGHTARROW", 157 },
-  { "KEY_ALT", 158 },
-  { "KEY_CTRL", 159 },
-  { "KEY_SHIFT", 160 },
-  { "KEY_CAPSLOCK", 151 },
-  { "KEY_F1", 167 },
-  { "KEY_F2", 168 },
-  { "KEY_F3", 169 },
-  { "KEY_F4", 170 },
-  { "KEY_F5", 171 },
-  { "KEY_F6", 172 },
-  { "KEY_F7", 173 },
-  { "KEY_F8", 174 },
-  { "KEY_F9", 175 },
-  { "KEY_F10", 176 },
-  { "KEY_F11", 177 },
-  { "KEY_F12", 178 },
-  { "KEY_INS", 161 },
-  { "KEY_DEL", 162 },
-  { "KEY_PGDN", 163 },
-  { "KEY_PGUP", 164 },
-  { "KEY_HOME", 165 },
-  { "KEY_END", 166 },
-  { "KEY_MOUSE1", 200 },
-  { "KEY_MOUSE2", 201 },
-  { "KEY_MOUSE3", 202 },
-  { "KEY_MOUSE4", 203 },
-  { "KEY_MOUSE5", 204 },
-  { "KEY_MWHEELUP", 206 },
-  { "KEY_MWHEELDOWN", 205 },
-  { "KEY_AUX1", 207 },
-  { "KEY_AUX2", 208 },
-  { "KEY_AUX3", 209 },
-  { "KEY_AUX4", 210 },
-  { "KEY_AUX5", 211 },
-  { "KEY_AUX6", 212 },
-  { "KEY_AUX7", 213 },
-  { "KEY_AUX8", 214 },
-  { "KEY_AUX9", 215 },
-  { "KEY_AUX10", 216 },
-  { "KEY_AUX11", 217 },
-  { "KEY_AUX12", 218 },
-  { "KEY_AUX13", 219 },
-  { "KEY_AUX14", 220 },
-  { "KEY_AUX15", 221 },
-  { "KEY_AUX16", 222 },
-  { "KEY_KP_HOME", 182 },
-  { "KEY_KP_UPARROW", 183 },
-  { "KEY_KP_PGUP", 184 },
-  { "KEY_KP_LEFTARROW", 185 },
-  { "KEY_KP_5", 186 },
-  { "KEY_KP_RIGHTARROW", 187 },
-  { "KEY_KP_END", 188 },
-  { "KEY_KP_DOWNARROW", 189 },
-  { "KEY_KP_PGDN", 190 },
-  { "KEY_KP_ENTER", 191 },
-  { "KEY_KP_INS", 192 },
-  { "KEY_KP_DEL", 193 },
-  { "KEY_KP_SLASH", 194 },
-  { "KEY_KP_MINUS", 195 },
-  { "KEY_KP_PLUS", 196 },
-  { "KEY_KP_NUMLOCK", 197 },
-  { "KEY_KP_STAR", 198 },
-  { "KEY_KP_EQUALS", 199 },
-  { "KEY_PAUSE", 153 },
-  { "KEY_SEMICOLON", 59 },
-  { "KEY_COMMAND", 150 },
-  { "�", 128 },
-  { "KISAK", 129},
-  { "�", 130 },
-  { "�", 131 },
-  { "�", 132 },
-  { "�", 133 },
-  { "�", 134 },
-  { "�", 135 },
-  { "�", 136 },
-  { "�", 137 },
-  { "�", 138 },
-  { "�", 139 },
-  { "�", 140 },
-  { "�", 141 },
-  { "�", 142 },
-  { "�", 143 },
-  { "�", 144 },
-  { "�", 145 },
-  { "�", 146 },
-  { "�", 147 },
-  { NULL, 0 }
+  { "KEY_TAB", K_TAB },
+  { "KEY_ENTER", K_ENTER },
+  { "KEY_ESCAPE", K_ESCAPE },
+  { "KEY_SPACE", K_SPACE },
+  { "KEY_BACKSPACE", K_BACKSPACE },
+  { "KEY_UPARROW", K_UPARROW },
+  { "KEY_DOWNARROW", K_DOWNARROW },
+  { "KEY_LEFTARROW", K_LEFTARROW },
+  { "KEY_RIGHTARROW", K_RIGHTARROW },
+  { "KEY_ALT", K_ALT },
+  { "KEY_CTRL", K_CTRL },
+  { "KEY_SHIFT", K_SHIFT },
+  { "KEY_CAPSLOCK", K_CAPSLOCK },
+  { "KEY_F1", K_F1 },
+  { "KEY_F2", K_F2 },
+  { "KEY_F3", K_F3 },
+  { "KEY_F4", K_F4 },
+  { "KEY_F5", K_F5 },
+  { "KEY_F6", K_F6 },
+  { "KEY_F7", K_F7 },
+  { "KEY_F8", K_F8 },
+  { "KEY_F9", K_F9 },
+  { "KEY_F10", K_F10 },
+  { "KEY_F11", K_F11 },
+  { "KEY_F12", K_F12 },
+  { "KEY_INS", K_INS },
+  { "KEY_DEL", K_DEL },
+  { "KEY_PGDN", K_PGDN },
+  { "KEY_PGUP", K_PGUP },
+  { "KEY_HOME", K_HOME },
+  { "KEY_END", K_END },
+  { "KEY_MOUSE1", K_MOUSE1 },
+  { "KEY_MOUSE2", K_MOUSE2 },
+  { "KEY_MOUSE3", K_MOUSE3 },
+  { "KEY_MOUSE4", K_MOUSE4 },
+  { "KEY_MOUSE5", K_MOUSE5 },
+  { "KEY_MWHEELUP", K_MWHEELUP },
+  { "KEY_MWHEELDOWN", K_MWHEELDOWN },
+  { "KEY_AUX1", K_AUX1 },
+  { "KEY_AUX2", K_AUX2 },
+  { "KEY_AUX3", K_AUX3 },
+  { "KEY_AUX4", K_AUX4 },
+  { "KEY_AUX5", K_AUX5 },
+  { "KEY_AUX6", K_AUX6 },
+  { "KEY_AUX7", K_AUX7 },
+  { "KEY_AUX8", K_AUX8 },
+  { "KEY_AUX9", K_AUX9 },
+  { "KEY_AUX10", K_AUX10 },
+  { "KEY_AUX11", K_AUX11 },
+  { "KEY_AUX12", K_AUX12 },
+  { "KEY_AUX13", K_AUX13 },
+  { "KEY_AUX14", K_AUX14 },
+  { "KEY_AUX15", K_AUX15 },
+  { "KEY_AUX16", K_AUX16 },
+  { "KEY_KP_HOME", K_KP_HOME },
+  { "KEY_KP_UPARROW", K_KP_UPARROW },
+  { "KEY_KP_PGUP", K_KP_PGUP },
+  { "KEY_KP_LEFTARROW", K_KP_LEFTARROW },
+  { "KEY_KP_5", K_KP_5 },
+  { "KEY_KP_RIGHTARROW", K_KP_RIGHTARROW },
+  { "KEY_KP_END", K_KP_END },
+  { "KEY_KP_DOWNARROW", K_KP_DOWNARROW },
+  { "KEY_KP_PGDN", K_KP_PGDN },
+  { "KEY_KP_ENTER", K_KP_ENTER },
+  { "KEY_KP_INS", K_KP_INS },
+  { "KEY_KP_DEL", K_KP_DEL },
+  { "KEY_KP_SLASH", K_KP_SLASH },
+  { "KEY_KP_MINUS", K_KP_MINUS },
+  { "KEY_KP_PLUS", K_KP_PLUS },
+  { "KEY_KP_NUMLOCK", K_KP_NUMLOCK },
+  { "KEY_KP_STAR", K_KP_STAR },
+  { "KEY_KP_EQUALS", K_KP_EQUALS },
+  { "KEY_PAUSE", K_PAUSE },
+  { "KEY_SEMICOLON", ';' },
+  { "KEY_COMMAND", K_COMMAND },
+  { "�", K_ASCII_181 },
+  { "KISAK", K_ASCII_191},
+  { "�", K_ASCII_223 },
+  { "�", K_ASCII_224 },
+  { "�", K_ASCII_225 },
+  { "�", K_ASCII_228 },
+  { "�", K_ASCII_229 },
+  { "�", K_ASCII_230 },
+  { "�", K_ASCII_231 },
+  { "�", K_ASCII_232 },
+  { "�", K_ASCII_233 },
+  { "�", K_ASCII_236 },
+  { "�", K_ASCII_241 },
+  { "�", K_ASCII_242 },
+  { "�", K_ASCII_243 },
+  { "�", K_ASCII_246 },
+  { "�", K_ASCII_248 },
+  { "�", K_ASCII_249 },
+  { "�", K_ASCII_250 },
+  { "�", K_ASCII_252 },
+  { NULL, K_NONE }
 }; // idb
 
 //struct keyname_t *keynames 827b29b0     cl_keys.obj
@@ -448,19 +449,19 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
 
     shouldCompleteCmd = s_shouldCompleteCmd;
     s_shouldCompleteCmd = 1;
-    isShiftDown = playerKeys[localClientNum].keys[160].down;
-    isCtrlDown = playerKeys[localClientNum].keys[159].down;
-    isAltDown = playerKeys[localClientNum].keys[158].down;
-    if (key == 108 && isCtrlDown)
+    isShiftDown = playerKeys[localClientNum].keys[K_SHIFT].down;
+    isCtrlDown = playerKeys[localClientNum].keys[K_CTRL].down;
+    isAltDown = playerKeys[localClientNum].keys[K_ALT].down;
+    if (key == 'l' && isCtrlDown)
     {
         Cbuf_AddText(localClientNum, "clear\n");
         return;
     }
-    if (key == 13 || key == 191)
+    if (key == K_ENTER || key == K_KP_ENTER)
     {
         if (Con_CommitToAutoComplete())
             return;
-        Com_Printf(0, "]%s\n", g_consoleField.buffer);
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "]%s\n", g_consoleField.buffer);
         if (Key_IsCatcherActive(localClientNum, 2))
         {
             Scr_AddDebugText(g_consoleField.buffer);
@@ -507,25 +508,25 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
         if (Console_IsClientDisconnected())
             SCR_UpdateScreen();
     }
-    else if (Key_IsCatcherActive(localClientNum, 2) || key != 9)
+    else if (Key_IsCatcherActive(localClientNum, 2) || key != K_TAB)
     {
-        if (key == 154 && isCtrlDown)
+        if (key == K_UPARROW && isCtrlDown)
         {
             Con_CycleAutoComplete(-1);
             return;
         }
-        if (key == 155 && isCtrlDown)
+        if (key == K_DOWNARROW && isCtrlDown)
         {
             Con_CycleAutoComplete(1);
             return;
         }
-        if (key == 206 && isShiftDown)
+        if (key == K_MWHEELUP && isShiftDown)
         {
             v5 = 1;
         }
         else
         {
-            v3 = key == 154 || key == 183 || tolower(key) == 112 && isCtrlDown;
+            v3 = key == K_UPARROW || key == K_KP_UPARROW || tolower(key) == 'p' && isCtrlDown;
             v5 = v3;
         }
         if (v5)
@@ -538,13 +539,13 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
         }
         else
         {
-            if (key == 205 && isShiftDown)
+            if (key == K_MWHEELDOWN && isShiftDown)
             {
                 v4 = 1;
             }
             else
             {
-                v2 = key == 155 || key == 189 || tolower(key) == 110 && isCtrlDown;
+                v2 = key == K_DOWNARROW || key == K_KP_DOWNARROW || tolower(key) == 'n' && isCtrlDown;
                 v4 = v2;
             }
             if (v4)
@@ -559,13 +560,13 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
             {
                 switch (key)
                 {
-                case 164:
+                case K_PGUP:
                     Con_PageUp();
                     return;
-                case 163:
+                case K_PGDN:
                     Con_PageDown();
                     return;
-                case 206:
+                case K_MWHEELUP:
                     Con_PageUp();
                     if (isCtrlDown)
                     {
@@ -573,7 +574,7 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
                         Con_PageUp();
                     }
                     break;
-                case 205:
+                case K_MWHEELDOWN:
                     Con_PageDown();
                     if (isCtrlDown)
                     {
@@ -582,26 +583,26 @@ void __cdecl Console_Key(int32_t localClientNum, int32_t key)
                     }
                     break;
                 default:
-                    if (key == 165 && isCtrlDown)
+                    if (key == K_HOME && isCtrlDown)
                     {
                         Con_Top();
                         return;
                     }
-                    if (key == 166 && isCtrlDown)
+                    if (key == K_END && isCtrlDown)
                     {
                         Con_Bottom();
                         return;
                     }
-                    if (key == 162 || key == 27)
+                    if (key == K_DEL || key == K_ESCAPE)
                     {
                         if (Con_CancelAutoComplete())
                             return;
                     }
-                    else if (key == 157
-                        || key == 187
-                        || key == 156
-                        || key == 185
-                        || key != 127 && !isCtrlDown && !isAltDown && !isShiftDown)
+                    else if (key == K_RIGHTARROW
+                        || key == K_KP_RIGHTARROW
+                        || key == K_LEFTARROW
+                        || key == K_KP_LEFTARROW
+                        || key != K_BACKSPACE && !isCtrlDown && !isAltDown && !isShiftDown)
                     {
                         Con_CommitToAutoComplete();
                     }
@@ -629,10 +630,10 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
     int32_t isCtrlDown; // [esp+18h] [ebp-8h]
     char isModified; // [esp+1Fh] [ebp-1h]
 
-    isCtrlDown = playerKeys[localClientNum].keys[159].down;
+    isCtrlDown = playerKeys[localClientNum].keys[K_CTRL].down;
     isModified = 0;
     len = strlen(edit->buffer);
-    if ((key == 161 || key == 192) && playerKeys[localClientNum].keys[160].down)
+    if ((key == K_INS || key == K_KP_INS) && playerKeys[localClientNum].keys[K_SHIFT].down)
     {
         isModified = Field_Paste(localClientNum, scrPlace, edit);
     }
@@ -640,14 +641,14 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
     {
         switch (key)
         {
-        case 162:
+        case K_DEL:
             if (edit->cursor < len)
                 memmove(
                     (uint8_t *)&edit->buffer[edit->cursor],
                     (uint8_t *)&edit->buffer[edit->cursor + 1],
                     len - edit->cursor);
             break;
-        case 157:
+        case K_RIGHTARROW:
             if (edit->cursor < len)
                 ++edit->cursor;
             if (isCtrlDown)
@@ -658,7 +659,7 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
                     ++edit->cursor;
             }
             break;
-        case 156:
+        case K_LEFTARROW:
             if (edit->cursor > 0)
                 --edit->cursor;
             if (isCtrlDown)
@@ -670,15 +671,15 @@ char __cdecl Field_KeyDownEvent(int32_t localClientNum, const ScreenPlacement *s
                 edit->scroll = edit->cursor;
             break;
         default:
-            if (key == 165 || tolower(key) == 97 && isCtrlDown)
+            if (key == K_HOME || tolower(key) == 'a' && isCtrlDown)
             {
                 edit->cursor = 0;
             }
-            else if (key == 166 || tolower(key) == 101 && isCtrlDown)
+            else if (key == K_END || tolower(key) == 'e' && isCtrlDown)
             {
                 edit->cursor = len;
             }
-            else if (key == 161)
+            else if (key == K_INS)
             {
                 OverstrikeMode = Key_GetOverstrikeMode(localClientNum);
                 Key_SetOverstrikeMode(localClientNum, OverstrikeMode == 0);
@@ -865,7 +866,7 @@ void CompleteCommand()
                 }
                 else if (Con_HasTooManyMatchesToShow())
                 {
-                    Com_Printf(0, "]%s\n", g_consoleField.buffer);
+                    Com_Printf(CON_CHANNEL_DONT_FILTER, "]%s\n", g_consoleField.buffer);
                     Cmd_ForEach(PrintMatches);
                     Dvar_ForEachName(PrintMatches);
                 }
@@ -890,7 +891,7 @@ void __cdecl PrintMatches(const char *s)
         || !I_strnicmp(s, s_shortestMatch, strlen(s_shortestMatch)))
     {
         if (I_stristr(s, s_shortestMatch))
-            Com_Printf(0, "    %s\n", s);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "    %s\n", s);
     }
 }
 
@@ -994,7 +995,7 @@ void CompleteDvarArgument()
     dvar = Dvar_FindVar(dvarName);
     if (!dvar)
         MyAssertHandler(".\\client\\cl_keys.cpp", 898, 0, "%s", "dvar");
-    if (dvar->type == 6)
+    if (dvar->type == DVAR_TYPE_ENUM)
     {
         dvarValuePrefix = Cmd_Argv(1);
         if (*dvarValuePrefix)
@@ -1119,13 +1120,13 @@ const char *__cdecl Key_KeynumToString(int32_t keynum, int32_t translate)
         return "<KEY NOT FOUND>";
     if (keynum >= 0x100)
         return "<OUT OF RANGE>";
-    if (translate && SEH_GetCurrentLanguage() == 1 && keynum >= 48 && keynum <= 57)
+    if (translate && SEH_GetCurrentLanguage() == 1 && keynum >= '0' && keynum <= '9')
         return *(&keynames_localized[72].name + keynum);
-    if (keynum > ' ' && keynum < 127 && keynum != '"')
+    if (keynum > ' ' && keynum < K_BACKSPACE && keynum != '"')
     {
         tinystr[0] = toupper(keynum);
         tinystr[1] = 0;
-        if (keynum != 59 || translate)
+        if (keynum != ';' || translate)
             return tinystr;
     }
     if (translate)
@@ -1235,7 +1236,7 @@ void __cdecl Key_Unbind_f()
         if (b == -1)
         {
             v1 = Cmd_Argv(1);
-            Com_Printf(0, "\"%s\" isn't a valid key\n", v1);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "\"%s\" isn't a valid key\n", v1);
         }
         else
         {
@@ -1244,7 +1245,7 @@ void __cdecl Key_Unbind_f()
     }
     else
     {
-        Com_Printf(0, "unbind <key> : remove commands from a key\n");
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "unbind <key> : remove commands from a key\n");
     }
 }
 
@@ -1336,7 +1337,7 @@ void __cdecl Key_Bind_f()
         if (keynum == -1)
         {
             v1 = Cmd_Argv(1);
-            Com_Printf(0, "\"%s\" isn't a valid key\n", v1);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "\"%s\" isn't a valid key\n", v1);
         }
         else
         {
@@ -1347,12 +1348,12 @@ void __cdecl Key_Bind_f()
                 if (binding)
                 {
                     v2 = Cmd_Argv(1);
-                    Com_Printf(0, "\"%s\" = \"%s\"\n", v2, binding);
+                    Com_Printf(CON_CHANNEL_DONT_FILTER, "\"%s\" = \"%s\"\n", v2, binding);
                 }
                 else
                 {
                     v3 = Cmd_Argv(1);
-                    Com_Printf(0, "\"%s\" is not bound\n", v3);
+                    Com_Printf(CON_CHANNEL_DONT_FILTER, "\"%s\" is not bound\n", v3);
                 }
             }
             else
@@ -1382,7 +1383,7 @@ void __cdecl Key_Bind_f()
     }
     else
     {
-        Com_Printf(0, "bind <key> [command] : attach a command to a key\n");
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "bind <key> [command] : attach a command to a key\n");
     }
 }
 
@@ -1446,7 +1447,7 @@ void __cdecl Key_Bindlist_f()
             if (*binding)
             {
                 v0 = Key_KeynumToString(keynum, 0);
-                Com_Printf(0, "%s \"%s\"\n", v0, binding);
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "%s \"%s\"\n", v0, binding);
             }
         }
     }
@@ -1458,12 +1459,9 @@ cmd_function_s Key_Unbindall_f_VAR;
 cmd_function_s Key_Bindlist_f_VAR;
 cmd_function_s CL_ToggleConsole_f_VAR;
 
-// "toggleconsole". The stock config binds ~ to this and nothing ever registered
-// it, so the bind silently did nothing. That matters more than it sounds:
-// CL_IsConsoleKey only recognises ` ^ ~ and 184, so on any layout whose key left
-// of 1 is not one of those -- Nordic and Baltic layouts put section or one-half
-// there -- the built in console key does not fire either, and with the bind dead
-// too there is no way to open the console at all.
+// "toggleconsole". The stock config binds the console key to this and nothing
+// ever registered it, so that bind silently did nothing -- which left no way to
+// open the console on a keyboard where the built-in key check also failed.
 void __cdecl CL_ToggleConsole_f()
 {
     Con_ToggleConsole();
@@ -1483,7 +1481,7 @@ extern const dvar_t *con_toggleKey;
 bool __cdecl CL_IsConsoleKey(int32_t key)
 {
     // key 184 isn't apart of ASCII
-    if (key == '`' || key == '^' || key == 184 || key == '~')
+    if (key == '`' || key == '^' || key == K_KP_PGUP || key == '~')
         return true;
 
     // con_toggleKey names one more, so a layout whose console key is a dead key
@@ -1586,7 +1584,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                     {
                         return;
                     }
-                    if (keys[160].down)
+                    if (keys[K_SHIFT].down)
                     {
                         if (!Con_IsActive(localClientNum))
                             Con_ToggleConsole();
@@ -1600,7 +1598,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
             }
             else
             {
-                if (key == 165 && down && keys[127].down)
+                if (key == K_HOME && down && keys[K_BACKSPACE].down)
                     goto LABEL_45;
                 if (CL_IsConsoleKey(key))
                     return;
@@ -1609,7 +1607,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         locSelInputState = &playerKeys[localClientNum].locSelInputState;
         if ((clientUIActives[0].keyCatchers & 8) != 0 && down > 0)
         {
-            if (key == 27)
+            if (key == K_ESCAPE)
             {
                 *locSelInputState = LOC_SEL_INPUT_CANCEL;
             }
@@ -1631,16 +1629,16 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         clcState = clientUIActives[0].connectionState;
         if (down)
         {
-            v6 = key == 200 || key < 128;
+            v6 = key == K_MOUSE1 || key < K_ASCII_FIRST;
             if (v6
                 && (CL_GetLocalClientConnection(localClientNum)->demoplaying || clcState == CA_CINEMATIC || clcState == CA_LOGO)
                 && !clientUIActives[0].keyCatchers)
             {
                 Dvar_SetString(nextdemo, (char*)"");
-                key = 27;
+                key = K_ESCAPE;
             }
         }
-        if (key == 27 && down)
+        if (key == K_ESCAPE && down)
         {
             if ((clientUIActives[0].keyCatchers & 2) != 0)
             {
@@ -1654,7 +1652,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                     Con_CancelAutoComplete();
                 if ((clientUIActives[0].keyCatchers & 0x10) != 0)
                 {
-                    UI_KeyEvent(localClientNum, 27, down);
+                    UI_KeyEvent(localClientNum, K_ESCAPE, down);
                 }
                 else
                 {
@@ -1743,10 +1741,10 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                         Cbuf_AddText(localClientNum, "\n");
                     }
                 }
-                else if (key >= 207)
+                else if (key >= K_AUX1)
                 {
                     v4 = Key_KeynumToString(key, 0);
-                    Com_Printf(14, "%s is unbound, use controls menu to set.\n", v4);
+                    Com_Printf(CON_CHANNEL_CLIENT, "%s is unbound, use controls menu to set.\n", v4);
                 }
                 return;
             }
@@ -1757,7 +1755,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
     if ((clientUIActives[0].keyCatchers & 0x21) != 0)
     {
     LABEL_34:
-        if (key == 96 || key == 126 || key == 27)
+        if (key == '`' || key == '~' || key == K_ESCAPE)
             return;
         goto LABEL_38;
     }
@@ -1767,14 +1765,14 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         {
             switch (key)
             {
-            case 154:
-            case 155:
-            case 156:
-            case 157:
-            case 163:
-            case 164:
-            case 169:
-            case 176:
+            case K_UPARROW:
+            case K_DOWNARROW:
+            case K_LEFTARROW:
+            case K_RIGHTARROW:
+            case K_PGDN:
+            case K_PGUP:
+            case K_F3:
+            case K_F10:
                 goto LABEL_34;
             default:
                 return;
@@ -1786,10 +1784,10 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                 MyAssertHandler(".\\client\\cl_keys.cpp", 1942, 0, "%s", "cl->keyCatchers & KEYCATCH_UI");
             switch (key)
             {
-            case 154:
-            case 155:
-            case 163:
-            case 164:
+            case K_UPARROW:
+            case K_DOWNARROW:
+            case K_PGDN:
+            case K_PGUP:
                 goto LABEL_34;
             default:
                 return;
@@ -1881,7 +1879,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                     //{
                     //    return;
                     //}
-                    if (keys[160].down)
+                    if (keys[K_SHIFT].down)
                     {
                         if (!Con_IsActive(localClientNum))
                             Con_ToggleConsole();
@@ -1895,7 +1893,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
             }
             else
             {
-                if (key == 165 && down && keys[127].down)
+                if (key == K_HOME && down && keys[K_BACKSPACE].down)
                     goto LABEL_45;
                 if (CL_IsConsoleKey(key))
                     return;
@@ -1904,7 +1902,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         locSelInputState = &playerKeys[localClientNum].locSelInputState;
         if ((clientUIActives[0].keyCatchers & 8) != 0 && down > 0)
         {
-            if (key == 27)
+            if (key == K_ESCAPE)
             {
                 *locSelInputState = LOC_SEL_INPUT_CANCEL;
             }
@@ -1926,15 +1924,15 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         clcState = CL_GetLocalClientConnectionState(localClientNum);
         if (down)
         {
-            if ((key == 200 || key < 128)
+            if ((key == K_MOUSE1 || key < K_ASCII_FIRST)
                 && (cls.demoplaying || clcState == CA_CINEMATIC || clcState == CA_LOGO)
                 && !clientUIActives[0].keyCatchers)
             {
                 Dvar_SetString(nextdemo, (char *)"");
-                key = 27;
+                key = K_ESCAPE;
             }
         }
-        if (key == 27 && down)
+        if (key == K_ESCAPE && down)
         {
             if ((clientUIActives[0].keyCatchers & 2) != 0)
             {
@@ -1948,7 +1946,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                     Con_CancelAutoComplete();
                 if ((clientUIActives[0].keyCatchers & 0x10) != 0)
                 {
-                    UI_KeyEvent(localClientNum, 27, down);
+                    UI_KeyEvent(localClientNum, K_ESCAPE, down);
                 }
                 else
                 {
@@ -2021,10 +2019,10 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                         Cbuf_AddText(localClientNum, "\n");
                     }
                 }
-                else if (key >= 207)
+                else if (key >= K_AUX1)
                 {
                     v4 = Key_KeynumToString(key, 0);
-                    Com_Printf(14, "%s is unbound, use controls menu to set.\n", v4);
+                    Com_Printf(CON_CHANNEL_CLIENT, "%s is unbound, use controls menu to set.\n", v4);
                 }
                 return;
             }
@@ -2035,7 +2033,7 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
     if ((clientUIActives[0].keyCatchers & 0x21) != 0)
     {
     LABEL_34:
-        if (key == 96 || key == 126 || key == 27)
+        if (key == '`' || key == '~' || key == K_ESCAPE)
             return;
         goto LABEL_38;
     }
@@ -2045,14 +2043,14 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
         {
             switch (key)
             {
-            case 154:
-            case 155:
-            case 156:
-            case 157:
-            case 163:
-            case 164:
-            case 169:
-            case 176:
+            case K_UPARROW:
+            case K_DOWNARROW:
+            case K_LEFTARROW:
+            case K_RIGHTARROW:
+            case K_PGDN:
+            case K_PGUP:
+            case K_F3:
+            case K_F10:
                 goto LABEL_34;
             default:
                 return;
@@ -2064,10 +2062,10 @@ void __cdecl CL_KeyEvent(int32_t localClientNum, int32_t key, int32_t down, uint
                 MyAssertHandler(".\\client\\cl_keys.cpp", 1942, 0, "%s", "cl->keyCatchers & KEYCATCH_UI");
             switch (key)
             {
-            case 154:
-            case 155:
-            case 163:
-            case 164:
+            case K_UPARROW:
+            case K_DOWNARROW:
+            case K_PGDN:
+            case K_PGUP:
                 goto LABEL_34;
             default:
                 return;
@@ -2092,12 +2090,12 @@ void __cdecl Message_Key(int32_t localClientNum, int32_t key)
             "%s\n\t(localClientNum) = %i",
             "(localClientNum == 0)",
             localClientNum);
-    if (key == 27)
+    if (key == K_ESCAPE)
     {
         clientUIActives[0].keyCatchers &= ~0x20u;
         Field_Clear(chatField);
     }
-    else if (key == 13 || key == 191)
+    else if (key == K_ENTER || key == K_KP_ENTER)
     {
         if (localClientNum)
             MyAssertHandler(
@@ -2134,7 +2132,7 @@ bool __cdecl CL_MouseInputShouldBypassMenus(int32_t localClientNum, int32_t key)
         return 1;
     if (!cl_bypassMouseInput || !cl_bypassMouseInput->current.enabled)
         return 0;
-    if (key == 200 || key == 201 || key == 202)
+    if (key == K_MOUSE1 || key == K_MOUSE2 || key == K_MOUSE3)
         return 1;
     return cls.uiStarted && !UI_CheckExecKey(localClientNum, key);
 #endif
@@ -2156,7 +2154,7 @@ void __cdecl CL_CharEvent(int32_t localClientNum, int32_t key)
             localClientNum);
     if ((clientUIActives[0].keyCatchers & 1) != 0)
     {
-        if (key == 8 && Con_CancelAutoComplete())
+        if (key == '\b' && Con_CancelAutoComplete())
             return;
     LABEL_18:
         CL_ConsoleCharEvent(localClientNum, key);
@@ -2169,7 +2167,7 @@ void __cdecl CL_CharEvent(int32_t localClientNum, int32_t key)
     }
     if ((clientUIActives[0].keyCatchers & 0x10) != 0)
     {
-        UI_KeyEvent(localClientNum, key | 0x400, 1);
+        UI_KeyEvent(localClientNum, key | K_CHAR_FLAG, 1);
         return;
     }
     if (localClientNum)

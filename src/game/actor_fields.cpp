@@ -151,11 +151,11 @@ unsigned __int8 *__cdecl BaseForFields(unsigned __int8 *actor, const actor_field
     {
         if (fields == sentientfields)
         {
-            return (unsigned __int8 *)*((unsigned int *)actor + 1);
+            return (unsigned __int8 *)((actor_s *)actor)->sentient;
         }
         else if (fields == entfields)
         {
-            return *(unsigned __int8 **)actor;
+            return (unsigned __int8 *)((actor_s *)actor)->ent;
         }
         else
         {
@@ -312,53 +312,36 @@ void __cdecl ActorScr_SetGoalHeight(actor_s *pSelf, const actor_fields_s *pField
 
 void __cdecl ActorScr_SetTime(actor_s *pSelf, const actor_fields_s *pField)
 {
-    long double v4; // fp2
-    long double v5; // fp2
+    iassert(pSelf);
+    iassert(pField);
+    iassert(pField->type == F_INT);
 
-    if (!pSelf)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 396, 0, "%s", "pSelf");
-    if (!pField)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 399, 0, "%s", "pField");
-    if (pField->type)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 401, 0, "%s", "pField->type == F_INT");
-    *(double *)&v4 = (float)((float)(Scr_GetFloat(0) * (float)1000.0) + (float)0.5);
-    v5 = floor(v4);
-    *(gentity_s **)((char *)&pSelf->ent + pField->ofs) = (gentity_s *)(int)(float)*(double *)&v5;
+    float milliseconds = Scr_GetFloat(0) * 1000.0f;
+    *(int *)((char *)pSelf + pField->ofs) = (int)floorf(milliseconds + 0.5f);
 }
 
 void __cdecl ActorScr_GetTime(actor_s *pSelf, const actor_fields_s *pField)
 {
-    __int64 v2; // r11
+    iassert(pSelf);
+    iassert(pField);
+    iassert(pField->type == F_INT);
 
-    if (!pField)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 414, 0, "%s", "pField");
-    if (pField->type)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 415, 0, "%s", "pField->type == F_INT");
-    //LODWORD(v2) = *(gentity_s **)((char *)&pSelf->ent + pField->ofs);
-    //Scr_AddFloat((float)((float)v2 * (float)0.001));
-    Scr_AddFloat((float)*(int *)((char *)&pSelf->ent + pField->ofs) * 0.001);
+    int milliseconds = *(const int *)((const char *)pSelf + pField->ofs);
+    Scr_AddFloat((float)milliseconds * 0.001);
 }
 
 void __cdecl ActorScr_SetWeapon(actor_s *pSelf, const actor_fields_s *pField)
 {
-    const char *String; // r31
-    const char *v5; // r3
-    const char *v6; // r3
+    iassert(pSelf);
+    iassert(pField);
+    iassert(pField->type == F_INT);
 
-    if (!pSelf)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 430, 0, "%s", "pSelf");
-    if (!pField)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 433, 0, "%s", "pField");
-    if (pField->type)
-        MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 435, 0, "%s", "pField->type == F_INT");
-    String = Scr_GetString(0);
+    const char *String = Scr_GetString(0);
     if (!G_GetWeaponIndexForName(String))
     {
-        v5 = va("Can't find weapon [%s].  It probably needs to be precached.", String);
-        Scr_ParamError(0, v5);
+        Scr_ParamError(0, va("Can't find weapon [%s].  It probably needs to be precached.", String));
     }
-    v6 = Scr_GetString(0);
-    *(gentity_s **)((char *)&pSelf->ent + pField->ofs) = (gentity_s *)G_GetWeaponIndexForName(v6);
+    *(int *)((char *)pSelf + pField->ofs) = G_GetWeaponIndexForName(Scr_GetString(0));
 }
 
 void __cdecl ActorScr_GetWeapon(actor_s *pSelf, const actor_fields_s *pField)
@@ -570,43 +553,43 @@ void __cdecl PrintFieldUsage(const actor_fields_s *fields)
             switch (type)
             {
             case F_INT:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "int");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "int");
                 break;
             case F_SHORT:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "short");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "short");
                 break;
             case F_BYTE:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "byte");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "byte");
                 break;
             case F_FLOAT:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "float");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "float");
                 break;
             case F_STRING:
             case F_MODEL:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "string");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "string");
                 break;
             case F_VECTOR:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "vector");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "vector");
                 break;
             case F_ENTITY:
             case F_ENTHANDLE:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "entnum");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "entnum");
                 break;
             case F_ACTOR:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "actor");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "actor");
                 break;
             case F_SENTIENT:
             case F_SENTIENTHANDLE:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "sentient");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "sentient");
                 break;
             case F_CLIENT:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "clientnum");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "clientnum");
                 break;
             case F_PATHNODE:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "pathnode");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "pathnode");
                 break;
             case F_ACTORGROUP:
-                Com_Printf(0, "^5  %-20s: %s\n", v3->name, "actorgroup");
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "^5  %-20s: %s\n", v3->name, "actorgroup");
                 break;
             default:
                 if (!alwaysfails)
@@ -623,12 +606,12 @@ void __cdecl PrintFieldUsage(const actor_fields_s *fields)
 
 void Cmd_AI_PrintUsage()
 {
-    Com_Printf(0, "^5USAGE: ai (!)target field (value), or ai (!) target [list/delete]\n");
+    Com_Printf(CON_CHANNEL_DONT_FILTER, "^5USAGE: ai (!)target field (value), or ai (!) target [list/delete]\n");
     Com_Printf(
-        0,
+        CON_CHANNEL_DONT_FILTER,
         "^5target can be an entity number, a targetname, an entity classname,\n    'all', 'axis', 'allies', or 'neutral'\n");
-    Com_Printf(0, "^5if ! immediately precedes target, it uses AI that don't match target\n");
-    Com_Printf(0, "^5field can be one of:\n");
+    Com_Printf(CON_CHANNEL_DONT_FILTER, "^5if ! immediately precedes target, it uses AI that don't match target\n");
+    Com_Printf(CON_CHANNEL_DONT_FILTER, "^5field can be one of:\n");
     PrintFieldUsage(aifields);
     PrintFieldUsage(sentientfields);
     PrintFieldUsage(entfields);
@@ -650,13 +633,13 @@ void __cdecl Cmd_AI_DisplayInfo(actor_s *actor)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor_fields.cpp", 723, 0, "%s", "actor->sentient");
     v2 = SL_ConvertToString(actor->ent->classname);
     v3 = Sentient_NameForTeam(actor->sentient->eTeam);
-    Com_Printf(0, "ent %i (%-7s) %-24s", actor->ent->s.number, v3, v2);
+    Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i (%-7s) %-24s", actor->ent->s.number, v3, v2);
     if (actor->ent->targetname)
     {
         v4 = SL_ConvertToString(actor->ent->targetname);
-        Com_Printf(0, " targetname %s", v4);
+        Com_Printf(CON_CHANNEL_DONT_FILTER, " targetname %s", v4);
     }
-    Com_Printf(0, "\n");
+    Com_Printf(CON_CHANNEL_DONT_FILTER, "\n");
 }
 
 void __cdecl Cmd_AI_Delete(actor_s *actor)
@@ -676,9 +659,8 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
     double v9; // r7
     int ofs; // r11
     const char *v11; // r7
-    int v12; // r10
+    gentity_s *v12;
     gentity_s *gentities; // r11
-    unsigned int v14; // r10
     unsigned int v15; // r29
     gentity_s *v16; // r11
     const char *v17; // r8
@@ -709,7 +691,7 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
         LODWORD(v7) = *(unsigned int *)&pBase[HIDWORD(v7)];
 
         Com_Printf(
-            0,
+            CON_CHANNEL_DONT_FILTER,
             "ent %i: %s = %g\n",
             number,
             pField->name,
@@ -721,20 +703,20 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
         switch (type)
         {
         case F_INT:
-            Com_Printf(0, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, *(unsigned int *)&pBase[pField->ofs]);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, *(unsigned int *)&pBase[pField->ofs]);
             return;
         case F_SHORT:
-            Com_Printf(0, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, *(__int16 *)&pBase[pField->ofs]);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, *(__int16 *)&pBase[pField->ofs]);
             return;
         case F_BYTE:
-            Com_Printf(0, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, pBase[pField->ofs]);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %i\n", pSelf->ent->s.number, pField->name, pBase[pField->ofs]);
             return;
         case F_FLOAT:
             // KISAKFIX: IDA hex-rays `(const char*)HIDWORD(v9)` is a PPC double-pass
             // artifact. Disasm at 0x821f3f90 case 3: r4=fmt, r5=number, r6=pField->name,
             // double via f1+stack. Literal x86 port treats HIDWORD(v9) as a %s pointer
             // → garbage deref → crash on every `ai <ent> <floatField>` console command.
-            Com_Printf(0, "ent %i: %s = %g\n", pSelf->ent->s.number, pField->name,
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %g\n", pSelf->ent->s.number, pField->name,
                        *(float *)&pBase[pField->ofs]);
             return;
         case F_STRING:
@@ -743,7 +725,7 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
                 v11 = SL_ConvertToString(*(unsigned __int16 *)&pBase[ofs]);
             else
                 v11 = "<undefined>";
-            Com_Printf(0, "ent %i: %s = %s\n", number, pField->name, v11);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %s\n", number, pField->name, v11);
             return;
         case F_VECTOR:
             // KISAKFIX: kisak port dropped `pField->name` from the arg list. IDA disasm
@@ -751,7 +733,7 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
             // name argument shifted `*(float*)&pBase[ofs]` into the `%s` slot — crash
             // on every `ai <ent> <vectorField>` console command.
             Com_Printf(
-                0,
+                CON_CHANNEL_DONT_FILTER,
                 "ent %i: %s = %g %g %g\n",
                 pSelf->ent->s.number,
                 pField->name,
@@ -760,12 +742,12 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
                 *(float *)&pBase[pField->ofs + 8]);
             return;
         case F_ENTITY:
-            v12 = *(unsigned int *)&pBase[pField->ofs];
+            v12 = *(gentity_s **)&pBase[pField->ofs];
             if (!v12)
                 goto LABEL_18;
             gentities = level.gentities;
-            v14 = (int)((unsigned __int64)(875407347LL * (v12 - (unsigned int)level.gentities)) >> 32) >> 7;
-            v15 = v14 + (v14 >> 31);
+            v15 = (unsigned int)(v12 - level.gentities);
+
             if (v15 >= 0x880)
             {
                 MyAssertHandler(
@@ -781,7 +763,7 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
                 v17 = SL_ConvertToString(v16->targetname);
             else
                 v17 = "<undefined>";
-            Com_Printf(0, "ent %i: %s = %i (targetname %s)\n", number, pField->name, v15, v17);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %i (targetname %s)\n", number, pField->name, v15, v17);
             return;
         case F_ENTHANDLE:
             enthand = (EntHandle *)&pBase[pField->ofs];
@@ -804,19 +786,19 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
                 goto LABEL_38;
             goto LABEL_29;
         case F_ACTOR:
-            v22 = pField->ofs;
-            if (*(unsigned int *)&pBase[v22])
-                goto LABEL_32;
-            goto LABEL_18;
-        case F_SENTIENT:
-            v22 = pField->ofs;
-            if (!*(unsigned int *)&pBase[v22])
+            if (!*(actor_s **)&pBase[pField->ofs])
                 goto LABEL_18;
-        LABEL_32:
-            v18 = *(unsigned __int16 *)(**(unsigned int **)&pBase[v22] + 118);
-            v23 = &level.gentities[v18];
-            targetname = v23->targetname;
-            if (v23->targetname)
+            v18 = (*(actor_s **)&pBase[pField->ofs])->ent->s.number;
+            targetname = level.gentities[v18].targetname;
+            if (targetname)
+                goto LABEL_38;
+            goto LABEL_29;
+        case F_SENTIENT:
+            if (!*(sentient_s **)&pBase[pField->ofs])
+                goto LABEL_18;
+            v18 = (*(sentient_s **)&pBase[pField->ofs])->ent->s.number;
+            targetname = level.gentities[v18].targetname;
+            if (targetname)
                 goto LABEL_38;
             goto LABEL_29;
         case F_SENTIENTHANDLE:
@@ -834,38 +816,38 @@ void __cdecl Cmd_AI_DisplayValue(actor_s *pSelf, unsigned __int8 *pBase, const a
                 else
                     LABEL_29:
                 v21 = "<undefined>";
-                Com_Printf(0, "ent %i: %s = %i (targetname %s)\n", number, pField->name, v18, v21);
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %i (targetname %s)\n", number, pField->name, v18, v21);
             }
             else
             {
             LABEL_18:
-                Com_Printf(0, "ent %i: %s = (null)\n", number, pField->name);
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = (null)\n", number, pField->name);
             }
             break;
         case F_CLIENT:
             Com_Printf(
-                0,
+                CON_CHANNEL_DONT_FILTER,
                 "ent %i: %s = client %i\n",
                 pSelf->ent->s.number,
                 pField->name,
-                (signed int)(*(unsigned int *)&pBase[pField->ofs] - (unsigned int)level.clients) / 46104);
+                (int)(*(gclient_s **)&pBase[pField->ofs] - level.clients));
             return;
         case F_PATHNODE:
             v25 = *(const pathnode_t **)&pBase[pField->ofs];
             if (v25)
             {
                 v26 = Path_ConvertNodeToIndex(v25);
-                Com_Printf(0, "ent %i: %s = node %i\n", number, pField->name, v26);
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = node %i\n", number, pField->name, v26);
             }
             else
             {
-                Com_Printf(0, "ent %i: %s = (null)\n", pSelf->ent->s.number, pField->name);
+                Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = (null)\n", pSelf->ent->s.number, pField->name);
             }
             return;
         case F_MODEL:
             v27 = G_ModelName(pBase[pField->ofs]);
             v28 = SL_ConvertToString(v27);
-            Com_Printf(0, "ent %i: %s = %s\n", number, pField->name, v28);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "ent %i: %s = %s\n", number, pField->name, v28);
             return;
         case F_ACTORGROUP:
             return;
@@ -901,7 +883,7 @@ void __cdecl Cmd_AI_SetValue(actor_s *pSelf, int argc, unsigned __int8 *pBase, c
     setter = pField->setter;
     if (setter == ActorScr_ReadOnly)
     {
-        Com_PrintError(0, "%s is read-only\n", pField->name);
+        Com_PrintError(CON_CHANNEL_DONT_FILTER, "%s is read-only\n", pField->name);
         return;
     }
     if (setter == ActorScr_SetTime)
@@ -968,7 +950,7 @@ void __cdecl Cmd_AI_SetValue(actor_s *pSelf, int argc, unsigned __int8 *pBase, c
         case F_PATHNODE:
         case F_MODEL:
         case F_ACTORGROUP:
-            Com_Printf(0, "cannot set from console\n");
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "cannot set from console\n");
             break;
         case F_VECTOR:
             if (argc != 6)
@@ -1061,7 +1043,7 @@ void __cdecl Cmd_AI_EntityNumber(
     else if (v9 > 0x87F)
     {
         Cmd_AI_PrintUsage();
-        Com_PrintError(0, "%i is not a valid entity number\n", v10);
+        Com_PrintError(CON_CHANNEL_DONT_FILTER, "%i is not a valid entity number\n", v10);
     }
     else
     {
@@ -1073,7 +1055,7 @@ void __cdecl Cmd_AI_EntityNumber(
         else
         {
             Cmd_AI_PrintUsage();
-            Com_PrintError(0, "entity number %i is not an actor\n", v10);
+            Com_PrintError(CON_CHANNEL_DONT_FILTER, "entity number %i is not an actor\n", v10);
         }
     }
 }
@@ -1179,7 +1161,7 @@ void __cdecl Cmd_AI_f()
             if (!FieldForName)
             {
                 Cmd_AI_PrintUsage();
-                Com_PrintError(0, "%s is not an actor or entity field\n", v6);
+                Com_PrintError(CON_CHANNEL_DONT_FILTER, "%s is not an actor or entity field\n", v6);
                 return;
             }
         }

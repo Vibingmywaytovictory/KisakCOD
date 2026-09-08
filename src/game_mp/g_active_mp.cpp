@@ -893,9 +893,9 @@ void __cdecl IntermissionClientEndFrame(gentity_s *ent)
     client->ps.eFlags &= ~0x40u;
     client->ps.viewmodelIndex = 0;
     ent->s.eType = ET_INVISIBLE;
-    v1 = va("%i", level.teamScores[1]);
+    v1 = va("%i", level.teamScores[TEAM_AXIS]);
     SV_SetConfigstring(4, v1);
-    v2 = va("%i", level.teamScores[2]);
+    v2 = va("%i", level.teamScores[TEAM_ALLIES]);
     SV_SetConfigstring(5, v2);
 }
 
@@ -1469,7 +1469,7 @@ int32_t __cdecl G_UpdateClientInfo(gentity_s *ent)
         }
         else
         {
-            Com_PrintWarning(16, "G_UpdateClientInfo(): Veh attached, but no ownerNum\n");
+            Com_PrintWarning(CON_CHANNEL_SYSTEM, "G_UpdateClientInfo(): Veh attached, but no ownerNum\n");
             client->sess.cs.attachedVehEntNum = ENTITYNUM_NONE;
             client->sess.cs.attachedVehSlotIndex = 0;
         }

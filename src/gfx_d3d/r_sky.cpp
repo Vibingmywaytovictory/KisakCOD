@@ -220,9 +220,9 @@ void __cdecl R_SetSunFromDvars(sunflare_t *sun)
 {
     iassert(sun);
 
-    sun->spriteMaterial = Material_RegisterHandle((char *)r_sunsprite_shader->current.integer, 6);
+    sun->spriteMaterial = Material_RegisterHandle((char *)r_sunsprite_shader->current.integer, IMAGE_TRACK_FX);
     sun->spriteSize = r_sunsprite_size->current.value;
-    sun->flareMaterial = Material_RegisterHandle((char *)r_sunflare_shader->current.integer, 6);
+    sun->flareMaterial = Material_RegisterHandle((char *)r_sunflare_shader->current.integer, IMAGE_TRACK_FX);
     sun->flareMinSize = r_sunflare_min_size->current.value * 0.5f;
     sun->flareMinDot = cos(DEG2RAD( r_sunflare_min_angle->current.value ));
     sun->flareMaxSize = r_sunflare_max_size->current.value * 0.5f;
@@ -264,7 +264,7 @@ void __cdecl R_LoadSunThroughDvars(const char *sunName, sunflare_t *sun)
     }
     else
     {
-        Com_Printf(8, "WARNING: couldn't load sun file '%s'\n", fullpath);
+        Com_Printf(CON_CHANNEL_GFX, "WARNING: couldn't load sun file '%s'\n", fullpath);
     }
 }
 
@@ -285,17 +285,17 @@ void __cdecl R_Cmd_LoadSun()
             }
             else
             {
-                Com_Printf(8, "You can't r_loadsun while a map isn't loaded\n");
+                Com_Printf(CON_CHANNEL_GFX, "You can't r_loadsun while a map isn't loaded\n");
             }
         }
         else
         {
-            Com_Printf(8, "You must have cheats enabled to use r_loadsun\n");
+            Com_Printf(CON_CHANNEL_GFX, "You must have cheats enabled to use r_loadsun\n");
         }
     }
     else
     {
-        Com_Printf(8, "USAGE: r_loadsun <sunname>\n  sunname must not have an extension\n");
+        Com_Printf(CON_CHANNEL_GFX, "USAGE: r_loadsun <sunname>\n  sunname must not have an extension\n");
     }
 }
 
@@ -310,7 +310,7 @@ void __cdecl R_Cmd_SaveSun()
     }
     else
     {
-        Com_Printf(8, "USAGE: r_savesun <sunname>\n  sunname must not have an extension\n");
+        Com_Printf(CON_CHANNEL_GFX, "USAGE: r_savesun <sunname>\n  sunname must not have an extension\n");
     }
 }
 

@@ -156,7 +156,7 @@ void __cdecl CG_RegisterWeapon(int32_t localClientNum, uint32_t weaponNum)
                     }
                     else
                     {
-                        Com_PrintError(14, "CG_RegisterWeapon: No such bone tag (%s) for weapon (%s)\n", SL_ConvertToString(weapDef->hideTags[tagIndex]), weapDef->szInternalName);
+                        Com_PrintError(CON_CHANNEL_CLIENT, "CG_RegisterWeapon: No such bone tag (%s) for weapon (%s)\n", SL_ConvertToString(weapDef->hideTags[tagIndex]), weapDef->szInternalName);
                     }
                 }
                 DObjSetHidePartBits(obj, weapInfo->partBits);
@@ -179,7 +179,7 @@ void __cdecl CG_RegisterWeapon(int32_t localClientNum, uint32_t weaponNum)
                             weapDef->szDisplayName);
                     else
                         Com_PrintWarning(
-                            17,
+                            CON_CHANNEL_PLAYERWEAP,
                             "WARNING: Weapon %s: Could not translate display name \"%s\"\n",
                             weapDef->szInternalName,
                             weapDef->szDisplayName);
@@ -199,7 +199,7 @@ void __cdecl CG_RegisterWeapon(int32_t localClientNum, uint32_t weaponNum)
                             weapDef->szModeName);
                     else
                         Com_PrintWarning(
-                            17,
+                            CON_CHANNEL_PLAYERWEAP,
                             "WARNING: Weapon %s: Could not translate mode name \"%s\"\n",
                             weapDef->szInternalName,
                             weapDef->szModeName);
@@ -219,7 +219,7 @@ void __cdecl CG_RegisterWeapon(int32_t localClientNum, uint32_t weaponNum)
                             weapDef->szOverlayName);
                     else
                         Com_PrintWarning(
-                            17,
+                            CON_CHANNEL_PLAYERWEAP,
                             "WARNING: Weapon %s: Could not translate AI overlay description \"%s\"\n",
                             weapDef->szInternalName,
                             weapDef->szOverlayName);
@@ -408,29 +408,26 @@ void __cdecl CG_RegisterItemVisuals(int32_t localClientNum, uint32_t weapIdx)
 
 void __cdecl CG_RegisterItems(int32_t localClientNum)
 {
-    char v1; // al
-    char *v2; // [esp+8h] [ebp-98h]
-    const char *ConfigString; // [esp+Ch] [ebp-94h]
-    char items[132]; // [esp+10h] [ebp-90h] BYREF
-    int32_t i; // [esp+98h] [ebp-8h]
-    int32_t digit; // [esp+9Ch] [ebp-4h]
+    const char* configString = CL_GetConfigString(localClientNum, CS_ITEMS);
+    if (!configString[0])
+        return;
 
-    ConfigString = CL_GetConfigString(localClientNum, CS_ITEMS);
-    v2 = items;
-    do
+    for (size_t i = 1; i < MAX_WEAPONS; ++i)
     {
-        v1 = *ConfigString;
-        *v2++ = *ConfigString++;
-    } while (v1);
-    for (i = 1; i < 128; ++i)
-    {
-        digit = items[i / 4];
-        if (digit > 57)
-            digit -= 87;
-        else
-            digit -= 48;
-        if ((digit & (1 << (i & 3))) != 0)
+        const char hexadecimal = configString[i / 4];
+        if (!hexadecimal)
+            break;
+
+        // '0'-'9','a'-'f'; 'f' -> 0b1111
+        const int value = (hexadecimal > '9')
+            ? static_cast<int>(hexadecimal - 'a' + 10)
+            : static_cast<int>(hexadecimal - '0');
+
+        const size_t bitIndex = i & 3;
+        if (value & (1 << bitIndex))
+        {
             CG_RegisterItemVisuals(localClientNum, i);
+        }
     }
 }
 
@@ -890,7 +887,7 @@ void __cdecl WeaponRunXModelAnims(int32_t localClientNum, const playerState_s* p
             goto LABEL_64;
         default:
             StartWeaponAnim(localClientNum, weaponIndex, obj, WEAP_ANIM_IDLE, transitionTime);
-            Com_Printf(19, "WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & 0xFFFFFDFF);
+            Com_Printf(CON_CHANNEL_ANIM, "WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & 0xFFFFFDFF);
         LABEL_64:
             weapInfo->iPrevAnim = ps->weapAnim;
             CG_GetLocalClientGlobals(localClientNum)->prevViewmodelWeapon = weaponIndex;
@@ -1137,7 +1134,7 @@ bool __cdecl ViewmodelKnifeShouldBeAttached(int32_t localClientNum, WeaponDef* w
         return 0;
 
     anim = CG_GetLocalClientGlobals(localClientNum)->predictedPlayerState.weapAnim & 0xFFFFFDFF;
-    return anim == 8 || anim == 9;
+    return anim == WEAP_MELEE_ATTACK || anim == WEAP_MELEE_CHARGE;
 }
 
 void __cdecl ProcessWeaponNoteTracks(int32_t localClientNum, const playerState_s *predictedPlayerState)
@@ -2086,7 +2083,7 @@ char __cdecl VerifyPlayerAltModeWeapon(int32_t localClientNum, const WeaponDef *
         return 1;
 
     Com_PrintError(
-        14,
+        CON_CHANNEL_CLIENT,
         "Player is holding alt-mode weapon \"%s\", but does not posses it's original, \"%s\".\n",
         weapDef->szInternalName,
         weapDef->szAltWeaponName);
@@ -2369,13 +2366,13 @@ char __cdecl ActionParms(int32_t *slotResult)
         }
         else
         {
-            Com_Printf(0, "+/-actionslot; number given is out of range.  Was %i, expected 1 thru %i.\n", slot, 4);
+            Com_Printf(CON_CHANNEL_DONT_FILTER, "+/-actionslot; number given is out of range.  Was %i, expected 1 thru %i.\n", slot, 4);
             return 0;
         }
     }
     else
     {
-        Com_Printf(0, "USAGE: +/-actionslot <number>\n");
+        Com_Printf(CON_CHANNEL_DONT_FILTER, "USAGE: +/-actionslot <number>\n");
         return 0;
     }
 }
@@ -2680,7 +2677,7 @@ void __cdecl DrawBulletImpacts(
         {
             if (ent->nextState.eType != ET_VEHICLE && ent->nextState.eType != ET_HELICOPTER)
             {
-                Com_PrintError(14, "Unknown eType %i in CG_DrawBulletImpacts()\n", ent->nextState.eType);
+                Com_PrintError(CON_CHANNEL_CLIENT, "Unknown eType %i in CG_DrawBulletImpacts()\n", ent->nextState.eType);
                 return;
             }
             minSpread = weaponDef->fAdsSpread;
@@ -3667,7 +3664,7 @@ int32_t __cdecl CalcMuzzlePoint(int32_t localClientNum, int32_t entityNum, float
                 muzzle[2] = cent->nextState.lerp.pos.trBase[2];
                 if (entityNum < 64)
                 {
-                    Com_DPrintf(17, "No %s in CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
+                    Com_DPrintf(CON_CHANNEL_PLAYERWEAP, "No %s in CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
                     if ((cent->nextState.lerp.eFlags & 8) != 0)
                     {
                         muzzle[2] = muzzle[2] + 11.0;
@@ -4005,7 +4002,7 @@ void __cdecl CG_SelectWeaponIndex(int32_t localClientNum, uint32_t weaponIndex)
     cg_s *cgameGlob;
 
     cgameGlob = CG_GetLocalClientGlobals(localClientNum);
-    Com_Printf(15, "CG_SelectWeaponIndex: localClientNum=%d weaponIndex=%d prevSelect=%d\n",
+    Com_Printf(CON_CHANNEL_SERVER, "CG_SelectWeaponIndex: localClientNum=%d weaponIndex=%d prevSelect=%d\n",
         localClientNum, weaponIndex, cgameGlob->weaponSelect);
     cgameGlob->weaponSelectTime = cgameGlob->time;
     if (cgameGlob->weaponSelect != weaponIndex)

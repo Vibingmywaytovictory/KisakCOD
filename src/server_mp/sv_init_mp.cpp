@@ -83,7 +83,7 @@ void __cdecl SV_SetConfigstring(int index, const char *val)
                 client = svs.clients;
                 while (i < sv_maxclients->current.integer)
                 {
-                    if (client->header.state >= 3)
+                    if (client->header.state >= CS_CLIENTLOADING)
                     {
                         if (len <= maxChunk)
                         {
@@ -176,10 +176,10 @@ void __cdecl SV_SetConfigValueForKey(int start, int max, char *key, char *value)
     }
     if (ia == max)
     {
-        Com_Printf(15, "Overflow at config string start value of %i: key values printed below\n", start);
+        Com_Printf(CON_CHANNEL_SERVER, "Overflow at config string start value of %i: key values printed below\n", start);
         for (ia = 0; ia < max; ++ia)
         {
-            Com_Printf(15, "%i: %i ( %s )\n", ia + start, sv.configstrings[ia + start], SL_ConvertToString(sv.configstrings[ia + start]));
+            Com_Printf(CON_CHANNEL_SERVER, "%i: %i ( %s )\n", ia + start, sv.configstrings[ia + start], SL_ConvertToString(sv.configstrings[ia + start]));
         }
         Com_Error(ERR_DROP, "SV_SetConfigValueForKey: overflow'");
     }
@@ -315,7 +315,7 @@ void __cdecl SV_ChangeMaxClients()
     count = 0;
     for (i = 0; i < sv_maxclients->current.integer; ++i)
     {
-        if (svs.clients[i].header.state >= 2 && i > count)
+        if (svs.clients[i].header.state >= CS_CONNECTED && i > count)
             count = i;
     }
     counta = count + 1;
@@ -331,7 +331,7 @@ void __cdecl SV_ChangeMaxClients()
         oldClients = (client_t *)Hunk_AllocateTempMemory(sizeof(client_t) * counta, "SV_ChangeMaxClients");
         for (ia = 0; ia < counta; ++ia)
         {
-            if (svs.clients[ia].header.state < 2)
+            if (svs.clients[ia].header.state < CS_CONNECTED)
                 Com_Memset(&oldClients[ia], 0, sizeof(client_t));
             else
                 memcpy(&oldClients[ia], &svs.clients[ia], sizeof(client_t));
@@ -339,7 +339,7 @@ void __cdecl SV_ChangeMaxClients()
         Com_Memset(svs.clients, 0, sizeof(client_t) * sv_maxclients->current.integer);
         for (ib = 0; ib < counta; ++ib)
         {
-            if (oldClients[ib].header.state >= 2)
+            if (oldClients[ib].header.state >= CS_CONNECTED)
                 memcpy(&svs.clients[ib], &oldClients[ib], sizeof(svs.clients[ib]));
         }
         Hunk_FreeTempMemory((char*)oldClients);
@@ -440,7 +440,7 @@ void __cdecl SV_SpawnServer(char *mapname)
         client = svs.clients;
         while (i < sv_maxclients->current.integer)
         {
-            if (client->header.state >= 3)
+            if (client->header.state >= CS_CLIENTLOADING)
             {
                 Com_sprintf(filename, 0x40u, "loadingnewmap\n%s\n%s", mapname, sv_gametype->current.string);
                 NET_OutOfBandPrint(NS_SERVER, client->header.netchan.remoteAddress, filename);
@@ -472,8 +472,8 @@ void __cdecl SV_SpawnServer(char *mapname)
         }
 
         SV_ShutdownGameProgs();
-        Com_Printf(15, "------ Server Initialization ------\n");
-        Com_Printf(15, "Server: %s\n", mapname);
+        Com_Printf(CON_CHANNEL_SERVER, "------ Server Initialization ------\n");
+        Com_Printf(CON_CHANNEL_SERVER, "Server: %s\n", mapname);
         SV_ClearServer();
     }
 
@@ -603,7 +603,7 @@ void __cdecl SV_SpawnServer(char *mapname)
         clienta = svs.clients;
         while (i < sv_maxclients->current.integer)
         {
-            if (clienta->header.state >= 2)
+            if (clienta->header.state >= CS_CONNECTED)
             {
                 clienta->statPacketsReceived = 0;
                 NET_OutOfBandPrint(NS_SERVER, clienta->header.netchan.remoteAddress, "requeststats\n");
@@ -617,7 +617,7 @@ void __cdecl SV_SpawnServer(char *mapname)
         p = FS_LoadedIwdChecksums();
         Dvar_SetString((dvar_s *)sv_iwds, (char *)p);
         if (!strlen(p))
-            Com_PrintWarning(15, "WARNING: sv_pure set but no IWD files loaded\n");
+            Com_PrintWarning(CON_CHANNEL_SERVER, "WARNING: sv_pure set but no IWD files loaded\n");
         p = FS_LoadedIwdNames();
         Dvar_SetString((dvar_s *)sv_iwdNames, (char *)p);
     }
@@ -638,7 +638,7 @@ void __cdecl SV_SpawnServer(char *mapname)
     sv.state = SS_GAME;
     SV_Heartbeat_f();
     ProfLoad_Deactivate();
-    Com_Printf(15, "-----------------------------------\n");
+    Com_Printf(CON_CHANNEL_SERVER, "-----------------------------------\n");
     // LWSS: Remove punkbuster junk
     //if (Dvar_GetBool("sv_punkbuster"))
     //    EnablePbSv();
@@ -856,7 +856,7 @@ void __cdecl SV_DropAllClients()
     drop = svs.clients;
     while (i < sv_maxclients->current.integer)
     {
-        if (drop->header.state >= 2)
+        if (drop->header.state >= CS_CONNECTED)
             SV_DropClient(drop, "EXE_DISCONNECTED", 1);
         ++i;
         ++drop;
@@ -872,7 +872,7 @@ void __cdecl SV_Shutdown(const char *finalmsg)
     if (com_sv_running && com_sv_running->current.enabled)
     {
         Com_SyncThreads();
-        Com_Printf(15, "----- Server Shutdown -----\n");
+        Com_Printf(CON_CHANNEL_SERVER, "----- Server Shutdown -----\n");
         SV_FinalMessage(finalmsg);
         KISAK_NULLSUB();
         SV_MasterShutdown();
@@ -889,7 +889,7 @@ void __cdecl SV_Shutdown(const char *finalmsg)
         }
         memset(&svs, 0, sizeof(svs));
         bgs = 0;
-        Com_Printf(15, "---------------------------\n");
+        Com_Printf(CON_CHANNEL_SERVER, "---------------------------\n");
     }
 }
 
@@ -908,14 +908,14 @@ void __cdecl SV_FinalMessage(const char *message)
         client = svs.clients;
         while (i < sv_maxclients->current.integer)
         {
-            if (client->header.state >= 2)
+            if (client->header.state >= CS_CONNECTED)
             {
                 if (client->header.netchan.remoteAddress.type != NA_LOOPBACK)
                     SV_SendDisconnect(client, client->header.state, message, translationForReason, client->name);
                 client->nextSnapshotTime = -1;
                 SV_SetServerStaticHeader();
                 SV_BeginClientSnapshot(client, &msg);
-                if (client->header.state == 4 || client->header.state == 1)
+                if (client->header.state == CS_ACTIVE || client->header.state == CS_ZOMBIE)
                     SV_WriteSnapshotToClient(client, &msg);
                 SV_EndClientSnapshot(client, &msg);
                 SV_GetServerStaticHeader();

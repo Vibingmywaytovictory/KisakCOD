@@ -344,14 +344,14 @@ void __cdecl Con_Init()
 {
     int32_t i; // [esp+0h] [ebp-4h]
 
-    // The comment below was already here and the value contradicted it. The gate
-    // in CL_KeyEvent reads
+    // The trailing comment here already said "just enable console by default"
+    // and the value contradicted it. The gate in CL_KeyEvent reads
     //     if (!con_restricted->current.enabled || (keyCatchers & 1) != 0)
-    // so with this on, the console key only works while the console is already
-    // open -- which means it can never be opened at all. Defaulted off so the key
-    // does what it looks like it does. DVAR_ARCHIVE, so an existing config_mp.cfg
-    // that already saved "monkeytoy 1" still wins until it is removed or
-    // overridden with +set monkeytoy 0.
+    // so with this ON the console key only works while the console is already
+    // open -- which means it can never be opened at all, and the scancode fix
+    // above would still be inert. Defaulted off so the key does what the comment
+    // always said it did. DVAR_ARCHIVE, so a config_mp.cfg that already saved
+    // "monkeytoy 1" still wins until it is removed or +set monkeytoy 0 is used.
     con_restricted = Dvar_RegisterBool("monkeytoy", 0, DVAR_ARCHIVE, "Restrict console access");
 
     // An extra key that opens the console, by name, on top of the hardcoded
@@ -1314,7 +1314,7 @@ void __cdecl Con_Linefeed(int32_t localClientNum, uint32_t channel, int32_t flag
 
 void __cdecl CL_ConsoleFixPosition()
 {
-    CL_ConsolePrint(0, 0, "\n", 0, 0, 0);
+    CL_ConsolePrint(0, CON_CHANNEL_DONT_FILTER, "\n", 0, 0, 0);
     con.displayLineOffset = con.consoleWindow.activeLineCount - 1;
 }
 
@@ -1402,7 +1402,7 @@ void __cdecl CL_DeathMessagePrint(
         deathMsgLenh = deathMsgLeng + 1;
         bcassert(deathMsgLenh, ARRAY_COUNT(deathMsg)); // 0x400
         deathMsg[deathMsgLenh] = 0;
-        CL_ConsolePrint(localClientNum, 5, deathMsg, 0, con.visiblePixelWidth, 0);
+        CL_ConsolePrint(localClientNum, CON_CHANNEL_OBITUARY, deathMsg, 0, con.visiblePixelWidth, 0);
     }
 }
 
@@ -2684,7 +2684,7 @@ void __cdecl ConDrawInput_DetailedDvarMatch(char *str)
         ConDrawInput_Text(dvarInfo, con_inputDvarInfoColor);
         conDrawInputGlob.y = conDrawInputGlob.y + conDrawInputGlob.fontHeight;
         conDrawInputGlob.x = conDrawInputGlob.leftX;
-        if (dvar->type == 6 && Cmd_Argc() == 2)
+        if (dvar->type == DVAR_TYPE_ENUM && Cmd_Argc() == 2)
             ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
     }
 }

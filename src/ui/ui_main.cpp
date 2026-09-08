@@ -124,25 +124,25 @@ void __cdecl TRACK_ui_main()
 
 void UI_AssetCache()
 {
-    sharedUiInfo.assets.whiteMaterial = Material_RegisterHandle("white", 3);
-    sharedUiInfo.assets.scrollBar = Material_RegisterHandle("ui_scrollbar", 3);
-    sharedUiInfo.assets.scrollBarArrowDown = Material_RegisterHandle("ui_scrollbar_arrow_dwn_a", 3);
-    sharedUiInfo.assets.scrollBarArrowUp = Material_RegisterHandle("ui_scrollbar_arrow_up_a", 3);
-    sharedUiInfo.assets.scrollBarArrowLeft = Material_RegisterHandle("ui_scrollbar_arrow_left", 3);
-    sharedUiInfo.assets.scrollBarArrowRight = Material_RegisterHandle("ui_scrollbar_arrow_right", 3);
-    sharedUiInfo.assets.scrollBarThumb = Material_RegisterHandle("ui_scrollbar_thumb", 3);
-    sharedUiInfo.assets.sliderBar = Material_RegisterHandle("ui_slider2", 3);
-    sharedUiInfo.assets.sliderThumb = Material_RegisterHandle("ui_sliderbutt_1", 3);
+    sharedUiInfo.assets.whiteMaterial = Material_RegisterHandle("white", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBar = Material_RegisterHandle("ui_scrollbar", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowDown = Material_RegisterHandle("ui_scrollbar_arrow_dwn_a", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowUp = Material_RegisterHandle("ui_scrollbar_arrow_up_a", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowLeft = Material_RegisterHandle("ui_scrollbar_arrow_left", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowRight = Material_RegisterHandle("ui_scrollbar_arrow_right", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarThumb = Material_RegisterHandle("ui_scrollbar_thumb", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.sliderBar = Material_RegisterHandle("ui_slider2", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.sliderThumb = Material_RegisterHandle("ui_sliderbutt_1", IMAGE_TRACK_UI);
     // LWSS ADD - Cursor icon
-    sharedUiInfo.assets.cursor = Material_RegisterHandle("ui_cursor", 0);
+    sharedUiInfo.assets.cursor = Material_RegisterHandle("ui_cursor", IMAGE_TRACK_MISC);
     // LWSS END
-    sharedUiInfo.assets.bigFont = CL_RegisterFont("fonts/bigfont", 0);
-    sharedUiInfo.assets.smallFont = CL_RegisterFont("fonts/smallfont", 0);
-    sharedUiInfo.assets.consoleFont = CL_RegisterFont("fonts/consolefont", 0);
-    sharedUiInfo.assets.boldFont = CL_RegisterFont("fonts/boldfont", 0);
-    sharedUiInfo.assets.textFont = CL_RegisterFont("fonts/normalfont", 0);
-    sharedUiInfo.assets.extraBigFont = CL_RegisterFont("fonts/extrabigfont", 0);
-    sharedUiInfo.assets.objectiveFont = CL_RegisterFont("fonts/objectivefont", 0);
+    sharedUiInfo.assets.bigFont = CL_RegisterFont("fonts/bigfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.smallFont = CL_RegisterFont("fonts/smallfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.consoleFont = CL_RegisterFont("fonts/consolefont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.boldFont = CL_RegisterFont("fonts/boldfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.textFont = CL_RegisterFont("fonts/normalfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.extraBigFont = CL_RegisterFont("fonts/extrabigfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.objectiveFont = CL_RegisterFont("fonts/objectivefont", IMAGE_TRACK_MISC);
 }
 
 void __cdecl UI_DrawSides(
@@ -573,7 +573,7 @@ void UI_UpdateSaveUI()
     if (!ui_saveTimeGlob.hasfirstFrameShown)
     {
         v0 = Sys_Milliseconds();
-        Com_Printf(13, "Save Message First Frame Shown: %i\n", v0);
+        Com_Printf(CON_CHANNEL_UI, "Save Message First Frame Shown: %i\n", v0);
         ui_saveTimeGlob.hasfirstFrameShown = 1;
     }
     if (ui_saveTimeGlob.callWrite)
@@ -593,7 +593,7 @@ void UI_UpdateSaveUI()
             Dvar_SetBool(ui_isSaving, 0);
             Menus_CloseByName(&uiInfo.uiDC, ui_saveTimeGlob.saveMenuName);
             v1 = Sys_Milliseconds();
-            Com_Printf(13, "Save Message Last Frame Shown: %i\n", v1);
+            Com_Printf(CON_CHANNEL_UI, "Save Message Last Frame Shown: %i\n", v1);
         }
     }
 }
@@ -697,16 +697,16 @@ void __cdecl UI_DrawSaveGameShot(rectDef_s *rect, double scale, float *color)
         v11 = v5 << 6;
         if (*(const char **)((char *)&uiInfo.savegameList[0].imageName + v11))
         {
-            sshotImage = Material_RegisterRawImage(*(const char **)((char *)&uiInfo.savegameList[0].imageName + v11), 3);
+            sshotImage = Material_RegisterRawImage(*(const char **)((char *)&uiInfo.savegameList[0].imageName + v11), IMAGE_TRACK_UI);
             uiInfo.sshotImage = sshotImage;
         }
         if (!*(const char **)((char *)&uiInfo.savegameList[0].imageName + v11) || !sshotImage)
-            uiInfo.sshotImage = Material_RegisterHandle("unknownsave", 3);
+            uiInfo.sshotImage = Material_RegisterHandle("unknownsave", IMAGE_TRACK_UI);
         I_strncpyz(uiInfo.sshotImageName, *(const char **)((char *)&uiInfo.savegameList[0].imageName + v11), 64);
     }
     else
     {
-        uiInfo.sshotImage = Material_RegisterHandle("unknownsave", 3);
+        uiInfo.sshotImage = Material_RegisterHandle("unknownsave", IMAGE_TRACK_UI);
     }
 LABEL_14:
     UI_DrawHandlePic(&scrPlaceFull, rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, uiInfo.sshotImage);
@@ -929,19 +929,19 @@ int __cdecl UI_GetOpenOrCloseMenuOnDvarArgs(
             }
             else
             {
-                Com_Printf(13, "%s: invalid menu name.\n", cmd);
+                Com_Printf(CON_CHANNEL_UI, "%s: invalid menu name.\n", cmd);
                 return 0;
             }
         }
         else
         {
-            Com_Printf(13, "%s: invalid test value.\n", cmd);
+            Com_Printf(CON_CHANNEL_UI, "%s: invalid test value.\n", cmd);
             return 0;
         }
     }
     else
     {
-        Com_Printf(13, "%s: invalid dvar name.\n", cmd);
+        Com_Printf(CON_CHANNEL_UI, "%s: invalid dvar name.\n", cmd);
         return 0;
     }
 }
@@ -963,7 +963,7 @@ bool __cdecl UI_DvarValueTest(const char *cmd, const char *dvarName, const char 
     }
     else
     {
-        Com_Printf(13, "%s: cannot find dvar %s\n", cmd, dvarName);
+        Com_Printf(CON_CHANNEL_UI, "%s: cannot find dvar %s\n", cmd, dvarName);
         return 0;
     }
 }
@@ -1188,7 +1188,7 @@ void __cdecl UI_ParseMenuMaterial(const char *key, char *value)
     Material *material; // [esp+0h] [ebp-4Ch]
     char name[68]; // [esp+4h] [ebp-48h] BYREF
 
-    material = Material_RegisterHandle(value, 3);
+    material = Material_RegisterHandle(value, IMAGE_TRACK_UI);
     Com_sprintf(name, 0x40u, "$%s", key);
     I_strlwr(name);
     Material_Duplicate(material, name);
@@ -1236,7 +1236,7 @@ void __cdecl UI_MapLoadInfo(const char *filename)
         }
         else
         {
-            Com_PrintWarning(13, "WARNING: Could not find '%s'.\n", filename);
+            Com_PrintWarning(CON_CHANNEL_UI, "WARNING: Could not find '%s'.\n", filename);
         }
     }
 }
@@ -1413,7 +1413,7 @@ char *__cdecl UI_SafeTranslateString(const char *reference)
         if (loc_warningsAsErrors->current.enabled)
             Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", v1);
         else
-            Com_PrintWarning(13, "WARNING: Could not translate string \"%s\"\n", v1);
+            Com_PrintWarning(CON_CHANNEL_UI, "WARNING: Could not translate string \"%s\"\n", v1);
         v3 = errorString;
         v4 = "^1UNLOCALIZED(^7";
         v5 = 17;
@@ -1997,7 +1997,7 @@ void __cdecl UI_DelSavegame()
     if (FS_DeleteInDir(path, (char*)"players"))
 #endif
     {
-        Com_Printf(13, "Deleted savegame: %s.svg\n", file);
+        Com_Printf(CON_CHANNEL_UI, "Deleted savegame: %s.svg\n", file);
 #ifdef KISAK_XBOX
         Com_sprintf(path, sizeof(path), "save/%s.jpg", file);
         FS_Delete(path);
@@ -2009,7 +2009,7 @@ void __cdecl UI_DelSavegame()
     }
     else
     {
-        Com_Printf(13, "Unable to delete savegame: %s.svg\n", file);
+        Com_Printf(CON_CHANNEL_UI, "Unable to delete savegame: %s.svg\n", file);
     }
 }
 
@@ -2477,7 +2477,7 @@ void __cdecl UI_RunMenuScript(int localClientNum, const char **args, const char 
         return;
     }
 
-    Com_Printf(13, "unknown UI script %s in block:\n%s\n", out, actualScript);
+    Com_Printf(CON_CHANNEL_UI, "unknown UI script %s in block:\n%s\n", out, actualScript);
 }
 
 int __cdecl UI_SetActiveMenu(int localClientNum, uiMenuCommand_t menu)

@@ -1434,7 +1434,7 @@ void __cdecl PlayerCmd_finishPlayerDamage(scr_entref_t entref)
                 Scr_AddInt(damage);
                 Scr_Notify(pSelf, scr_const.damage, 2u);
                 if (!entityHandlers[pSelf->handler].die)
-                    Com_Printf(1, "No die handler for player entity type %i", pSelf->handler);
+                    Com_Printf(CON_CHANNEL_ERROR, "No die handler for player entity type %i", pSelf->handler);
                 if (pSelf->health > 0)
                 {
                     pain = entityHandlers[pSelf->handler].pain;
@@ -2403,18 +2403,17 @@ void __cdecl PlayerCmd_DeactivateReverb(scr_entref_t e)
     double Float; // fp31
     uint32_t NumParam; // r3
     int32_t ConstString; // r10
-    const char *v6; // r3
 
-    v1 = HIWORD(entref);
-    if ((_WORD)entref)
+    v1 = e.entnum;
+    if (e.classnum)
     {
         v2 = "not an entity";
     }
     else
     {
-        if (g_entities[HIWORD(entref)].client)
+        if (g_entities[e.entnum].client)
             goto LABEL_6;
-        v2 = va("entity %i is not a player", HIWORD(entref));
+        v2 = va("entity %i is not a player", e.entnum);
     }
     Scr_ObjectError(v2);
 LABEL_6:
@@ -2435,8 +2434,7 @@ LABEL_6:
     ConstString = Scr_GetConstString(0);
     if (ConstString != scr_const.snd_enveffectsprio_level && ConstString != scr_const.snd_enveffectsprio_shellshock)
         Scr_Error("priority must be 'snd_enveffectsprio_level' or 'snd_enveffectsprio_shellshock'\n");
-    v6 = va("%c %i \"%s\" %g %g %g", 68, Float);
-    SV_GameSendServerCommand(v1, SV_CMD_RELIABLE, v6);
+    SV_GameSendServerCommand(v1, SV_CMD_RELIABLE, va("%c %i \"%s\" %g %g %g", 68, Float));
 }
 
 void __cdecl PlayerCmd_SetChannelVolumes(scr_entref_t entref)
@@ -2782,7 +2780,7 @@ void __cdecl PlayerCmd_SetSpreadOverride(scr_entref_t entref)
             if (value < 64)
             {
                 pSelf->client->ps.spreadOverride = value;
-                pSelf->client->ps.spreadOverrideState = 2;
+                pSelf->client->ps.spreadOverrideState = PSOS_ENABLED;
             }
             else
             {
@@ -2822,7 +2820,7 @@ void __cdecl PlayerCmd_ResetSpreadOverride(scr_entref_t entref)
             Scr_ObjectError(v1);
         }
     }
-    pSelf->client->ps.spreadOverrideState = 1;
+    pSelf->client->ps.spreadOverrideState = PSOS_RESETTING;
     pSelf->client->ps.aimSpreadScale = 255.0;
     if (Scr_GetNumParam())
         Scr_Error("USAGE: <player> resetspreadoverride()\n");
@@ -3383,10 +3381,10 @@ void __cdecl PlayerCmd_UpdateScores(scr_entref_t entref)
             Scr_ObjectError(v1);
         }
     }
-    _snprintf(svcmd, 0x40u, "%c %i", 72, level.teamScores[2]);
+    _snprintf(svcmd, 0x40u, "%c %i", 72, level.teamScores[TEAM_ALLIES]);
     svcmd[63] = 0;
     SV_GameSendServerCommand(pSelf - g_entities, SV_CMD_CAN_IGNORE, svcmd);
-    _snprintf(svcmd, 0x40u, "%c %i", 71, level.teamScores[1]);
+    _snprintf(svcmd, 0x40u, "%c %i", 71, level.teamScores[TEAM_AXIS]);
     svcmd[63] = 0;
     SV_GameSendServerCommand(pSelf - g_entities, SV_CMD_CAN_IGNORE, svcmd);
 }

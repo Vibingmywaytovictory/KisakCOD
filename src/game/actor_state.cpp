@@ -348,8 +348,8 @@ void __cdecl Actor_SimplifyStateTransitions(actor_s *self)
         {
             transitionCount = self->transitionCount;
             v3 = 8 * (transitionCount + 6);
-            v4 = *(unsigned int *)((char *)&self->ent + v3);
-            v5 = *(&self->iStateTime + 2 * transitionCount);
+            v4 = self->StateTransitions[transitionCount - 2].eTransition;
+            v5 = self->StateTransitions[transitionCount - 1].eTransition;
             if (v4 >= 4)
                 MyAssertHandler(
                     "c:\\trees\\cod3\\cod3src\\src\\game\\actor_state.cpp",
@@ -373,8 +373,8 @@ void __cdecl Actor_SimplifyStateTransitions(actor_s *self)
             {
                 if (v6)
                 {
-                    self->eSubState[2 * self->transitionCount + 4] = (ai_substate_t)v6;
-                    self->eSubState[2 * self->transitionCount + 5] = (ai_substate_t)*(&self->preThinkTime + 2 * self->transitionCount);
+                    self->StateTransitions[self->transitionCount - 2].eTransition = v6;
+                    self->StateTransitions[self->transitionCount - 2].eState = self->StateTransitions[self->transitionCount - 1].eState;
                     v7 = self->transitionCount - 1;
                 }
                 else
@@ -387,7 +387,7 @@ void __cdecl Actor_SimplifyStateTransitions(actor_s *self)
             }
             return;
         }
-        Com_PrintWarning(18, "WARNING: ignoring AI state transition on entnum %d (actor is dead)\n", self->ent->s.number);
+        Com_PrintWarning(CON_CHANNEL_AI, "WARNING: ignoring AI state transition on entnum %d (actor is dead)\n", self->ent->s.number);
         self->transitionCount = 1;
     }
 }

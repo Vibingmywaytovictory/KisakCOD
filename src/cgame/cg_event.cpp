@@ -118,12 +118,12 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
 #endif
 
         if (cg_debugEvents->current.enabled)
-            Com_Printf(21, "ent:%3i  event:%3i ", ent->number, event);
+            Com_Printf(CON_CHANNEL_FX, "ent:%3i  event:%3i ", ent->number, event);
 
         iassert(event > 0 && event < EV_MAX_EVENTS);
 
         if (cg_debugEvents->current.enabled)
-            Com_Printf(21, "CG_EntityEvent:%s\n", eventnames[event]);
+            Com_Printf(CON_CHANNEL_FX, "CG_EntityEvent:%s\n", eventnames[event]);
 
         if (isPlayerView)
             weaponIdx = cgameGlob->predictedPlayerState.weapon;
@@ -437,7 +437,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                 else
                 {
                 LABEL_216:
-                    Com_DPrintf(21, "Event %s just for client %i was sent to other clients\n", eventnames[event], clientNum);
+                    Com_DPrintf(CON_CHANNEL_FX, "Event %s just for client %i was sent to other clients\n", eventnames[event], clientNum);
                 }
                 return;
             case EV_FIRE_WEAPON_MG42:
@@ -662,7 +662,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
                 if (weaponDef->projExplosionEffect)
                 {
                     Com_Printf(
-                        14,
+                        CON_CHANNEL_CLIENT,
                         "Playing smoke grenade at %i at ( %f, %f, %f )\n",
                         ent->lerp.u.customExplode.startTime,
                         ent->lerp.pos.trBase[0],
@@ -968,7 +968,7 @@ void __cdecl CG_EntityEvent(int32_t localClientNum, centity_s *cent, int32_t eve
     }
     else if (cg_debugEvents->current.enabled)
     {
-        Com_Printf(21, "CG_EntityEvent:ZERO EVENT\n");
+        Com_Printf(CON_CHANNEL_FX, "CG_EntityEvent:ZERO EVENT\n");
     }
 }
 
@@ -1008,7 +1008,7 @@ void __cdecl CG_Obituary(int32_t localClientNum, const entityState_s *ent)
     {
         mod = ent->eventParm & 0xFFFFFF7F;
         weapDef = 0;
-        iconShader = Material_RegisterHandle("killicondied", 7);
+        iconShader = Material_RegisterHandle("killicondied", IMAGE_TRACK_HUD);
     }
     else
     {
@@ -1045,37 +1045,37 @@ void __cdecl CG_Obituary(int32_t localClientNum, const entityState_s *ent)
         }
         else
         {
-            iconShader = Material_RegisterHandle("killicondied", 7);
+            iconShader = Material_RegisterHandle("killicondied", IMAGE_TRACK_HUD);
         }
     }
     switch (mod)
     {
     case 7u:
-        iconShader = Material_RegisterHandle("killiconmelee", 7);
+        iconShader = Material_RegisterHandle("killiconmelee", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 8u:
-        iconShader = Material_RegisterHandle("killiconheadshot", 7);
+        iconShader = Material_RegisterHandle("killiconheadshot", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 9u:
-        iconShader = Material_RegisterHandle("killiconcrush", 7);
+        iconShader = Material_RegisterHandle("killiconcrush", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 0xBu:
-        iconShader = Material_RegisterHandle("killiconfalling", 7);
+        iconShader = Material_RegisterHandle("killiconfalling", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 0xCu:
-        iconShader = Material_RegisterHandle("killiconsuicide", 7);
+        iconShader = Material_RegisterHandle("killiconsuicide", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 0xDu:
-        iconShader = Material_RegisterHandle("killicondied", 7);
+        iconShader = Material_RegisterHandle("killicondied", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     case 0xFu:
-        iconShader = Material_RegisterHandle("killiconimpact", 7);
+        iconShader = Material_RegisterHandle("killiconimpact", IMAGE_TRACK_HUD);
         iconWidth = baseIconSize;
         break;
     default:
@@ -1279,7 +1279,7 @@ void __cdecl CG_PlayFx(int32_t localClientNum, centity_s *cent, const float *ang
     }
     else
     {
-        Com_PrintError(21, "ERROR: CG_PlayFx called with invalid effect id %i\n", fxId);
+        Com_PrintError(CON_CHANNEL_FX, "ERROR: CG_PlayFx called with invalid effect id %i\n", fxId);
     }
 }
 

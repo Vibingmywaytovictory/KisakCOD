@@ -52,16 +52,13 @@ void __cdecl TRACK_actor_event_listener()
 
 void __cdecl Actor_EventListener_Init()
 {
-    unsigned int *p_events; // r11
-
     g_listenerCount = 0;
-    p_events = &g_AIEVlisteners[0].events;
-    do
+
+    for (int i = 0; i < ARRAY_COUNT(g_AIEVlisteners); ++i)
     {
-        *(p_events - 1) = ENTITYNUM_NONE;
-        *p_events = 0;
-        p_events += 2;
-    } while ((int)p_events < (int)&g_AIEVlisteners[32]);
+        g_AIEVlisteners[i].entIndex = ENTITYNUM_NONE;
+        g_AIEVlisteners[i].events = 0;
+    }
 }
 
 void __cdecl Actor_EventListener_SetCount(int listenerCount)
@@ -76,26 +73,14 @@ int __cdecl Actor_EventListener_GetCount()
 
 int __cdecl Actor_FindEventFromString(unsigned __int16 eventString)
 {
-    int v1; // r9
-    unsigned __int16 **v2; // r11
-    const char *v3; // r3
-    const char *v4; // r3
-
-    v1 = 0;
-    v2 = g_AIEV_scrConst_table;
-    while (!*v2 || **v2 != eventString)
+    for (int i = 0; i < ARRAY_COUNT(g_AIEV_scrConst_table); ++i)
     {
-        ++v2;
-        ++v1;
-        if ((int)v2 >= (int)&g_AIEV_scrConst_table[23])
-        {
-            v3 = SL_ConvertToString(eventString);
-            v4 = va("Unable to find AI event for [%s]", v3);
-            Scr_Error(v4);
-            return 0;
-        }
+        if (g_AIEV_scrConst_table[i] && *g_AIEV_scrConst_table[i] == eventString)
+            return i;
     }
-    return v1;
+
+    Scr_Error(va("Unable to find AI event for [%s]", SL_ConvertToString(eventString)));
+    return 0;
 }
 
 void __cdecl Actor_EventListener_Add(int entIndex, unsigned __int16 eventString)
@@ -284,8 +269,8 @@ void __cdecl Actor_DumpEventListners()
     unsigned int events; // r23
     const char *EntityTypeName; // r3
 
-    Com_Printf(18, "AIEventListners: %d, level time: %d\n", g_listenerCount, level.time);
-    Com_Printf(18, "==================\n", g_listenerCount);
+    Com_Printf(CON_CHANNEL_AI, "AIEventListners: %d, level time: %d\n", g_listenerCount, level.time);
+    Com_Printf(CON_CHANNEL_AI, "==================\n", g_listenerCount);
     v0 = 0;
     if (g_listenerCount > 0)
     {
@@ -301,7 +286,7 @@ void __cdecl Actor_DumpEventListners()
                     "g_AIEVlisteners[i].entIndex < MAX_GENTITIES");
             events = v1->events;
             EntityTypeName = G_GetEntityTypeName(&g_entities[v1->entIndex]);
-            Com_Printf(18, "%d entity: %04d (%s), events: %x\n", v0++, v1->entIndex, EntityTypeName, events);
+            Com_Printf(CON_CHANNEL_AI, "%d entity: %04d (%s), events: %x\n", v0++, v1->entIndex, EntityTypeName, events);
             ++v1;
         } while (v0 < g_listenerCount);
     }

@@ -246,7 +246,7 @@ XAnimTree_s *__cdecl G_AllocAnimClientTree()
             break;
         if ((unsigned int)++v0 >= 0x40)
         {
-            Com_Printf(18, "G_AllocAnimClientTree: failed allocation\n");
+            Com_Printf(CON_CHANNEL_AI, "G_AllocAnimClientTree: failed allocation\n");
             return 0;
         }
     }
@@ -328,7 +328,7 @@ void __cdecl Actor_FinishSpawning(actor_s *self)
     if (self->sentient->ent != self->ent)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor.cpp", 751, 0, "%s", "self->sentient->ent == self->ent");
     ent = self->ent;
-    v3 = G_Find(0, 284, scr_const.player);
+    v3 = G_Find(0, offsetof(gentity_s, classname), scr_const.player);
     if (!v3)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\actor.cpp", 757, 0, "%s", "player");
     if (!v3->sentient)
@@ -1196,7 +1196,7 @@ void __cdecl Actor_HandleInvalidPath(actor_s *self)
         {
             if (ai_badPathSpam->current.enabled)
                 Com_Printf(
-                    18,
+                    CON_CHANNEL_AI,
                     "AI (entity %d, origin %.1f %.1f %.1f) couldn't find path to goal. Maybe suppressed.\n",
                     self->ent->s.number,
                     self->ent->r.currentOrigin[0],
@@ -1206,7 +1206,7 @@ void __cdecl Actor_HandleInvalidPath(actor_s *self)
         else
         {
             Com_Printf(
-                18,
+                CON_CHANNEL_AI,
                 "%sAI (entity %d, origin %.1f %.1f %.1f) couldn't find path to goal.\n",
                 "^1",
                 self->ent->s.number,
@@ -1516,7 +1516,7 @@ void __cdecl Actor_GetAnimDeltas(actor_s *self, float *rotation, float *translat
 
     if (ai_debugAnimDeltas->current.integer == self->ent->s.number)
         Com_Printf(
-            18,
+            CON_CHANNEL_AI,
             "deltas = %g %g %g\n",
             translation[0],
             translation[1],
@@ -2248,19 +2248,19 @@ int __cdecl Actor_IsMoving(actor_s *self)
 
 unsigned int __cdecl G_GetActorFriendlyIndex(int iEntNum)
 {
-    gentity_s *v2; // r10
+    gentity_s *ent; // r10
     actor_s *actor; // r11
-    unsigned int v4; // r11
 
     if (!level.bDrawCompassFriendlies)
         return -1;
+
     iassert(iEntNum < MAX_GENTITIES);
-    v2 = &g_entities[iEntNum];
-    actor = v2->actor;
-    if (!actor || !actor->bDrawOnCompass || v2->sentient->eTeam != TEAM_ALLIES)
+    ent = &g_entities[iEntNum];
+    actor = ent->actor;
+    if (!actor || !actor->bDrawOnCompass || ent->sentient->eTeam != TEAM_ALLIES)
         return -1;
-    v4 = (int)((unsigned __int64)(2248490037LL * ((char *)actor - (char *)level.actors)) >> 32) >> 12;
-    return v4 + (v4 >> 31);
+
+    return (int)(actor - level.actors);
 }
 
 void __cdecl G_BypassForCG_GetClientActorIndexAndTeam(int iEntNum, int *actorIndex, int *team)
@@ -2570,7 +2570,7 @@ actor_s *__cdecl Actor_Alloc()
         ++actors;
         if (v1 >= 32)
         {
-            Com_DPrintf(18, "Actor allocation failed\n");
+            Com_DPrintf(CON_CHANNEL_AI, "Actor allocation failed\n");
             return 0;
         }
     }
@@ -2683,11 +2683,11 @@ void __cdecl Actor_FreeExpendable()
     float eyePos[3]; // [sp+50h] [-80h] BYREF // v15
     float forward[3]; // [sp+60h] [-70h] BYREF // v18
 
-    Com_Printf(18, "^3trying to delete somebody to make room for spawned AI (time %d)\n", level.time);
+    Com_Printf(CON_CHANNEL_AI, "^3trying to delete somebody to make room for spawned AI (time %d)\n", level.time);
     if (level.loading)
         Com_Error(ERR_DROP, "too many actors in BSP file");
 
-    player = G_Find(0, 284, scr_const.player);
+    player = G_Find(0, offsetof(gentity_s, classname), scr_const.player);
 
     iassert(player);
     iassert(player->client);
@@ -2816,7 +2816,7 @@ void __cdecl Actor_FreeExpendable()
             }
         }
     }
-    Com_Printf(18, "^3deleting entity %i\n", v1->ent->s.number);
+    Com_Printf(CON_CHANNEL_AI, "^3deleting entity %i\n", v1->ent->s.number);
     v13 = v1->ent;
     sentient = v1->sentient;
     if (v1->Path.wPathLen)
@@ -3308,11 +3308,11 @@ void __cdecl Actor_EntInfo(gentity_s *self, float *source)
     {
         if (enemy)
         {
-            v11 = (char *)actor + 40 * (enemy - level.sentients);
-            if (v11[2100])
+            const sentient_info_t *info = &actor->sentientInfo[enemy - level.sentients];
+            if (info->VisCache.bVisible)
             {
                 v12 = colorGreen;
-                if (level.time - *((unsigned int *)v11 + 526) > 250)
+                if (level.time - info->VisCache.iLastUpdateTime > 250)
                     v12 = colorYellow;
             }
             else
@@ -4542,7 +4542,7 @@ void __cdecl Actor_UpdateAnglesAndDelta(actor_s *self)
         yawChange = 0.0;
     LABEL_33:
         if (ai_debugAnimDeltas->current.integer == ent->s.number)
-            Com_Printf(18, "yawChange = %g\n", yawChange);
+            Com_Printf(CON_CHANNEL_AI, "yawChange = %g\n", yawChange);
         if (yawChange != 0.0)
             Actor_ChangeAngles(self, 0.0, yawChange);
         Actor_DecideOrientation(self);
@@ -5010,7 +5010,7 @@ void __cdecl Actor_Think(gentity_s *self)
         }
         else
         {
-            Com_Printf(18, "^3Deleting AI without a model.\n");
+            Com_Printf(CON_CHANNEL_AI, "^3Deleting AI without a model.\n");
             G_FreeEntity(self);
         }
     }

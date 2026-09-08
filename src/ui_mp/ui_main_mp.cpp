@@ -1203,14 +1203,14 @@ char *__cdecl GetMenuBuffer_LoadObj(char *filename)
         }
         else
         {
-            Com_PrintError(13, "menu file too large: %s is %i, max allowed is %i", filename, len, 0x8000);
+            Com_PrintError(CON_CHANNEL_UI, "menu file too large: %s is %i, max allowed is %i", filename, len, 0x8000);
             FS_FCloseFile(f);
             return 0;
         }
     }
     else
     {
-        Com_PrintError(13, "menu file not found: %s, using default\n", filename);
+        Com_PrintError(CON_CHANNEL_UI, "menu file not found: %s, using default\n", filename);
         return 0;
     }
 }
@@ -1230,7 +1230,7 @@ XModelPiece *__cdecl GetMenuBuffer_FastFile(const char *filename)
     rawfile = DB_FindXAssetHeader(ASSET_TYPE_RAWFILE, filename).rawfile;
     if (rawfile)
         return (XModelPiece *)rawfile->buffer;
-    Com_PrintError(13, "menu file not found: %s, using default\n", filename);
+    Com_PrintError(CON_CHANNEL_UI, "menu file not found: %s, using default\n", filename);
     return 0;
 }
 
@@ -1413,7 +1413,7 @@ void __cdecl UI_ParseMenuMaterial(const char *key, char *value)
     Material *material; // [esp+0h] [ebp-4Ch]
     char name[68]; // [esp+4h] [ebp-48h] BYREF
 
-    material = Material_RegisterHandle(value, 3);
+    material = Material_RegisterHandle(value, IMAGE_TRACK_UI);
     Com_sprintf(name, 0x40u, "$%s", key);
     I_strlwr(name);
     Material_Duplicate(material, name);
@@ -1461,7 +1461,7 @@ void __cdecl UI_MapLoadInfo(const char *filename)
         }
         else
         {
-            Com_PrintWarning(13, "WARNING: Could not find '%s'.\n", filename);
+            Com_PrintWarning(CON_CHANNEL_UI, "WARNING: Could not find '%s'.\n", filename);
         }
     }
 }
@@ -1920,7 +1920,7 @@ void __cdecl UI_DrawLocalTalking(int localClientNum, const rectDef_s *rect, cons
 
     if (sv_voice->current.enabled && cl_voice->current.enabled && IN_IsTalkKeyHeld())
     {
-        material = Material_RegisterHandle("voice_on", 7);
+        material = Material_RegisterHandle("voice_on", IMAGE_TRACK_HUD);
         UI_DrawHandlePic(
             &scrPlaceView[localClientNum],
             rect->x,
@@ -1955,7 +1955,7 @@ void __cdecl UI_DrawTalkerNum(
     {
         if (CL_GetClientName(localClientNum, client, name, 38))
         {
-            material = Material_RegisterHandle("voice_on", 7);
+            material = Material_RegisterHandle("voice_on", IMAGE_TRACK_HUD);
             textHeight = UI_TextHeight(font, textScale);
             UI_DrawHandlePic(
                 &scrPlaceView[localClientNum],
@@ -1984,7 +1984,7 @@ void __cdecl UI_DrawTalkerNum(
         }
         else
         {
-            Com_PrintWarning(13, "Unable to find client %i but they are talking\n", client);
+            Com_PrintWarning(CON_CHANNEL_UI, "Unable to find client %i but they are talking\n", client);
         }
     }
 }
@@ -2071,10 +2071,10 @@ int __cdecl UI_GameType_HandleKey(int flags, float *special, int key, int resetM
     int oldCount; // [esp+0h] [ebp-8h]
     int nextGameType; // [esp+4h] [ebp-4h]
 
-    if (key != 200 && key != 201 && key != 13 && key != 191)
+    if (key != K_MOUSE1 && key != K_MOUSE2 && key != K_ENTER && key != K_KP_ENTER)
         return 0;
     oldCount = UI_MapCountByGameType();
-    if (key != 201)
+    if (key != K_MOUSE2)
     {
         nextGameType = ui_gametype->current.integer + 1;
         if (nextGameType >= sharedUiInfo.numGameTypes)
@@ -2108,9 +2108,9 @@ int __cdecl UI_NetSource_HandleKey(int flags, float *special, int key)
     int integer; // [esp+0h] [ebp-Ch]
     int nextNetSource; // [esp+8h] [ebp-4h]
 
-    if (key != 200 && key != 201 && key != 13 && key != 191)
+    if (key != K_MOUSE1 && key != K_MOUSE2 && key != K_ENTER && key != K_KP_ENTER)
         return 0;
-    if (key == 201)
+    if (key == K_MOUSE2)
     {
         if (ui_netSource->current.integer)
             integer = ui_netSource->current.integer;
@@ -2133,9 +2133,9 @@ int __cdecl UI_NetSource_HandleKey(int flags, float *special, int key)
 
 int __cdecl UI_NetFilter_HandleKey(int flags, float *special, int key)
 {
-    if (key != 200 && key != 201 && key != 13 && key != 191)
+    if (key != K_MOUSE1 && key != K_MOUSE2 && key != K_ENTER && key != K_KP_ENTER)
         return 0;
-    if (key == 201)
+    if (key == K_MOUSE2)
         --ui_serverFilterType;
     else
         ++ui_serverFilterType;
@@ -2228,9 +2228,9 @@ int __cdecl UI_NetGameType_HandleKey(int flags, float *special, int key)
     int integer; // [esp+0h] [ebp-8h]
     int nextNetGameType; // [esp+4h] [ebp-4h]
 
-    if (key != 200 && key != 201 && key != 13 && key != 191)
+    if (key != K_MOUSE1 && key != K_MOUSE2 && key != K_ENTER && key != K_KP_ENTER)
         return 0;
-    if (key == 201)
+    if (key == K_MOUSE2)
     {
         if (ui_netGameType->current.integer)
             integer = ui_netGameType->current.integer;
@@ -2261,9 +2261,9 @@ int __cdecl UI_JoinGameType_HandleKey(int flags, float *special, int key)
     int integer; // [esp+0h] [ebp-8h]
     int nextJoinGameType; // [esp+4h] [ebp-4h]
 
-    if (key != 200 && key != 201 && key != 13 && key != 191)
+    if (key != K_MOUSE1 && key != K_MOUSE2 && key != K_ENTER && key != K_KP_ENTER)
         return 0;
-    if (key == 201)
+    if (key == K_MOUSE2)
     {
         if (ui_joinGameType->current.integer)
             integer = ui_joinGameType->current.integer;
@@ -2456,41 +2456,41 @@ void __cdecl UI_AddServerToFavoritesList(char *pszName, char *pszAddress)
                 if (res == -1)
                 {
                     v5 = UI_SafeTranslateString("EXE_FAVORITELISTFULL");
-                    Com_Printf(13, "%s\n", v5);
+                    Com_Printf(CON_CHANNEL_UI, "%s\n", v5);
                     Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITELISTFULL");
                 }
                 else if (res == -2)
                 {
                     v6 = UI_SafeTranslateString("EXE_BADSERVERADDRESS");
-                    Com_Printf(13, "%s\n", v6);
+                    Com_Printf(CON_CHANNEL_UI, "%s\n", v6);
                     Dvar_SetStringByName("ui_favorite_message", "@EXE_BADSERVERADDRESS");
                 }
                 else
                 {
                     v7 = UI_SafeTranslateString("EXE_FAVORITEADDED");
                     v8 = va("%s\n", v7);
-                    Com_Printf(13, v8, pszAddress);
+                    Com_Printf(CON_CHANNEL_UI, v8, pszAddress);
                     Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDED");
                 }
             }
             else
             {
                 v4 = UI_SafeTranslateString("EXE_FAVORITEINLIST");
-                Com_Printf(13, "%s\n", v4);
+                Com_Printf(CON_CHANNEL_UI, "%s\n", v4);
                 Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEINLIST");
             }
         }
         else
         {
             v3 = UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY");
-            Com_Printf(13, "%s\n", v3);
+            Com_Printf(CON_CHANNEL_UI, "%s\n", v3);
             Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDRESSEMPTY");
         }
     }
     else
     {
         v2 = UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY");
-        Com_Printf(13, "%s\n", v2);
+        Com_Printf(CON_CHANNEL_UI, "%s\n", v2);
         Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITENAMEEMPTY");
     }
 }
@@ -2897,7 +2897,7 @@ void __cdecl UI_RunMenuScript(int localClientNum, const char **args, const char 
                                                                                                                                                                                                 "clearLoadErrorsSummary"))
                                                                                                                                                                                             {
                                                                                                                                                                                                 Com_Printf(
-                                                                                                                                                                                                    13,
+                                                                                                                                                                                                    CON_CHANNEL_UI,
                                                                                                                                                                                                     "unknown UI script %s in block:\n%s\n",
                                                                                                                                                                                                     out,
                                                                                                                                                                                                     actualScript);
@@ -3469,19 +3469,19 @@ char __cdecl UI_GetOpenOrCloseMenuOnDvarArgs(
             }
             else
             {
-                Com_Printf(13, "%s: invalid menu name.\n", cmd);
+                Com_Printf(CON_CHANNEL_UI, "%s: invalid menu name.\n", cmd);
                 return 0;
             }
         }
         else
         {
-            Com_Printf(13, "%s: invalid test value.\n", cmd);
+            Com_Printf(CON_CHANNEL_UI, "%s: invalid test value.\n", cmd);
             return 0;
         }
     }
     else
     {
-        Com_Printf(13, "%s: invalid dvar name.\n", cmd);
+        Com_Printf(CON_CHANNEL_UI, "%s: invalid dvar name.\n", cmd);
         return 0;
     }
 }
@@ -3529,7 +3529,7 @@ bool __cdecl UI_DvarValueTest(const char *cmd, const char *dvarName, const char 
     }
     else
     {
-        Com_Printf(13, "%s: cannot find dvar %s\n", cmd, dvarName);
+        Com_Printf(CON_CHANNEL_UI, "%s: cannot find dvar %s\n", cmd, dvarName);
         return 0;
     }
 }
@@ -4242,7 +4242,7 @@ Material *__cdecl UI_GetLevelShot(int index)
     if (!sharedUiInfo.serverHardwareIconList[40 * index - 5082])
         sharedUiInfo.serverHardwareIconList[40 * index - 5082] = Material_RegisterHandle(
             (char *)sharedUiInfo.serverHardwareIconList[40 * index - 5118],
-            3);
+            IMAGE_TRACK_UI);
     return sharedUiInfo.serverHardwareIconList[40 * index - 5082];
 }
 
@@ -4455,7 +4455,7 @@ void UI_GetGameTypesList_LoadObj()
                 p[v1 - 4] = 0;
             if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32)
             {
-                Com_Printf(13, "Too many game type scripts found! Only loading the first %i\n", 31);
+                Com_Printf(CON_CHANNEL_UI, "Too many game type scripts found! Only loading the first %i\n", 31);
                 return;
             }
             sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(p);
@@ -4514,7 +4514,7 @@ void UI_GetGameTypesList_FastFile()
                 break;
             if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32)
             {
-                Com_Printf(13, "Too many game type scripts found! Only loading the first %i\n", 31);
+                Com_Printf(CON_CHANNEL_UI, "Too many game type scripts found! Only loading the first %i\n", 31);
                 return;
             }
             sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName->token);
@@ -4595,7 +4595,7 @@ void __cdecl CL_SelectStringTableEntryInDvar_f()
         }
         else
         {
-            Com_Printf(16, "usage: selectStringTableEntryInDvar <tableFileName> <columnNum> <dvarName>");
+            Com_Printf(CON_CHANNEL_SYSTEM, "usage: selectStringTableEntryInDvar <tableFileName> <columnNum> <dvarName>");
         }
     }
 #endif
@@ -4711,12 +4711,12 @@ void __cdecl UI_Init(int localClientNum)
     }
     UI_AssetCache();
     Menus_CloseAll(&uiInfoArray.uiDC);
-    sharedUiInfo.serverHardwareIconList[0] = Material_RegisterHandle("server_hardware_unknown", 3);
-    sharedUiInfo.serverHardwareIconList[1] = Material_RegisterHandle("server_hardware_linux_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[2] = Material_RegisterHandle("server_hardware_win_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[3] = Material_RegisterHandle("server_hardware_mac_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[6] = Material_RegisterHandle("server_hardware_win_listen", 3);
-    sharedUiInfo.serverHardwareIconList[7] = Material_RegisterHandle("server_hardware_mac_listen", 3);
+    sharedUiInfo.serverHardwareIconList[0] = Material_RegisterHandle("server_hardware_unknown", IMAGE_TRACK_UI);
+    sharedUiInfo.serverHardwareIconList[1] = Material_RegisterHandle("server_hardware_linux_dedicated", IMAGE_TRACK_UI);
+    sharedUiInfo.serverHardwareIconList[2] = Material_RegisterHandle("server_hardware_win_dedicated", IMAGE_TRACK_UI);
+    sharedUiInfo.serverHardwareIconList[3] = Material_RegisterHandle("server_hardware_mac_dedicated", IMAGE_TRACK_UI);
+    sharedUiInfo.serverHardwareIconList[6] = Material_RegisterHandle("server_hardware_win_listen", IMAGE_TRACK_UI);
+    sharedUiInfo.serverHardwareIconList[7] = Material_RegisterHandle("server_hardware_mac_listen", IMAGE_TRACK_UI);
     LAN_LoadCachedServers(); // cl_ui_xenon_mp.obj
     UI_ServersSort(10, 0);
     Dvar_SetBoolByName("ui_mousePitch", Dvar_GetFloat("m_pitch") < 0.0);
@@ -4913,23 +4913,23 @@ void UI_RegisterDvars()
 
 void UI_AssetCache()
 {
-    sharedUiInfo.assets.whiteMaterial = Material_RegisterHandle("white", 3);
-    sharedUiInfo.assets.scrollBar = Material_RegisterHandle("ui_scrollbar", 3);
-    sharedUiInfo.assets.scrollBarArrowDown = Material_RegisterHandle("ui_scrollbar_arrow_dwn_a", 3);
-    sharedUiInfo.assets.scrollBarArrowUp = Material_RegisterHandle("ui_scrollbar_arrow_up_a", 3);
-    sharedUiInfo.assets.scrollBarArrowLeft = Material_RegisterHandle("ui_scrollbar_arrow_left", 3);
-    sharedUiInfo.assets.scrollBarArrowRight = Material_RegisterHandle("ui_scrollbar_arrow_right", 3);
-    sharedUiInfo.assets.scrollBarThumb = Material_RegisterHandle("ui_scrollbar_thumb", 3);
-    sharedUiInfo.assets.sliderBar = Material_RegisterHandle("ui_slider2", 3);
-    sharedUiInfo.assets.sliderThumb = Material_RegisterHandle("ui_sliderbutt_1", 3);
-    sharedUiInfo.assets.cursor = Material_RegisterHandle("ui_cursor", 0);
-    sharedUiInfo.assets.bigFont = CL_RegisterFont("fonts/bigfont", 0);
-    sharedUiInfo.assets.smallFont = CL_RegisterFont("fonts/smallfont", 0);
-    sharedUiInfo.assets.consoleFont = CL_RegisterFont("fonts/consolefont", 0);
-    sharedUiInfo.assets.boldFont = CL_RegisterFont("fonts/boldfont", 0);
-    sharedUiInfo.assets.textFont = CL_RegisterFont("fonts/normalfont", 0);
-    sharedUiInfo.assets.extraBigFont = CL_RegisterFont("fonts/extrabigfont", 0);
-    sharedUiInfo.assets.objectiveFont = CL_RegisterFont("fonts/objectivefont", 0);
+    sharedUiInfo.assets.whiteMaterial = Material_RegisterHandle("white", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBar = Material_RegisterHandle("ui_scrollbar", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowDown = Material_RegisterHandle("ui_scrollbar_arrow_dwn_a", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowUp = Material_RegisterHandle("ui_scrollbar_arrow_up_a", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowLeft = Material_RegisterHandle("ui_scrollbar_arrow_left", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarArrowRight = Material_RegisterHandle("ui_scrollbar_arrow_right", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.scrollBarThumb = Material_RegisterHandle("ui_scrollbar_thumb", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.sliderBar = Material_RegisterHandle("ui_slider2", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.sliderThumb = Material_RegisterHandle("ui_sliderbutt_1", IMAGE_TRACK_UI);
+    sharedUiInfo.assets.cursor = Material_RegisterHandle("ui_cursor", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.bigFont = CL_RegisterFont("fonts/bigfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.smallFont = CL_RegisterFont("fonts/smallfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.consoleFont = CL_RegisterFont("fonts/consolefont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.boldFont = CL_RegisterFont("fonts/boldfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.textFont = CL_RegisterFont("fonts/normalfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.extraBigFont = CL_RegisterFont("fonts/extrabigfont", IMAGE_TRACK_MISC);
+    sharedUiInfo.assets.objectiveFont = CL_RegisterFont("fonts/objectivefont", IMAGE_TRACK_MISC);
 }
 
 int bypassKeyClear;
@@ -4952,7 +4952,7 @@ void __cdecl UI_KeyEvent(int localClientNum, int key, int down)
             goto LABEL_25;
         if (Dvar_GetBool("cl_bypassMouseInput") || UI_GetActiveMenu(localClientNum) == UIMENU_SCOREBOARD)
             bypassKeyClear = 1;
-        if (key == 27 && down && !Menus_AnyFullScreenVisible(&uiInfoArray.uiDC) && !menu->onESC)
+        if (key == K_ESCAPE && down && !Menus_AnyFullScreenVisible(&uiInfoArray.uiDC) && !menu->onESC)
             Menus_CloseAll(&uiInfoArray.uiDC);
         if (Key_IsCatcherActive(uiInfoArray.uiDC.localClientNum, 16))
             Menu_HandleKey(&uiInfoArray.uiDC, menu, key, down);
@@ -5655,14 +5655,14 @@ void UI_StopServerRefresh()
     {
         *(uint32_t *)&sharedUiInfo.serverStatus.string[1124] = 0;
         Com_Printf(
-            13,
+            CON_CHANNEL_UI,
             "%d servers listed in browser with %d players.\n",
             *(uint32_t *)&sharedUiInfo.gap8EB4[72900],
             *(uint32_t *)&sharedUiInfo.gap8EB4[72908]);
         count = LAN_GetServerCount(ui_netSource->current.integer);
         if (count - *(uint32_t *)&sharedUiInfo.gap8EB4[72900] > 0)
             Com_Printf(
-                13,
+                CON_CHANNEL_UI,
                 "%d servers not listed (filtered out by game browser settings)\n",
                 count - *(uint32_t *)&sharedUiInfo.gap8EB4[72900]);
     }
@@ -5798,7 +5798,7 @@ char *__cdecl UI_SafeTranslateString(const char *reference)
             if (loc_warningsAsErrors->current.enabled)
                 Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
             else
-                Com_PrintWarning(13, "WARNING: Could not translate string \"%s\"\n", reference);
+                Com_PrintWarning(CON_CHANNEL_UI, "WARNING: Could not translate string \"%s\"\n", reference);
             strcpy(errorString, "^1UNLOCALIZED(^7");
             I_strncat(errorString, 1024, reference);
             I_strncat(errorString, 1024, "^1)^7");

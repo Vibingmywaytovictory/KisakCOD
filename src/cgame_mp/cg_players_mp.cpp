@@ -56,12 +56,12 @@ void __cdecl CG_AddPlayerSpriteDrawSurfs(int32_t localClientNum, const centity_s
             iClientTeam = cgameGlob->bgs.clientinfo[ps->clientNum].team;
             secondaryHeight = 0;
             if (cent->nextState.iHeadIcon
-                && (!cent->nextState.iHeadIconTeam
+                && (cent->nextState.iHeadIconTeam == TEAM_FREE
                     || iClientTeam == TEAM_SPECTATOR
                     || cent->nextState.iHeadIconTeam == iClientTeam))
             {
                 pszIcon = CL_GetConfigString(localClientNum, cent->nextState.iHeadIcon + 2266);
-                hMaterial = Material_RegisterHandle(pszIcon, 7);
+                hMaterial = Material_RegisterHandle(pszIcon, IMAGE_TRACK_HUD);
                 if (hMaterial)
                 {
                     CG_AddPlayerSpriteDrawSurf(
@@ -433,7 +433,7 @@ void __cdecl CG_PlayerTurretPositionAndBlend(int32_t localClientNum, centity_s *
                                     else
                                     {
                                         Com_PrintWarning(
-                                            17,
+                                            CON_CHANNEL_PLAYERWEAP,
                                             "WARNING: aborting player positioning on turret since 'tag_weapon' does not exist\n");
                                     }
                                 }
@@ -568,7 +568,7 @@ void __cdecl CG_ResetPlayerEntity(int32_t localClientNum, cg_s *cgameGlob, centi
     }
     if (cg_debugPosition->current.enabled)
         Com_Printf(
-            17,
+            CON_CHANNEL_PLAYERWEAP,
             "%i ResetPlayerEntity yaw=%i\n",
             cent->nextState.number,
             (uint32_t)(ci->torso.yawAngle));

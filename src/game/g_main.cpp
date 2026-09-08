@@ -895,15 +895,11 @@ void G_LoadAnimTreeInstances()
         *actorXAnimTrees++ = XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
     } while (v0);
     g_scr_data.actorBackupXAnimTree = XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
-    v3 = 16;
-    p_entnum = &g_scr_data.actorCorpseInfo[0].entnum;
-    do
+    for (int i = 0; i < ARRAY_COUNT(g_scr_data.actorCorpseInfo); ++i)
     {
-        --v3;
-        *(p_entnum - 1) = (int)XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
-        *p_entnum = -1;
-        p_entnum += 8;
-    } while (v3);
+        g_scr_data.actorCorpseInfo[i].tree = XAnimCreateTree(anims, Hunk_AllocActorXAnimServer);
+        g_scr_data.actorCorpseInfo[i].entnum = -1;
+    }
     v5 = 64;
     actorXAnimClientTrees = g_scr_data.actorXAnimClientTrees;
     do
@@ -1048,8 +1044,8 @@ void __cdecl G_PrintFastFileErrors(const char *fastfile)
 
     if (rawfile->len)
     {
-        Com_PrintError(1, "There were errors when building fast file '%s'\n", fastfile);
-        Com_PrintError(1, rawfile->buffer);
+        Com_PrintError(CON_CHANNEL_ERROR, "There were errors when building fast file '%s'\n", fastfile);
+        Com_PrintError(CON_CHANNEL_ERROR, rawfile->buffer);
     }
 }
 
@@ -1218,7 +1214,7 @@ void __cdecl G_InitGame(
     level.num_entities = 1;
     level.firstFreeEnt = 0;
     level.lastFreeEnt = 0;
-    SV_LocateGameData(level.gentities, 1, 628, &clients->ps, 46104);
+    SV_LocateGameData(level.gentities, 1, sizeof(gentity_s), &clients->ps, sizeof(gclient_s));
     G_ParseHitLocDmgTable();
     BG_LoadPenetrationDepthTable();
     G_InitVehiclePaths();
@@ -1276,12 +1272,12 @@ void __cdecl G_ShutdownGame(int clearScripts)
     unsigned __int8 v2; // r11
 
     SV_ResetDemo();
-    Com_DPrintf(15, "ShutdownGame:\n");
-    Com_DPrintf(15, "------------------------------------------------------------\n");
+    Com_DPrintf(CON_CHANNEL_SERVER, "ShutdownGame:\n");
+    Com_DPrintf(CON_CHANNEL_SERVER, "------------------------------------------------------------\n");
     Cmd_UnregisterAllNotifications();
     if (G_LoadErrorCleanup())
     {
-        Com_Printf(15, "G_ShutdownGame: save game failed to load\n");
+        Com_Printf(CON_CHANNEL_SERVER, "G_ShutdownGame: save game failed to load\n");
     }
     else
     {
@@ -1319,7 +1315,7 @@ void G_ChangeLevel()
     int ConfigstringIndex; // r3
     const char *v4; // r3
 
-    v0 = G_Find(0, 284, scr_const.player);
+    v0 = G_Find(0, offsetof(gentity_s, classname), scr_const.player);
     if (!v0)
         MyAssertHandler("c:\\trees\\cod3\\cod3src\\src\\game\\g_main.cpp", 1735, 0, "%s", "player");
     if (v0->health > 0 && !g_reloading->current.integer)
@@ -2578,7 +2574,7 @@ int __cdecl G_RunFrame(ServerFrameExtent extent, int timeCap)
         for (v39 = 0; v39 < MAX_GENTITIES; ++v39)
         {
             v41 = SL_ConvertToString(g_entities[v39].classname);
-            Com_Printf(15, "%4i: %s\n", v39, v41);
+            Com_Printf(CON_CHANNEL_SERVER, "%4i: %s\n", v39, v41);
         }
         Dvar_SetBool(g_listEntity, 0);
     }
